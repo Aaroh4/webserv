@@ -2,7 +2,7 @@ TARGET = test
 
 FLAGS = -Wall -Wextra -Werror -std=c++11
 
-SRCS = srcs/main.cpp srcs/conversion.cpp \
+SRCS = srcs/main.cpp srcs/conversion.cpp srcs/readconfig.cpp \
 
 OBJS = $(SRCS:.cpp=.o)
 

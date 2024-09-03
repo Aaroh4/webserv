@@ -6,7 +6,7 @@
 /*   By: ahamalai <ahamalai@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/03 14:22:50 by ahamalai          #+#    #+#             */
-/*   Updated: 2024/09/03 14:44:56 by ahamalai         ###   ########.fr       */
+/*   Updated: 2024/09/03 15:57:55 by ahamalai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,6 +15,7 @@
 
 #include <string>
 #include <iostream>
+#include <vector>
 
 class ServerInfo
 {
@@ -25,6 +26,7 @@ class ServerInfo
 			~ServerInfo();
 	private:
 			unsigned int _ip;
+			std::vector<int> _port;
 };
 
 #endif
