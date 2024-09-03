@@ -16,18 +16,17 @@
 int	readconfig(std::string name)
 {
 	std::ifstream configfile(name);
-	bool	foundserver = false;
+	// bool	foundserver = false;
 
 	for (std::string line; std::getline(configfile, line);)
 	{
-		if (line.find("server") && foundserver == false)
-			foundserver = true;
-		else if (line.find("server") && foundserver != false)
-			return (1);
-		if (line.find("{") && foundserver == true)
+		// if (line.find("server") != std::string::npos && foundserver == false)
+		// 	foundserver = true;
+		// else if (line.find("server") && foundserver != false)
+		// 	return (1);
+		if (line.find("{") != std::string::npos)
 		{
-			std::cout << line << std::endl;
-			for (std::string line; line.find("}"); std::getline(configfile, line))
+			for (std::string line; std::getline(configfile, line) && line.find("}") == std::string::npos;)
 			{
 				std::cout << line << std::endl;
 			}
