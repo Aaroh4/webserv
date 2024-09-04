@@ -1,37 +1,35 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   ServerInfo.hpp                                     :+:      :+:    :+:   */
+/*   ServerManager.hpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: ahamalai <ahamalai@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/09/03 14:22:50 by ahamalai          #+#    #+#             */
-/*   Updated: 2024/09/04 13:19:51 by ahamalai         ###   ########.fr       */
+/*   Created: 2024/09/04 12:46:27 by ahamalai          #+#    #+#             */
+/*   Updated: 2024/09/04 14:28:24 by ahamalai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef SERVERINFO_HPP
-#define SERVERINFO_HPP
+#ifndef SERVERMANAGER_HPP
+#define SERVERMANAGER_HPP
 
+#include "ServerInfo.hpp"
 #include <string>
 #include <iostream>
 #include <vector>
 
-class ServerInfo
+class ServerManager
 {
 	public:
-			ServerInfo();
-			ServerInfo(const ServerInfo &);
-			ServerInfo operator=(const ServerInfo &);
-			~ServerInfo();
+			ServerManager();
+			ServerManager(const ServerManager &);
+			ServerManager operator=(const ServerManager &);
+			~ServerManager();
 
-			void				set_ip(std::string ip);
-			unsigned int		get_ip() const;
+			void	setnew_info(ServerInfo server);
+			ServerInfo get_info(int num);
 	private:
-			unsigned int _ip;
-			std::vector<int> _port;
+			std::vector<ServerInfo> _info;
 };
-
-unsigned int convertip(std::string ip);
 
 #endif
