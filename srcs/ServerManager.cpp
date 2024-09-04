@@ -6,7 +6,7 @@
 /*   By: ahamalai <ahamalai@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/04 13:23:09 by ahamalai          #+#    #+#             */
-/*   Updated: 2024/09/04 14:39:02 by ahamalai         ###   ########.fr       */
+/*   Updated: 2024/09/04 15:03:37 by ahamalai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,12 +17,15 @@ ServerManager::ServerManager()
 
 ServerManager::ServerManager(const ServerManager &input)
 {
-	(void)input; // NEEDS TO BE CHANGED IM TOO LAZY RIGHT NOW
+	this->_info = input._info;
 }
 
 ServerManager ServerManager::operator=(const ServerManager &input)
 {
-	(void)input; // NEEDS TO BE CHANGED IM TOO LAZY RIGHT NOW
+	if (this != &input)
+	{
+		this->_info = input._info;
+	}
 	return (input);
 }
 

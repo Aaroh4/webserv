@@ -6,7 +6,7 @@
 /*   By: ahamalai <ahamalai@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/03 16:18:51 by ahamalai          #+#    #+#             */
-/*   Updated: 2024/09/04 14:34:42 by ahamalai         ###   ########.fr       */
+/*   Updated: 2024/09/04 15:09:07 by ahamalai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,6 +22,8 @@ ServerInfo	config_server(std::vector<std::string> temp)
 	{
 		if (temp[i].find("host: ") != std::string::npos)
 			server.set_ip(temp[i].substr(7, std::string::npos));
+		if (temp[i].find("port: ") != std::string::npos)
+			server.setnew_port(stoi(temp[i].substr(7, std::string::npos)));
 	}
 	//std::cout << server.get_ip() << std::endl;
 		//std::cout << line.substr(7, std::string::npos) << std::endl;

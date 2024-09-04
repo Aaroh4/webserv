@@ -6,7 +6,7 @@
 /*   By: ahamalai <ahamalai@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/03 14:22:50 by ahamalai          #+#    #+#             */
-/*   Updated: 2024/09/04 13:19:51 by ahamalai         ###   ########.fr       */
+/*   Updated: 2024/09/04 15:05:15 by ahamalai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,6 +27,9 @@ class ServerInfo
 
 			void				set_ip(std::string ip);
 			unsigned int		get_ip() const;
+
+			void				setnew_port(int port);
+			int					get_port(int num) const;
 	private:
 			unsigned int _ip;
 			std::vector<int> _port;
