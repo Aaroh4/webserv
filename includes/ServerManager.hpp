@@ -17,6 +17,8 @@
 #include <string>
 #include <iostream>
 #include <vector>
+#include <unistd.h>
+#include <poll.h>
 
 class ServerManager
 {
@@ -26,8 +28,9 @@ class ServerManager
 			ServerManager operator=(const ServerManager &);
 			~ServerManager();
 
+			void	start_servers();
 			void	setnew_info(ServerInfo server);
-			ServerInfo get_info(int num);
+			std::vector<ServerInfo> get_info();
 	private:
 			std::vector<ServerInfo> _info;
 };

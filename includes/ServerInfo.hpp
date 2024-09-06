@@ -32,9 +32,13 @@ class ServerInfo
 
 			void				setnew_port(int port);
 			int					get_port(int num) const;
+
+			void				setsocketfd(int fd);
+			int					getsocketfd();
 	private:
-			unsigned int _ip;
-			std::vector<int> _port;
+			unsigned int		_ip;
+			std::vector<int>	_port;
+			int					_socketfd;
 };
 
 unsigned int convertip(std::string ip);

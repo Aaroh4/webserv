@@ -19,6 +19,7 @@ ServerInfo::ServerInfo(const ServerInfo &input)
 {
 	this->_ip = input._ip;
 	this->_port = input._port;
+	this->_socketfd = input._socketfd;
 }
 
 ServerInfo ServerInfo::operator=(const ServerInfo &input)
@@ -27,6 +28,7 @@ ServerInfo ServerInfo::operator=(const ServerInfo &input)
 	{
 		this->_ip = input._ip;
 		this->_port = input._port;
+		this->_socketfd = input._socketfd;
 	}
 	return (input);
 }
@@ -53,4 +55,14 @@ void	ServerInfo::setnew_port(int port)
 int		ServerInfo::get_port(int num) const
 {
 	return(this->_port[num]);
+}
+
+void	ServerInfo::setsocketfd(int fd)
+{
+	this->_socketfd = fd;
+}
+
+int		ServerInfo::getsocketfd()
+{
+	return (this->_socketfd);
 }

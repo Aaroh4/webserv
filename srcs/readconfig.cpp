@@ -17,7 +17,8 @@
 ServerInfo	config_server(std::vector<std::string> temp)
 {
 	ServerInfo server;
-		
+	
+	server.setsocketfd(socket(AF_INET, SOCK_STREAM, 0));
 	for (size_t i = 0; i < temp.size() ; i++)
 	{
 		if (temp[i].find("host: ") != std::string::npos)
