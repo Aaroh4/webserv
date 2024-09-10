@@ -6,7 +6,7 @@
 /*   By: ahamalai <ahamalai@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/03 14:22:50 by ahamalai          #+#    #+#             */
-/*   Updated: 2024/09/04 15:05:15 by ahamalai         ###   ########.fr       */
+/*   Updated: 2024/09/10 11:54:43 by ahamalai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,6 +18,8 @@
 #include <vector>
 #include <sys/socket.h>
 #include <arpa/inet.h>
+#include <poll.h>
+#include <unistd.h>
 
 class ServerInfo
 {
@@ -35,10 +37,12 @@ class ServerInfo
 
 			void				setsocketfd(int fd);
 			int					getsocketfd();
+
 	private:
 			unsigned int		_ip;
 			std::vector<int>	_port;
 			int					_socketfd;
+			std::vector <struct pollfd> _pollfds;
 };
 
 unsigned int convertip(std::string ip);
