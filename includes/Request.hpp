@@ -6,7 +6,7 @@
 /*   By: tkartasl <tkartasl@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/06 14:30:52 by tkartasl          #+#    #+#             */
-/*   Updated: 2024/09/12 13:45:16 by tkartasl         ###   ########.fr       */
+/*   Updated: 2024/09/12 14:49:39 by tkartasl         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,6 +18,7 @@
 class Request
 {
 	public:
+		Request(void);
 		Request(std::string request);
 		~Request(void);
 		Request(Request const& src);
@@ -40,6 +41,7 @@ class Request
 		std::map<std::string, std::string> _headers;
 		void	_parseRequestLine(void);
 		void 	_parseHeaders(void);
+		void	_getContentType(void);
 };
 
 #endif
