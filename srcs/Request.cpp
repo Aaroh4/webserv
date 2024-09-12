@@ -3,17 +3,18 @@
 /*                                                        :::      ::::::::   */
 /*   Request.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ahamalai <ahamalai@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: tkartasl <tkartasl@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/06 14:49:12 by tkartasl          #+#    #+#             */
-/*   Updated: 2024/09/12 14:36:43 by ahamalai         ###   ########.fr       */
+/*   Updated: 2024/09/12 14:52:09 by tkartasl         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/Request.hpp"
 #include <iostream>
 
-Request::Request()
+
+Request::Request(void)
 {
 }
 
@@ -57,6 +58,21 @@ Request& Request::operator=(Request const& src)
 	return *this;
 }
 
+void	Request::_getContentType(void)
+{
+	//Parses File type from url and set's the return content type to string attribute _type
+	
+	int	i = this->_url.find_last_of(".");
+	std::string type = this->_url.substr(i + 1, this->_url.length());
+	if (type == "css" || type == "js" || type == "html")
+		this->_type = "text/" + type;
+	else if (type == "jpg" || type == "png" || type == "jpeg" || type == "gif")
+		this->_type = "image/" + type;
+	else if (type == "mpeg" || type == "avi")
+		this->_type = "video/" + type;
+	std::cout << this->_type << std::endl;
+}
+
 void	Request::_parseRequestLine(void)
 {
 	//Parses method and put's it to string attribute _method, then erases it from the request
@@ -76,12 +92,12 @@ void	Request::_parseRequestLine(void)
 	this->_request.erase(0, this->_method.length() + 1);
 
 	//Parses URI and put's it to string attribute _url, then erases it from the request
-	
 	i = this->_request.find_first_of(" ");
 
 	this->_url = this->_request.substr(0, i);
 	this->_request.erase(0, this->_url.length() + 1);
 	
+	this->_getContentType();
 	//Parses HTTP Veresion nd put's it to string attribute _httpVersion, then erases it from the request
 
 	i = this->_request.find_first_of("\n");
