@@ -25,7 +25,6 @@ class Request
 		Request& operator=(Request const& src);
 	
 		virtual void parse(void);
-		void respond(int clientfd);
 		virtual std::string  getMethod(void) const;
 		virtual std::string  getUrl(void) const;
 		virtual std::string  getBody(void) const;

@@ -10,6 +10,7 @@
 /*                                                                            */
 /* ************************************************************************** */
 
+#include "../includes/Response.hpp"
 #include "../includes/ServerManager.hpp"
 #include "../includes/Request.hpp"
 
@@ -103,7 +104,8 @@ void	ServerManager::start_servers()
 						std::cout << buffer << std::endl;
 						Request request(buffer);
 						request.parse();
-						//request.respond(client_socket);
+						Response respond(request);
+						respond.respond(client_socket);
 					}
 				}
 			}

@@ -1,9 +1,10 @@
 TARGET = test
 
-FLAGS = -Wall -Wextra -Werror -std=c++11
+FLAGS = -Wall -Wextra -Werror -std=c++17
 
 SRCS = srcs/main.cpp srcs/conversion.cpp srcs/readconfig.cpp\
-	srcs/ServerManager.cpp srcs/ServerInfo.cpp srcs/Request.cpp
+	srcs/ServerManager.cpp srcs/ServerInfo.cpp srcs/Request.cpp\
+	srcs/Response.cpp
 
 OBJS = $(SRCS:.cpp=.o)
 
