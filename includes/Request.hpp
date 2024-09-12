@@ -3,17 +3,17 @@
 /*                                                        :::      ::::::::   */
 /*   Request.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: tkartasl <tkartasl@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: ahamalai <ahamalai@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/06 14:30:52 by tkartasl          #+#    #+#             */
-/*   Updated: 2024/09/12 10:23:07 by tkartasl         ###   ########.fr       */
+/*   Updated: 2024/09/12 13:29:40 by ahamalai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef REQUEST_H
 # define REQUEST_H
-# include <string>
-# include <map>
+
+#include "libraries.hpp"
 
 class Request
 {
@@ -21,13 +21,15 @@ class Request
 		Request(std::string request);
 		~Request(void);
 	
-		void parse(void);
-		std::string  getMethod(void) const;
-		std::string  getUrl(void) const;
-		std::string  getBody(void) const;
-		std::string  getHttpVersion(void) const;
-		std::map<std::string, std::string> getHeaders(void) const;
+		virtual void parse(void);
+		void respond(int clientfd);
+		virtual std::string  getMethod(void) const;
+		virtual std::string  getUrl(void) const;
+		virtual std::string  getBody(void) const;
+		virtual std::string  getHttpVersion(void) const;
+		virtual std::map<std::string, std::string> getHeaders(void) const;
 	private:
+		std::string	_type;
 		std::string _request;
 		std::string _method;
 		std::string _url;

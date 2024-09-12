@@ -6,20 +6,14 @@
 /*   By: ahamalai <ahamalai@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/03 14:22:50 by ahamalai          #+#    #+#             */
-/*   Updated: 2024/09/10 11:54:43 by ahamalai         ###   ########.fr       */
+/*   Updated: 2024/09/12 12:59:03 by ahamalai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef SERVERINFO_HPP
 #define SERVERINFO_HPP
 
-#include <string>
-#include <iostream>
-#include <vector>
-#include <sys/socket.h>
-#include <arpa/inet.h>
-#include <poll.h>
-#include <unistd.h>
+#include "libraries.hpp"
 
 class ServerInfo
 {

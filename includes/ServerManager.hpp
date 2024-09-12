@@ -6,7 +6,7 @@
 /*   By: ahamalai <ahamalai@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/04 12:46:27 by ahamalai          #+#    #+#             */
-/*   Updated: 2024/09/09 15:57:37 by ahamalai         ###   ########.fr       */
+/*   Updated: 2024/09/12 12:54:43 by ahamalai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,13 +14,7 @@
 #define SERVERMANAGER_HPP
 
 #include "ServerInfo.hpp"
-#include <fstream>
-#include <string>
-#include <iostream>
-#include <vector>
-#include <unistd.h>
-#include <poll.h>
-#include <fcntl.h>
+#include "libraries.hpp"
 
 class ServerManager
 {
