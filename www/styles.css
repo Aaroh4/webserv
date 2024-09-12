@@ -1,0 +1,12 @@
+body {
+	background-color: coral;
+}
+
+h1 {
+	color: cyan;
+	font-size: 100px;
+	font-style: italic;
+	/*padding: 10px;*/
+}
+
+#my_image {width:200px; height:100px; }
