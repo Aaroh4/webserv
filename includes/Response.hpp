@@ -7,7 +7,12 @@ class Response: public Request
 {
 	public:
 			Response();
+			Response(Request &request);
 			~Response();
+			Response(const Response &);
+			Response operator=(const Response &);
+
+			void	respond(int clientf);
 	private:
 
 };
