@@ -6,6 +6,7 @@ h1 {
 	color: cyan;
 	font-size: 100px;
 	font-style: italic;
+	position: center;
 	/*padding: 10px;*/
 }
 

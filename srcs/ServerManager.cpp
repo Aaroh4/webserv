@@ -6,10 +6,11 @@
 /*   By: ahamalai <ahamalai@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/04 13:23:09 by ahamalai          #+#    #+#             */
-/*   Updated: 2024/09/12 13:01:33 by ahamalai         ###   ########.fr       */
+/*   Updated: 2024/09/12 14:39:43 by ahamalai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
+#include "../includes/Response.hpp"
 #include "../includes/ServerManager.hpp"
 #include "../includes/Request.hpp"
 
@@ -103,7 +104,8 @@ void	ServerManager::start_servers()
 						std::cout << buffer << std::endl;
 						Request request(buffer);
 						request.parse();
-						request.respond(client_socket);
+						Response respond(request);
+						respond.respond(client_socket);
 					}
 				}
 			}

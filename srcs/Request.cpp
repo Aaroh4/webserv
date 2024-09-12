@@ -6,12 +6,16 @@
 /*   By: ahamalai <ahamalai@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/06 14:49:12 by tkartasl          #+#    #+#             */
-/*   Updated: 2024/09/12 13:24:46 by ahamalai         ###   ########.fr       */
+/*   Updated: 2024/09/12 14:36:43 by ahamalai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/Request.hpp"
 #include <iostream>
+
+Request::Request()
+{
+}
 
 Request::Request(std::string request) : _request(request)
 {
@@ -21,6 +25,36 @@ Request::Request(std::string request) : _request(request)
 Request::~Request(void)
 {
 	return;
+}
+
+Request::Request(Request const& src)
+{
+	this->_body = src._body;
+	this->_httpVersion = src._httpVersion;
+	this->_method = src._method;
+	this->_type = src._type;
+	this->_request = src._request;
+	this->_url = src._url;
+	this->_headers = src._headers;
+}
+
+Request& Request::operator=(Request const& src)
+{
+	if (this != &src)
+	{
+		this->_body = src._body;
+		this->_httpVersion = src._httpVersion;
+		this->_method = src._method;
+		this->_type = src._type;
+		this->_request = src._request;
+		this->_url = src._url;
+		this->_headers.clear();
+		for (const auto& map_content : src._headers)
+		{
+			this->_headers[map_content.first] = map_content.second;
+		}
+	}	
+	return *this;
 }
 
 void	Request::_parseRequestLine(void)
@@ -84,27 +118,6 @@ void	Request::parse(void)
 {
 	this->_parseRequestLine();
 	this->_parseHeaders();
-}
-
-void	Request::respond(int clientfd)
-{
-	std::ifstream index;
-	if (this->_url == "/")
-		index.open("./www/index.html");
-	else
-		index.open("./www" + this->_url);
-	std::string file;
-	for (std::string line; std::getline(index, line);)
-		file += line;
-	std::string response = "HTTP/1.1 200 OK\n";
-	if (this->_url == "/styles.css")
-		response += "Content-Type: text/css\n";
-	else
-		response += "Content-Type: text/html\n";
-	response += "Content-Length: " + std::to_string(file.length()) + "\n";
-	response += "Keep-Alive: timeout=5, max=100\n\n"; 
-	response += file;
-	send (clientfd, response.c_str(), response.length(), 0);
 }
 
 std::string  Request::getMethod(void) const

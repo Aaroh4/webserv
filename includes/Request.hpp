@@ -6,7 +6,7 @@
 /*   By: ahamalai <ahamalai@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/06 14:30:52 by tkartasl          #+#    #+#             */
-/*   Updated: 2024/09/12 13:33:56 by ahamalai         ###   ########.fr       */
+/*   Updated: 2024/09/12 14:36:50 by ahamalai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,11 +18,13 @@
 class Request
 {
 	public:
+		Request();
 		Request(std::string request);
 		~Request(void);
+		Request(Request const& src);
+		Request& operator=(Request const& src);
 	
 		virtual void parse(void);
-		void respond(int clientfd);
 		virtual std::string  getMethod(void) const;
 		virtual std::string  getUrl(void) const;
 		virtual std::string  getBody(void) const;
