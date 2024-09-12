@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Request.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ahamalai <ahamalai@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: tkartasl <tkartasl@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/06 14:30:52 by tkartasl          #+#    #+#             */
-/*   Updated: 2024/09/12 13:33:56 by ahamalai         ###   ########.fr       */
+/*   Updated: 2024/09/12 13:45:16 by tkartasl         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,6 +20,8 @@ class Request
 	public:
 		Request(std::string request);
 		~Request(void);
+		Request(Request const& src);
+		Request& operator=(Request const& src);
 	
 		virtual void parse(void);
 		void respond(int clientfd);

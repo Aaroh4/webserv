@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Request.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ahamalai <ahamalai@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: tkartasl <tkartasl@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/06 14:49:12 by tkartasl          #+#    #+#             */
-/*   Updated: 2024/09/12 13:24:46 by ahamalai         ###   ########.fr       */
+/*   Updated: 2024/09/12 13:59:13 by tkartasl         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,6 +21,36 @@ Request::Request(std::string request) : _request(request)
 Request::~Request(void)
 {
 	return;
+}
+
+Request::Request(Request const& src)
+{
+	this->_body = src._body;
+	this->_httpVersion = src._httpVersion;
+	this->_method = src._method;
+	this->_type = src._type;
+	this->_request = src._request;
+	this->_url = src._url;
+	this->_headers = src._headers;
+}
+
+Request& Request::operator=(Request const& src)
+{
+	if (this != &src)
+	{
+		this->_body = src._body;
+		this->_httpVersion = src._httpVersion;
+		this->_method = src._method;
+		this->_type = src._type;
+		this->_request = src._request;
+		this->_url = src._url;
+		this->_headers.clear();
+		for (const auto& map_content : src._headers)
+		{
+			this->_headers[map_content.first] = map_content.second;
+		}
+	}	
+	return *this;
 }
 
 void	Request::_parseRequestLine(void)
@@ -48,6 +78,11 @@ void	Request::_parseRequestLine(void)
 	this->_url = this->_request.substr(0, i);
 	this->_request.erase(0, this->_url.length() + 1);
 	
+	//Parses File type from url and put's it to string attribute _type
+	
+	i = this->_url.find_last_of(".");
+	this->_type = this->_url.substr(i, this->_url.length());
+	std::cout << this->_type << std::endl;
 	//Parses HTTP Veresion nd put's it to string attribute _httpVersion, then erases it from the request
 
 	i = this->_request.find_first_of("\n");
