@@ -33,10 +33,16 @@ void Response::respond(int clientfd)
 		index.open("./www/index.html");
 	else
 		index.open("./www" + this->_url);
+	std::string response = "HTTP/1.1 200 OK\n";
+	if (index.is_open() == false)
+	{
+		index.open("./www/404.html");
+		response = "HTTP/1.1 404 Not Found\n";
+	}
 	std::string file;
 	for (std::string line; std::getline(index, line);)
 		file += line;
-	std::string response = "HTTP/1.1 200 OK\n";
+	
 	if (this->_url == "/styles.css")
 		response += "Content-Type: text/css\n";
 	else if (this->_url == "/video.mp4" || this->_url == "/images/image.png")
