@@ -2,7 +2,8 @@
 #include <filesystem>
 
 Response::Response(): Request()
-{}
+{
+}
 
 Response::Response(Request &request): Request(request)
 {
@@ -29,9 +30,8 @@ Response Response::operator=(const Response &input)
 void Response::respond(int clientfd)
 {
 	std::ifstream index;
+	std::string response = "HTTP/1.1 200 OK\r\n";
 
-
-	std::string response = "HTTP/1.1 200 OK\n";
 	if (this->_type == "video/mp4" || this->_type == "image/png")
 	{
 		std::ifstream index("./www" + this->_url);
@@ -58,9 +58,9 @@ void Response::respond(int clientfd)
 		if (index.is_open() == false)
 		{
 			index.open("./www/404.html");
-			response = "HTTP/1.1 404 Not Found\n";
+			response = "HTTP/1.1 404 Not Found\r\n";
 		}
-			std::string file;
+		std::string file;
 		for (std::string line; std::getline(index, line);)
 			file += line;
 		response += "Content-Type: " + this->_type + "\r\n";
