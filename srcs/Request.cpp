@@ -89,8 +89,8 @@ void	Request::_parseRequestLine(void)
 		}
 	}
 
-	if (index == 3)
-		/*ERROR*/;
+	// if (index == 3)
+	// 	/*ERROR*/;
 	this->_request.erase(0, this->_method.length() + 1);
 	//Parses URI and put's it to string attribute _url, then erases it from the request
 	i = this->_request.find_first_of(" ");
