@@ -6,7 +6,7 @@
 /*   By: tkartasl <tkartasl@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/06 14:49:12 by tkartasl          #+#    #+#             */
-/*   Updated: 2024/09/13 11:03:50 by tkartasl         ###   ########.fr       */
+/*   Updated: 2024/09/13 14:02:13 by tkartasl         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -92,6 +92,7 @@ void	Request::_parseRequestLine(void)
 	// if (index == 3)
 	// 	/*ERROR*/;
 	this->_request.erase(0, this->_method.length() + 1);
+	
 	//Parses URI and put's it to string attribute _url, then erases it from the request
 	i = this->_request.find_first_of(" ");
 
