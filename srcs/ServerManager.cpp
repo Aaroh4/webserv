@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ServerManager.cpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: tkartasl <tkartasl@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: ahamalai <ahamalai@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/04 13:23:09 by ahamalai          #+#    #+#             */
-/*   Updated: 2024/09/13 11:13:23 by tkartasl         ###   ########.fr       */
+/*   Updated: 2024/09/16 13:31:07 by ahamalai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -75,10 +75,11 @@ void	ServerManager::start_servers()
 				if (i < this->get_info().size()) 
 				{
 					int client_socket = accept(poll_fds[i].fd, nullptr, nullptr);
-					if (client_socket < 0) {
+					if (client_socket < 0) 
+					{
 						perror("Accept failed");
 						continue;
-				}
+					}
 					fcntl(client_socket, F_SETFL, O_NONBLOCK, FD_CLOEXEC);
 					struct pollfd client_pollfd;
 					client_pollfd.fd = client_socket;

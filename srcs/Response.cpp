@@ -29,20 +29,23 @@ Response Response::operator=(const Response &input)
 
 void Response::respond(int clientfd)
 {
-	std::ifstream index;
+	std::fstream file;
 
 
 	std::string response = "HTTP/1.1 200 OK\n";
 	if (this->_url == "/")
 	{
-		this->_url = "/index.html";
-		index.open("./www/index.html");
+		//this->_url = "/index.html";
+		//file.open("./www/index.html");
+
+		file = this->directorylist();
+		this->_url = "./dir.html";
 	}
 	else
-		index.open("./www" + this->_url);
-	if (index.is_open() == false)
+		file.open("./www" + this->_url);
+	if (file.is_open() == false)
 	{
-		index.open("./www/404.html");
+		file.open("./www/404.html");
 		response = "HTTP/1.1 404 Not Found\n";
 		this->_url = "/404.html";
 	}
@@ -51,15 +54,51 @@ void Response::respond(int clientfd)
 	response += "Content-Type: " + this->_type + "\r\n";
 	if (this->_type == "video/mp4" || this->_type == "image/png")
 		response += "Content-Disposition: attachment; filename=\"" + this->_url + "\r\n";
-	response += "Content-Length: " + std::to_string(std::filesystem::file_size("./www" + this->_url)) + "\r\n";
+	std::streampos fsize = 0;
+    file.seekg(0, std::ios::end);
+    fsize = file.tellg();
+	file.seekg(0, std::ios::beg);
+	response += "Content-Length: " + std::to_string(fsize) + "\r\n";
 	response += "Keep-Alive: timeout=5, max=100\r\n\r\n";
-
 	send(clientfd, response.c_str(), response.length(), 0);
-	
 	const std::size_t chunkSize = 8192;
 	char buffer[chunkSize];
-	while (index.read(buffer, chunkSize) || index.gcount() > 0) 
-		send(clientfd, buffer, index.gcount(), 0);
+	while (file.read(buffer, chunkSize) || file.gcount() > 0) 
+		send(clientfd, buffer, file.gcount(), 0);
 
-	std::cout << "DONE " << std::filesystem::file_size("./www" + this->_url) << " " << "./www" + this->_url << std::endl;
+	//std::cout << "DONE " << std::filesystem::file_size("./www" + this->_url) << " " << "./www" + this->_url << std::endl;
 }
+
+std::fstream Response::directorylist()
+{
+	//std::string	directory;
+	std::fstream directory("dir.html", std::ios::out | std::ios::in | std::ios::trunc);
+
+	directory << "<!DOCTYPE html>\n <html lang=\"en\">\n <head>\n </head>\n <body>\n <ol>\n";
+	for (const auto & entry : std::filesystem::directory_iterator("./www")) 
+	{
+   		directory << "<li><a href=" << entry.path().string().erase(0, 6) << ">" << entry.path() << "</a> </li>" << std::endl;
+ 	}
+	directory << "</ol>\n <h1>Welcome to My Website</h1>\n </body>\n </html>\n";
+	return (directory);
+}
+
+
+
+//<!DOCTYPE html>
+//<html lang="en">
+//<head>
+//    <meta charset="UTF-8">
+//    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+//    <link rel="icon" href="images/image.png" type="image/png">
+//    <title>Cat site</title>
+//    <link rel="stylesheet" href="styles.css">
+//</head>
+//<body>
+//    <h1>Welcome to My Website</h1>
+//	<img width="320" height="240" src="images/image.png" alt="Cat"> 
+//	<video width="400" height="300" controls>
+//		<source src="/video.mp4" type="video/mp4">
+//	</video>
+//</body>
+//</html>
