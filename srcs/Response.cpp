@@ -41,17 +41,21 @@ void	Response::respond(int clientfd)
 
 void	Response::respondDelete(int clientfd)
 {
-	std::cout << this->_url << std::endl;
 	std::string fileToDelete = "./www" + this->_url;
 	if (remove(fileToDelete.c_str()) < 0)
 		std::cout << "error\n";
-	std::string response = "HTTP/1.1 204 No Content\r\n";
+	std::string response = "HTTP/1.1 200 OK\r\n";
+
 	send (clientfd, response.c_str(), response.length(), 0);
 }
 
 void	Response::respondPost(int clientfd)
 {
-	(void)clientfd;
+	if (index.is_open() == false)
+	{
+		index.open("./www/404.html");
+		response = "HTTP/1.1 404 Not Found\r\n";
+	}
 }
 
 void Response::respondGet(int clientfd)

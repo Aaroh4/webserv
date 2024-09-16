@@ -6,7 +6,7 @@
 /*   By: tkartasl <tkartasl@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/04 13:23:09 by ahamalai          #+#    #+#             */
-/*   Updated: 2024/09/13 11:13:23 by tkartasl         ###   ########.fr       */
+/*   Updated: 2024/09/16 14:31:53 by tkartasl         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -101,7 +101,7 @@ void	ServerManager::start_servers()
 					}
 					else 
 					{
-						//std::cout << buffer << std::endl;
+						std::cout << buffer << std::endl;
 						Request request(buffer);
 						request.parse();
 						Response respond(request);
