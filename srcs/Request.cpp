@@ -6,7 +6,7 @@
 /*   By: tkartasl <tkartasl@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/06 14:49:12 by tkartasl          #+#    #+#             */
-/*   Updated: 2024/09/12 14:52:09 by tkartasl         ###   ########.fr       */
+/*   Updated: 2024/09/13 11:03:50 by tkartasl         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -68,9 +68,8 @@ void	Request::_getContentType(void)
 		this->_type = "text/" + type;
 	else if (type == "jpg" || type == "png" || type == "jpeg" || type == "gif")
 		this->_type = "image/" + type;
-	else if (type == "mpeg" || type == "avi")
+	else if (type == "mpeg" || type == "avi" || type == "mp4")
 		this->_type = "video/" + type;
-	std::cout << this->_type << std::endl;
 }
 
 void	Request::_parseRequestLine(void)
@@ -84,13 +83,15 @@ void	Request::_parseRequestLine(void)
 	
 	for (index = 0; index < 3; index++)
 	{
-		if (this->_method == methods[i])
+		if (this->_method == methods[index])
+		{
 			break;
+		}
 	}
-	if (index == 3)
-		/*ERROR*/;
-	this->_request.erase(0, this->_method.length() + 1);
 
+	// if (index == 3)
+	// 	/*ERROR*/;
+	this->_request.erase(0, this->_method.length() + 1);
 	//Parses URI and put's it to string attribute _url, then erases it from the request
 	i = this->_request.find_first_of(" ");
 

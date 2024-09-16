@@ -2,7 +2,8 @@
 #include <filesystem>
 
 Response::Response(): Request()
-{}
+{
+}
 
 Response::Response(Request &request): Request(request)
 {
@@ -12,7 +13,7 @@ Response::~Response()
 {
 }
 
-Response::Response(const Response &input)
+Response::Response(const Response &input): Request()
 {
 	*this = input;
 }
@@ -29,43 +30,36 @@ Response Response::operator=(const Response &input)
 void Response::respond(int clientfd)
 {
 	std::ifstream index;
+
+
+	std::string response = "HTTP/1.1 200 OK\n";
 	if (this->_url == "/")
+	{
+		this->_url = "/index.html";
 		index.open("./www/index.html");
+	}
 	else
 		index.open("./www" + this->_url);
-	std::string file;
-	for (std::string line; std::getline(index, line);)
-		file += line;
-	std::string response = "HTTP/1.1 200 OK\n";
-	if (this->_url == "/styles.css")
-		response += "Content-Type: text/css\n";
-	else if (this->_url == "/video.mp4" || this->_url == "/images/image.png")
+	if (index.is_open() == false)
 	{
-	   std::ifstream index("./www" + this->_url);
-		if (this->_url == "/video.mp4")
-			response += "Content-Type: video/mp4\r\n";
-		else
-			response += "Content-Type: image/png\r\n";
-		response += "Content-Disposition: attachment; filename=\"" + this->_url + "\"\r\n";
-		response += "Content-Length: " + std::to_string(std::filesystem::file_size("./www" + this->_url)) + "\r\n";
-		response += "Keep-Alive: timeout=5, max=100\r\n\r\n";
-
-		send(clientfd, response.c_str(), response.length(), 0);
-		
-		const std::size_t chunkSize = 8192;
-		char buffer[chunkSize];
-		while (index.read(buffer, chunkSize) || index.gcount() > 0) 
-			send(clientfd, buffer, index.gcount(), 0);
-
-		std::cout << "DONE " << std::filesystem::file_size("./www" + this->_url) << " " << "./www" + this->_url << std::endl;
+		index.open("./www/404.html");
+		response = "HTTP/1.1 404 Not Found\n";
+		this->_url = "/404.html";
 	}
-	else
-		response += "Content-Type: text/html\r\n";
-	if (this->_url != "/video.mp4")
-	{
-		response += "Content-Length: " + std::to_string(file.length()) + "\r\n";
-		response += "Keep-Alive: timeout=5, max=100\r\n\r\n"; 
-		response += file;
-		send (clientfd, response.c_str(), response.length(), 0);
-	}
+	if (this->_type.empty())
+		this->_type = "text/html";
+	response += "Content-Type: " + this->_type + "\r\n";
+	if (this->_type == "video/mp4" || this->_type == "image/png")
+		response += "Content-Disposition: attachment; filename=\"" + this->_url + "\r\n";
+	response += "Content-Length: " + std::to_string(std::filesystem::file_size("./www" + this->_url)) + "\r\n";
+	response += "Keep-Alive: timeout=5, max=100\r\n\r\n";
+
+	send(clientfd, response.c_str(), response.length(), 0);
+	
+	const std::size_t chunkSize = 8192;
+	char buffer[chunkSize];
+	while (index.read(buffer, chunkSize) || index.gcount() > 0) 
+		send(clientfd, buffer, index.gcount(), 0);
+
+	std::cout << "DONE " << std::filesystem::file_size("./www" + this->_url) << " " << "./www" + this->_url << std::endl;
 }
