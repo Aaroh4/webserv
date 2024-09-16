@@ -1,5 +1,5 @@
 function onButtonClick() {
-	fetch('/video.mp4', {
+	fetch('/images/image.png', {
 		method: 'DELETE'
 	})
 }
