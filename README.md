@@ -8,7 +8,7 @@
 
 ### **Stage 2: Core Infrastructure (Day 4–10)**
 
-#### **WP2.1: HTTP Request Parsing and Validation (Coder A)**
+#### **WP2.1: HTTP Request Parsing and Validation (DONE)**
 - **Deliverables**: A module that can receive HTTP requests and parse the request line, headers, and body according to the HTTP/1.1 specification.
   - **Details**:
     - Parsing different HTTP methods (GET, POST, PUT, DELETE).
@@ -17,7 +17,7 @@
   - **Dependencies**: None
   - **Collaboration points**: Integrate with Coder B's routing module for request handling.
 
-#### **WP2.2: Connection Handling (Coder B)**
+#### **WP2.2: Connection Handling (almost DONE)**
 - **Deliverables**: Create a networking module to manage multiple clients and handle socket connections.
   - **Details**:
     - Non-blocking I/O with `select`, `poll`, or `epoll`.
