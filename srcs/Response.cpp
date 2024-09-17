@@ -30,7 +30,7 @@ Response Response::operator=(const Response &input)
 void Response::respond(int clientfd)
 {
 	std::fstream file;
-
+	std::streampos fsize = 0;
 
 	std::string response = "HTTP/1.1 200 OK\n";
 	if (this->_url == "/")
@@ -54,7 +54,6 @@ void Response::respond(int clientfd)
 	response += "Content-Type: " + this->_type + "\r\n";
 	if (this->_type == "video/mp4" || this->_type == "image/png")
 		response += "Content-Disposition: attachment; filename=\"" + this->_url + "\r\n";
-	std::streampos fsize = 0;
     file.seekg(0, std::ios::end);
     fsize = file.tellg();
 	file.seekg(0, std::ios::beg);
