@@ -51,11 +51,12 @@ void	Response::respondDelete(int clientfd)
 
 void	Response::respondPost(int clientfd)
 {
-	if (index.is_open() == false)
+	(void)clientfd;
+	/*if (index.is_open() == false)
 	{
 		index.open("./www/404.html");
 		response = "HTTP/1.1 404 Not Found\r\n";
-	}
+	}*/
 }
 
 void Response::respondGet(int clientfd)
