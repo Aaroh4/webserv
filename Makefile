@@ -1,6 +1,6 @@
 TARGET = test
 
-FLAGS = -Wall -Wextra -Werror -std=c++17
+FLAGS = -std=c++17 -Wall -Wextra -Werror
 
 SRCS = srcs/main.cpp srcs/conversion.cpp srcs/readconfig.cpp\
 	srcs/ServerManager.cpp srcs/ServerInfo.cpp srcs/Request.cpp\

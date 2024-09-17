@@ -16,6 +16,8 @@
 #include <unordered_map>
 #include <sstream>
 
+ServerInfo	config_server(std::string temp, ServerManager &manager);
+
 std::string toLowerCase(const std::string str) {
     std::string lowerStr = str;
     std::transform(lowerStr.begin(), lowerStr.end(), lowerStr.begin(),
@@ -23,7 +25,28 @@ std::string toLowerCase(const std::string str) {
     return lowerStr;
 }
 
-ServerInfo	config_server(std::string temp)
+void brackets(std::string configfile, std::string type, ServerManager &manager)
+{
+	std::string 		temp;
+	int					brackets = 1;
+	std::istringstream	file(configfile);
+
+	for (std::string line; std::getline(file, line) && brackets != 0;)
+	{
+		temp += line + "\n";
+		if (line.find("{") != std::string::npos)
+			brackets++;
+		if (line.find("}") != std::string::npos && brackets > 0)
+			brackets--;
+	}
+	std::cout << temp << std::endl;
+	if (type == "server")
+		manager.setnew_info(config_server(temp, manager));
+	else if (type == "location")
+		std::cout << "hello\n";
+}
+
+ServerInfo	config_server(std::string temp, ServerManager &manager)
 {
 	ServerInfo server;
 	std::vector<std::string> string_to_case
@@ -35,6 +58,7 @@ ServerInfo	config_server(std::string temp)
 		{"location "},
 	};
 
+	(void) manager;
 	server.setsocketfd(socket(AF_INET, SOCK_STREAM, 0));
 	for (size_t j = 0; j < string_to_case.size(); j++)
 	{
@@ -54,38 +78,33 @@ ServerInfo	config_server(std::string temp)
 				case 3:
 					server.setnew_port(std::stoi(value));
 					break;
+				// case 4:
+				// 	brackets(temp, "location", manager);
+				// 	break;
 				default:
 					break;
 			}
 		}
 	}
-	//std::cout << server.get_ip() << std::endl;
-		//std::cout << line.substr(7, std::string::npos) << std::endl;
-	std::cout << "asd\n";
 	return (server);
-}
-
-void brackets(std::ifstream &configfile, std::string line, std::string type, ServerManager &manager)
-{
-	std::string temp;
-	
-	if (line.find(type) != std::string::npos && line.find("{") != std::string::npos)
-	{
-		for (std::string line; std::getline(configfile, line) && line.find("}") == std::string::npos;)
-			temp += line + "\n";
-		if (type == "server")
-			manager.setnew_info(config_server(temp));
-		temp.clear();
-	}
 }
 
 int	readconfig(std::string name, ServerManager &manager)
 {
-	std::ifstream configfile(name);
+	std::ifstream	configfile(name);
+	std::string		filesave;
 
 	for (std::string line; std::getline(configfile, line);)
+		filesave += line + "\n";
+	for (std::string line; std::getline(std::istringstream(filesave), line);)
 	{
-		brackets(configfile, line, "server", manager);
+		if (line.find("server") != std::string::npos && line.find("{") != std::string::npos)
+		{
+			filesave = filesave.substr(filesave.find("{") + 1, filesave.size());
+			brackets(filesave, "server", manager);
+			while (1)
+			{}
+		}
 	}
 	return (0);
 }
