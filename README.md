@@ -27,7 +27,7 @@
   - **Dependencies**: None
   - **Collaboration points**: Synchronize with WP2.1 to test parsing from incoming connections.
 
-#### **WP2.3: Response Formatting and Status Codes (Coder C)**
+#### **WP2.3: Response Formatting and Status Codes (Lauri)**
 - **Deliverables**: Create a module that formats and sends HTTP responses back to the client.
   - **Details**:
     - Support different status codes (200, 404, 500, etc.).
@@ -51,7 +51,7 @@
   - **Dependencies**: Requires parsed requests from WP2.1.
   - **Collaboration points**: Work with Coder A to process the parsed requests.
 
-#### **WP3.2: CGI Implementation (Coder A)**
+#### **WP3.2: CGI Implementation (Tomi)**
 - **Deliverables**: Implement Common Gateway Interface (CGI) to support dynamic content.
   - **Details**:
     - Create a module to execute external programs/scripts (e.g., Python, PHP).
@@ -61,7 +61,7 @@
   - **Dependencies**: Requires WP3.1 routing and connection handling to be functional.
   - **Collaboration points**: Test dynamic routes in conjunction with Coder B’s routing module.
 
-#### **WP3.3: Configuration File Parsing (Coder C)**
+#### **WP3.3: Configuration File Parsing (Aaro)**
 - **Deliverables**: Implement a configuration system to define virtual hosts, ports, and routes.
   - **Details**:
     - Parse and validate a configuration file (e.g., specifying server blocks, routes, ports).
@@ -74,7 +74,7 @@
 
 ### **Stage 4: Advanced Features and Enhancements (Day 19–25)**
 
-#### **WP4.1: Chunked Transfer Encoding (Coder A)**
+#### **WP4.1: Chunked Transfer Encoding (Tomi)**
 - **Deliverables**: Add support for chunked transfer encoding for large payloads.
   - **Duration**: 5–7 days
   - **Dependencies**: Requires WP2.1 to support reading large requests.
