@@ -32,6 +32,7 @@ ServerInfo	config_server(std::string temp)
 		{"host:"},
 		{"port: "},
 		{"port:"},
+		{"location "},
 	};
 
 	server.setsocketfd(socket(AF_INET, SOCK_STREAM, 0));
