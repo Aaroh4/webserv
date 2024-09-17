@@ -1,5 +1,3 @@
-To create an effective project plan for the **Webserv** project, it's essential to divide the work into parallelizable, manageable work packages. This plan will allow the team of three to work efficiently with minimal conflict and dependencies. I'll break down the project into stages with specific tasks and assign them to different team members, keeping in mind that the team will need to occasionally synchronize to ensure all components work together.
-
 ### **Stage 1: Initial Setup and Research (Day 1–3)**
 - **WP1.1: Research and Planning (Team effort)**
   - **Deliverables**: Understanding HTTP/1.1 specification, learning about socket programming, and reviewing basic web server architectures. The team should align on the architecture (use of select, poll, epoll, threading).
