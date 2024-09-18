@@ -17,5 +17,6 @@ class Response: public Request
 
 };
 
+std::string getStatusMessage(int statusCode);
 
 #endif

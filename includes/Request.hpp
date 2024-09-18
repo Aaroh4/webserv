@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Request.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: tkartasl <tkartasl@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: llitovuo <llitovuo@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/06 14:30:52 by tkartasl          #+#    #+#             */
-/*   Updated: 2024/09/12 14:49:39 by tkartasl         ###   ########.fr       */
+/*   Updated: 2024/09/18 12:24:42 by llitovuo         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,7 +23,7 @@ class Request
 		~Request(void);
 		Request(Request const& src);
 		Request& operator=(Request const& src);
-	
+
 		virtual void parse(void);
 		virtual std::string  getMethod(void) const;
 		virtual std::string  getUrl(void) const;
@@ -37,6 +37,7 @@ class Request
 		std::string _url;
 		std::string _body;
 		std::string _httpVersion;
+		int			_statusCode;
 		std::map<std::string, std::string> _headers;
 		void	_parseRequestLine(void);
 		void 	_parseHeaders(void);
