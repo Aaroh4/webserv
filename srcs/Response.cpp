@@ -46,8 +46,9 @@ void Response::respond(int clientfd)
 		index.open("./www/404.html");
 		response = "HTTP/1.1 404 Not Found\r\n";
 		this->_url = "/404.html";
+		this->_statusCode = 404;
 	}
-	if (this->_statusCode != 200 && this->_statusCode != 404)
+	else if (this->_statusCode != 200 && this->_statusCode != 404)
 	{
 		response = "HTTP/";
 		response = this->_httpVersion + " ";
@@ -59,7 +60,10 @@ void Response::respond(int clientfd)
 	if (this->_type == "video/mp4" || this->_type == "image/png")
 		response += "Content-Disposition: attachment; filename=\"" + this->_url + "\r\n";
 	response += "Content-Length: " + std::to_string(std::filesystem::file_size("./www" + this->_url)) + "\r\n";
-	response += "Keep-Alive: timeout=5, max=100\r\n\r\n";
+	if (this->_statusCode == 200)
+		response += "Keep-Alive: timeout=5, max=100\r\n\r\n";
+	else
+		response += "Connection: Close\r\n\r\n";
 
 	send(clientfd, response.c_str(), response.length(), 0);
 
