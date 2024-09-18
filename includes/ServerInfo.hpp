@@ -6,7 +6,7 @@
 /*   By: ahamalai <ahamalai@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/03 14:22:50 by ahamalai          #+#    #+#             */
-/*   Updated: 2024/09/12 12:59:03 by ahamalai         ###   ########.fr       */
+/*   Updated: 2024/09/18 16:15:27 by ahamalai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,10 +32,14 @@ class ServerInfo
 			void				setsocketfd(int fd);
 			int					getsocketfd();
 
+			void				setlocation(std::string name);
+			std::string			getlocation();
+
 	private:
 			unsigned int		_ip;
 			std::vector<int>	_port;
 			int					_socketfd;
+			std::string 		locations;
 			std::vector <struct pollfd> _pollfds;
 };
 

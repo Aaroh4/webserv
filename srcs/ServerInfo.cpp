@@ -6,7 +6,7 @@
 /*   By: ahamalai <ahamalai@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/04 13:02:43 by ahamalai          #+#    #+#             */
-/*   Updated: 2024/09/10 11:54:38 by ahamalai         ###   ########.fr       */
+/*   Updated: 2024/09/18 15:57:36 by ahamalai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -65,4 +65,14 @@ void	ServerInfo::setsocketfd(int fd)
 int		ServerInfo::getsocketfd()
 {
 	return (this->_socketfd);
+}
+
+void	ServerInfo::setlocation(std::string name)
+{
+	this->locations = name;
+}
+
+std::string	ServerInfo::getlocation()
+{
+	return (this->locations);
 }

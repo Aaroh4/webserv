@@ -6,7 +6,7 @@
 /*   By: ahamalai <ahamalai@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/04 13:23:09 by ahamalai          #+#    #+#             */
-/*   Updated: 2024/09/16 13:31:07 by ahamalai         ###   ########.fr       */
+/*   Updated: 2024/09/18 16:36:33 by ahamalai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -117,6 +117,9 @@ void	ServerManager::start_servers()
 
 void ServerManager::setnew_info(ServerInfo server)
 {
+	std::cout << &server << " 1 " << std::endl;
+	std::cout << server.getlocation() << std::endl;
+	std::cout << server.get_ip() << std::endl;
 	this->_info.push_back(server);
 }
 
