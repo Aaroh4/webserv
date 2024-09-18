@@ -50,7 +50,6 @@ void Response::respond(int clientfd)
 	}
 	else if (this->_statusCode != 200 && this->_statusCode != 404)
 	{
-		response = "HTTP/";
 		response = this->_httpVersion + " ";
 		response += getStatusMessage(this->_statusCode) + "\r\n";
 	}
@@ -60,6 +59,7 @@ void Response::respond(int clientfd)
 	if (this->_type == "video/mp4" || this->_type == "image/png")
 		response += "Content-Disposition: attachment; filename=\"" + this->_url + "\r\n";
 	response += "Content-Length: " + std::to_string(std::filesystem::file_size("./www" + this->_url)) + "\r\n";
+	std::cout << "statuscode: "<< this->_statusCode << std::endl;
 	if (this->_statusCode == 200)
 		response += "Keep-Alive: timeout=5, max=100\r\n\r\n";
 	else

@@ -6,7 +6,7 @@
 /*   By: llitovuo <llitovuo@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/06 14:49:12 by tkartasl          #+#    #+#             */
-/*   Updated: 2024/09/18 12:25:31 by llitovuo         ###   ########.fr       */
+/*   Updated: 2024/09/18 13:33:34 by llitovuo         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -72,7 +72,7 @@ void	Request::_getContentType(void)
 		this->_type = "image/" + type;
 	else if (type == "mpeg" || type == "avi" || type == "mp4")
 		this->_type = "video/" + type;
-	else
+	else if (this->_url != "/")
 		this->_statusCode = 415; // Error: Unsupported Media Type
 }
 
@@ -107,11 +107,11 @@ void	Request::_parseRequestLine(void)
 	this->_getContentType();
 
 	//Parses HTTP Veresion nd put's it to string attribute _httpVersion, then erases it from the request
-	i = this->_request.find_first_of("\n");
+	i = this->_request.find_first_of("\r\n");
 
 	this->_httpVersion = this->_request.substr(0, i);
 	this->_request.erase(0, this->_httpVersion.length() + 1);
-	if (this->_httpVersion != "1.1")
+	if (this->_httpVersion != "HTTP/1.1")
 		this->_statusCode = 505; // Error: Unsupported HTML version
 }
 
