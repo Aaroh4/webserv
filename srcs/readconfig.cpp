@@ -6,7 +6,7 @@
 /*   By: ahamalai <ahamalai@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/03 16:18:51 by ahamalai          #+#    #+#             */
-/*   Updated: 2024/09/10 14:32:07 by ahamalai         ###   ########.fr       */
+/*   Updated: 2024/09/18 12:13:53 by ahamalai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,7 +25,7 @@ std::string toLowerCase(const std::string str) {
     return lowerStr;
 }
 
-void brackets(std::string configfile, std::string type, ServerManager &manager)
+int brackets(std::string configfile, std::string type, ServerManager &manager)
 {
 	std::string 		temp;
 	int					brackets = 1;
@@ -39,11 +39,12 @@ void brackets(std::string configfile, std::string type, ServerManager &manager)
 		if (line.find("}") != std::string::npos && brackets > 0)
 			brackets--;
 	}
-	std::cout << temp << std::endl;
+	//std::cout << temp;
 	if (type == "server")
 		manager.setnew_info(config_server(temp, manager));
 	else if (type == "location")
 		std::cout << "hello\n";
+	return (temp.size());
 }
 
 ServerInfo	config_server(std::string temp, ServerManager &manager)
@@ -55,7 +56,7 @@ ServerInfo	config_server(std::string temp, ServerManager &manager)
 		{"host:"},
 		{"port: "},
 		{"port:"},
-		{"location "},
+	//	{"location "},
 	};
 
 	(void) manager;
@@ -92,19 +93,22 @@ ServerInfo	config_server(std::string temp, ServerManager &manager)
 int	readconfig(std::string name, ServerManager &manager)
 {
 	std::ifstream	configfile(name);
-	std::string		filesave;
+	std::string		temp;
+	int				i = 0;
 
 	for (std::string line; std::getline(configfile, line);)
-		filesave += line + "\n";
-	for (std::string line; std::getline(std::istringstream(filesave), line);)
 	{
+		if (i > 0)
+			temp += line + "\n";
 		if (line.find("server") != std::string::npos && line.find("{") != std::string::npos)
-		{
-			filesave = filesave.substr(filesave.find("{") + 1, filesave.size());
-			brackets(filesave, "server", manager);
-			while (1)
-			{}
-		}
+			i++;
 	}
+	while (i-- > 0)
+	{
+		temp = temp.substr(brackets(temp, "server", manager), temp.size());
+		//std::cout << temp << "hello1\n";
+	}
+	//while (1)
+	//{}
 	return (0);
 }
