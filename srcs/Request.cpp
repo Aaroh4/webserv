@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Request.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: tkartasl <tkartasl@student.hive.fi>        +#+  +:+       +#+        */
+/*   By: llitovuo <llitovuo@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/06 14:49:12 by tkartasl          #+#    #+#             */
-/*   Updated: 2024/09/13 11:03:50 by tkartasl         ###   ########.fr       */
+/*   Updated: 2024/09/18 12:25:31 by llitovuo         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,6 +37,7 @@ Request::Request(Request const& src)
 	this->_request = src._request;
 	this->_url = src._url;
 	this->_headers = src._headers;
+	this->_statusCode = src._statusCode;
 }
 
 Request& Request::operator=(Request const& src)
@@ -49,19 +50,20 @@ Request& Request::operator=(Request const& src)
 		this->_type = src._type;
 		this->_request = src._request;
 		this->_url = src._url;
+		this->_statusCode = src._statusCode;
 		this->_headers.clear();
 		for (const auto& map_content : src._headers)
 		{
 			this->_headers[map_content.first] = map_content.second;
 		}
-	}	
+	}
 	return *this;
 }
 
 void	Request::_getContentType(void)
 {
 	//Parses File type from url and set's the return content type to string attribute _type
-	
+
 	int	i = this->_url.find_last_of(".");
 	std::string type = this->_url.substr(i + 1, this->_url.length());
 	if (type == "css" || type == "js" || type == "html")
@@ -70,17 +72,20 @@ void	Request::_getContentType(void)
 		this->_type = "image/" + type;
 	else if (type == "mpeg" || type == "avi" || type == "mp4")
 		this->_type = "video/" + type;
+	else
+		this->_statusCode = 415; // Error: Unsupported Media Type
 }
 
 void	Request::_parseRequestLine(void)
 {
 	//Parses method and put's it to string attribute _method, then erases it from the request
-	
+
 	const char* methods[3] = {"GET", "POST", "DELETE"};
+	this->_statusCode = 200;
 	int i = this->_request.find_first_of(" ");
 	this->_method = this->_request.substr(0, i);
 	int index;
-	
+
 	for (index = 0; index < 3; index++)
 	{
 		if (this->_method == methods[index])
@@ -89,21 +94,25 @@ void	Request::_parseRequestLine(void)
 		}
 	}
 
-	// if (index == 3)
-	// 	/*ERROR*/;
+	if (index == 3)
+		this->_statusCode = 501; //Error: Not Implemented
 	this->_request.erase(0, this->_method.length() + 1);
+
 	//Parses URI and put's it to string attribute _url, then erases it from the request
 	i = this->_request.find_first_of(" ");
 
 	this->_url = this->_request.substr(0, i);
 	this->_request.erase(0, this->_url.length() + 1);
-	
-	this->_getContentType();
-	//Parses HTTP Veresion nd put's it to string attribute _httpVersion, then erases it from the request
 
+	this->_getContentType();
+
+	//Parses HTTP Veresion nd put's it to string attribute _httpVersion, then erases it from the request
 	i = this->_request.find_first_of("\n");
+
 	this->_httpVersion = this->_request.substr(0, i);
 	this->_request.erase(0, this->_httpVersion.length() + 1);
+	if (this->_httpVersion != "1.1")
+		this->_statusCode = 505; // Error: Unsupported HTML version
 }
 
 //Parses headers line by line and adds the header(before :) and value (after :) to map container attribute _headers
