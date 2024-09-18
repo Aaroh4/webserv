@@ -6,7 +6,7 @@
 /*   By: tkartasl <tkartasl@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/06 14:49:12 by tkartasl          #+#    #+#             */
-/*   Updated: 2024/09/13 14:02:13 by tkartasl         ###   ########.fr       */
+/*   Updated: 2024/09/17 15:57:34 by tkartasl         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,11 +14,11 @@
 #include <iostream>
 
 
-Request::Request(void)
+Request::Request(void) : _sanitizeStatus(0)
 {
 }
 
-Request::Request(std::string request) : _request(request)
+Request::Request(std::string request) : _request(request), _sanitizeStatus(0)
 {
 	return;
 }
@@ -88,9 +88,8 @@ void	Request::_parseRequestLine(void)
 			break;
 		}
 	}
-
-	// if (index == 3)
-	// 	/*ERROR*/;
+	if (index == 3)
+		this->_sanitizeStatus = 666;
 	this->_request.erase(0, this->_method.length() + 1);
 	
 	//Parses URI and put's it to string attribute _url, then erases it from the request
@@ -136,6 +135,14 @@ void	Request::parse(void)
 {
 	this->_parseRequestLine();
 	this->_parseHeaders();
+}
+
+void	sanitize(void)
+{
+	if (this->_httpVersion != "HTTP/1.0" && this->_httpVersion != "HTTP/1.1")
+		this->_sanitizeStatus = 666;
+	if (this->_url.find("..") != std::string::npos)
+		this->_sanitizeStatus = 666;
 }
 
 std::string  Request::getMethod(void) const

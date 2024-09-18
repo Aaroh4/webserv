@@ -6,7 +6,7 @@
 /*   By: tkartasl <tkartasl@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/06 14:30:52 by tkartasl          #+#    #+#             */
-/*   Updated: 2024/09/12 14:49:39 by tkartasl         ###   ########.fr       */
+/*   Updated: 2024/09/17 15:42:07 by tkartasl         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,13 +24,15 @@ class Request
 		Request(Request const& src);
 		Request& operator=(Request const& src);
 	
-		virtual void parse(void);
-		virtual std::string  getMethod(void) const;
-		virtual std::string  getUrl(void) const;
-		virtual std::string  getBody(void) const;
-		virtual std::string  getHttpVersion(void) const;
-		virtual std::map<std::string, std::string> getHeaders(void) const;
+		virtual void	parse(void);
+		virtual	void	sanitize(void);
+		virtual std::string	getMethod(void) const;
+		virtual std::string	getUrl(void) const;
+		virtual std::string	getBody(void) const;
+		virtual std::string	getHttpVersion(void) const;
+		virtual std::map<std::string, std::string>	getHeaders(void) const;
 	protected:
+		int	_sanitizeStatus;
 		std::string	_type;
 		std::string _request;
 		std::string _method;
