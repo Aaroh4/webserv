@@ -6,7 +6,7 @@
 /*   By: tkartasl <tkartasl@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/06 14:30:52 by tkartasl          #+#    #+#             */
-/*   Updated: 2024/09/17 15:42:07 by tkartasl         ###   ########.fr       */
+/*   Updated: 2024/09/18 12:16:51 by tkartasl         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,6 +35,7 @@ class Request
 		int	_sanitizeStatus;
 		std::string	_type;
 		std::string _request;
+		std::string _queryString;
 		std::string _method;
 		std::string _url;
 		std::string _body;
@@ -43,6 +44,7 @@ class Request
 		void	_parseRequestLine(void);
 		void 	_parseHeaders(void);
 		void	_getContentType(void);
+		void 	_parseQueryString(void);
 };
 
 #endif
