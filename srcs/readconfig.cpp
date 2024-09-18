@@ -6,7 +6,7 @@
 /*   By: ahamalai <ahamalai@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/03 16:18:51 by ahamalai          #+#    #+#             */
-/*   Updated: 2024/09/18 16:36:24 by ahamalai         ###   ########.fr       */
+/*   Updated: 2024/09/18 16:44:09 by ahamalai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -113,8 +113,7 @@ int	readconfig(std::string name, ServerManager &manager)
 		ServerInfo server;
 		temp = temp.substr(brackets(info, temp, "server", server), temp.size());
 		manager.setnew_info(server);
-		std::cout << &server << " 2 " << std::endl;
-	//	std::cout << server.getlocation() << std::endl;
+		std::cout << server.getlocation() << std::endl;
 	}
 	//std::cout << manager.get_info()[0].getlocation() << std::endl;
 	//std::cout << manager.get_info()[0].get_ip() << std::endl;
