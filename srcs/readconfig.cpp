@@ -6,7 +6,7 @@
 /*   By: ahamalai <ahamalai@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/03 16:18:51 by ahamalai          #+#    #+#             */
-/*   Updated: 2024/09/19 16:12:11 by ahamalai         ###   ########.fr       */
+/*   Updated: 2024/09/19 16:24:30 by ahamalai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,6 +25,11 @@ std::string toLowerCase(const std::string str)
     std::transform(lowerStr.begin(), lowerStr.end(), lowerStr.begin(),
                    [](unsigned char c) { return std::tolower(c); });
     return lowerStr;
+}
+
+std::string	cutFromTo(std::string input, int start, int end)
+{
+	return (input.substr(start, end - start));
 }
 
 int brackets(std::string configfile, std::string type, ServerInfo &server)
@@ -47,9 +52,7 @@ int brackets(std::string configfile, std::string type, ServerInfo &server)
 
 		temploc.name = temp.substr(0, temp.find(" "));
 		
-		std::string temp2 = temp.substr(temp.find("dir-listing: "), temp.size()); // THIS IS FOR TESTING REMEMBER TO SWITCH OUT
-		temp2 = temp2.substr(0, temp2.find("\n"));					// THIS IS FOR TESTING REMEMBER TO SWITCH OUT
-		if (temp2.find("true") != std::string::npos)														// THIS IS FOR TESTING REMEMBER TO SWITCH OUT
+		if (cutFromTo(temp, temp.find("dir-listing: "), temp.find("\n")).find("true") != std::string::npos)														// THIS IS FOR TESTING REMEMBER TO SWITCH OUT
 			temploc.dirList = true; 					// THIS IS FOR TESTING REMEMBER TO SWITCH OUT
 		else											// THIS IS FOR TESTING REMEMBER TO SWITCH OUT
 			temploc.dirList = false; 					// THIS IS FOR TESTING REMEMBER TO SWITCH OUT
