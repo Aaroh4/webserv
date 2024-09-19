@@ -1,4 +1,4 @@
-TARGET = test
+TARGET = webserv
 
 FLAGS = -std=c++17 -Wall -Wextra -Werror
 

@@ -6,7 +6,7 @@
 /*   By: ahamalai <ahamalai@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/03 16:18:51 by ahamalai          #+#    #+#             */
-/*   Updated: 2024/09/19 15:07:15 by ahamalai         ###   ########.fr       */
+/*   Updated: 2024/09/19 16:12:11 by ahamalai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,12 +47,12 @@ int brackets(std::string configfile, std::string type, ServerInfo &server)
 
 		temploc.name = temp.substr(0, temp.find(" "));
 		
-		static int asd;				// THIS IS FOR TESTING REMEMBER TO SWITCH OUT
-		asd++;						// THIS IS FOR TESTING REMEMBER TO SWITCH OUT
-		if (asd == 1)				// THIS IS FOR TESTING REMEMBER TO SWITCH OUT
-			temploc.dirList = true; // THIS IS FOR TESTING REMEMBER TO SWITCH OUT
-		else						// THIS IS FOR TESTING REMEMBER TO SWITCH OUT
-			temploc.dirList = false; // THIS IS FOR TESTING REMEMBER TO SWITCH OUT
+		std::string temp2 = temp.substr(temp.find("dir-listing: "), temp.size()); // THIS IS FOR TESTING REMEMBER TO SWITCH OUT
+		temp2 = temp2.substr(0, temp2.find("\n"));					// THIS IS FOR TESTING REMEMBER TO SWITCH OUT
+		if (temp2.find("true") != std::string::npos)														// THIS IS FOR TESTING REMEMBER TO SWITCH OUT
+			temploc.dirList = true; 					// THIS IS FOR TESTING REMEMBER TO SWITCH OUT
+		else											// THIS IS FOR TESTING REMEMBER TO SWITCH OUT
+			temploc.dirList = false; 					// THIS IS FOR TESTING REMEMBER TO SWITCH OUT
 			
 		server.setnewlocation(temploc);
 		config_server(temp.substr(temp.find("{"), temp.size()), server);
@@ -94,7 +94,7 @@ ServerInfo	config_server(std::string temp, ServerInfo &server)
 					break;
 				 case 4:
 				 	if (value.find("{") != std::string::npos)
-				 		brackets(temp.substr(temp.find(value), temp.size()), "location", server);
+				 		brackets(temp.substr(temp.find(value), std::string::npos), "location", server);
 					else
 						std::cout << "No opening bracket on the same line as location!" << std::endl;
 					break;
@@ -122,7 +122,7 @@ int	readconfig(std::string name, ServerManager &manager)
 	for (int info = 1; info <= i; info++)
 	{
 		ServerInfo server;
-		temp = temp.substr(brackets(temp, "server", server), temp.size());
+		temp = temp.substr(brackets(temp, "server", server), std::string::npos);
 		manager.setnew_info(server);
 		//std::cout << server.getlocation() << std::endl;
 	}
