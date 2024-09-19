@@ -6,7 +6,7 @@
 /*   By: ahamalai <ahamalai@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/04 13:02:43 by ahamalai          #+#    #+#             */
-/*   Updated: 2024/09/18 16:45:31 by ahamalai         ###   ########.fr       */
+/*   Updated: 2024/09/19 14:03:01 by ahamalai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,6 +21,7 @@ ServerInfo::ServerInfo(const ServerInfo &input)
 	this->_port = input._port;
 	this->_socketfd = input._socketfd;
 	this->_locations = input._locations;
+	this->_locationinfo = input._locationinfo;
 }
 
 ServerInfo ServerInfo::operator=(const ServerInfo &input)
@@ -31,6 +32,7 @@ ServerInfo ServerInfo::operator=(const ServerInfo &input)
 		this->_port = input._port;
 		this->_socketfd = input._socketfd;
 		this->_locations = input._locations;
+		this->_locationinfo = input._locationinfo;
 	}
 	return (input);
 }
@@ -69,12 +71,12 @@ int		ServerInfo::getsocketfd()
 	return (this->_socketfd);
 }
 
-void	ServerInfo::setlocation(std::string name)
+void	ServerInfo::setnewlocation(location input)
 {
-	this->_locations = name;
+	this->_locationinfo.push_back(input);
 }
 
-std::string	ServerInfo::getlocation()
+std::vector<location>	ServerInfo::getlocationinfo() const
 {
-	return (this->_locations);
+	return (this->_locationinfo);
 }

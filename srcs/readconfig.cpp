@@ -6,7 +6,7 @@
 /*   By: ahamalai <ahamalai@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/03 16:18:51 by ahamalai          #+#    #+#             */
-/*   Updated: 2024/09/19 11:59:12 by ahamalai         ###   ########.fr       */
+/*   Updated: 2024/09/19 14:02:19 by ahamalai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,14 +43,14 @@ int brackets(std::string configfile, std::string type, ServerInfo &server)
 	}
 	if (type == "location")
 	{
-		server.setlocation(temp.substr(0, temp.find(" ")));
-		//brackets(info, temp.substr(temp.find("{"), temp.size()), "location", server);
+		location temploc;
+
+		temploc.name = temp.substr(0, temp.find(" "));
+		server.setnewlocation(temploc);
+		config_server(temp.substr(temp.find("{"), temp.size()), server);
 	}
 	else if (type == "server")
-	{
 		config_server(temp, server);
-		std::cout << "123\n";
-	}
 	return (temp.size());
 }
 
@@ -87,7 +87,9 @@ ServerInfo	config_server(std::string temp, ServerInfo &server)
 				 case 4:
 				 	if (value.find("{") != std::string::npos)
 				 		brackets(temp.substr(temp.find(value), temp.size()), "location", server);
-				 	break;
+					else
+						std::cout << "No opening bracket on the same line as location!" << std::endl;
+					break;
 				default:
 					break;
 			}
@@ -114,7 +116,7 @@ int	readconfig(std::string name, ServerManager &manager)
 		ServerInfo server;
 		temp = temp.substr(brackets(temp, "server", server), temp.size());
 		manager.setnew_info(server);
-		std::cout << server.getlocation() << std::endl;
+		//std::cout << server.getlocation() << std::endl;
 	}
 	//std::cout << manager.get_info()[0].getlocation() << std::endl;
 	//std::cout << manager.get_info()[0].get_ip() << std::endl;

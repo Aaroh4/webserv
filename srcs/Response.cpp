@@ -35,6 +35,7 @@ void Response::respond(int clientfd)
 	std::string response = "HTTP/1.1 200 OK\n";
 	if (this->_url == "/")
 	{
+		//for (size_t i = 0; i < )
 		//this->_url = "/index.html";
 		//file.open("./www/index.html");
 

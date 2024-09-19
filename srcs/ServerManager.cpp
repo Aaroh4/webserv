@@ -6,7 +6,7 @@
 /*   By: ahamalai <ahamalai@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/04 13:23:09 by ahamalai          #+#    #+#             */
-/*   Updated: 2024/09/18 16:43:53 by ahamalai         ###   ########.fr       */
+/*   Updated: 2024/09/19 14:18:59 by ahamalai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -67,9 +67,6 @@ void	ServerManager::start_servers()
 			break ;
 		for (size_t i = 0; i < poll_fds.size(); i++) 
 		{
-			// static int asd;
-			// asd++;
-			// std::cout << asd << ":" << i << std::endl;
 			if (poll_fds[i].revents & POLLIN) 
 			{
 				if (i < this->get_info().size()) 
@@ -117,7 +114,6 @@ void	ServerManager::start_servers()
 
 void ServerManager::setnew_info(ServerInfo server)
 {
-	std::cout << server.getlocation() << std::endl;
 	this->_info.push_back(server);
 }
 
