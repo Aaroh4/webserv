@@ -6,7 +6,7 @@
 /*   By: ahamalai <ahamalai@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/03 16:18:51 by ahamalai          #+#    #+#             */
-/*   Updated: 2024/09/18 16:44:09 by ahamalai         ###   ########.fr       */
+/*   Updated: 2024/09/19 11:59:12 by ahamalai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,7 +16,8 @@
 #include <unordered_map>
 #include <sstream>
 
-ServerInfo	config_server(int info, std::string temp, ServerInfo &server);
+ServerInfo	config_server(std::string temp, ServerInfo &server);
+int brackets(std::string configfile, std::string type, ServerInfo &server);
 
 std::string toLowerCase(const std::string str) 
 {
@@ -26,7 +27,7 @@ std::string toLowerCase(const std::string str)
     return lowerStr;
 }
 
-int brackets(int info, std::string configfile, std::string type, ServerInfo &server)
+int brackets(std::string configfile, std::string type, ServerInfo &server)
 {
 	std::string 		temp;
 	int					brackets = 1;
@@ -43,17 +44,17 @@ int brackets(int info, std::string configfile, std::string type, ServerInfo &ser
 	if (type == "location")
 	{
 		server.setlocation(temp.substr(0, temp.find(" ")));
-		config_server(info, temp, server);
+		//brackets(info, temp.substr(temp.find("{"), temp.size()), "location", server);
 	}
 	else if (type == "server")
 	{
-		config_server(info, temp, server);
+		config_server(temp, server);
 		std::cout << "123\n";
 	}
 	return (temp.size());
 }
 
-ServerInfo	config_server(int info, std::string temp, ServerInfo &server)
+ServerInfo	config_server(std::string temp, ServerInfo &server)
 {
 	std::vector<std::string> string_to_case
 	{
@@ -85,7 +86,7 @@ ServerInfo	config_server(int info, std::string temp, ServerInfo &server)
 					break;
 				 case 4:
 				 	if (value.find("{") != std::string::npos)
-				 		brackets(info, temp.substr(temp.find(value), temp.size()), "location", server);
+				 		brackets(temp.substr(temp.find(value), temp.size()), "location", server);
 				 	break;
 				default:
 					break;
@@ -111,7 +112,7 @@ int	readconfig(std::string name, ServerManager &manager)
 	for (int info = 1; info <= i; info++)
 	{
 		ServerInfo server;
-		temp = temp.substr(brackets(info, temp, "server", server), temp.size());
+		temp = temp.substr(brackets(temp, "server", server), temp.size());
 		manager.setnew_info(server);
 		std::cout << server.getlocation() << std::endl;
 	}
