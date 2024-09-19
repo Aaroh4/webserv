@@ -6,7 +6,7 @@
 /*   By: tkartasl <tkartasl@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/06 14:30:52 by tkartasl          #+#    #+#             */
-/*   Updated: 2024/09/18 12:16:51 by tkartasl         ###   ########.fr       */
+/*   Updated: 2024/09/19 14:37:30 by tkartasl         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -45,6 +45,7 @@ class Request
 		void 	_parseHeaders(void);
 		void	_getContentType(void);
 		void 	_parseQueryString(void);
+		void	_runCgi(void);
 };
 
 #endif

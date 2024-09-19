@@ -1,12 +1,11 @@
-print("Content-type: text/html\n\n")
-
 import cgi
 import cgitb
 cgitb.enable()
 
+print("Content-type: text/html\n\n")
+print("<hmtl><body style='text-align:center;'>")
 form = cgi.FieldStorage()
-if "name" not in form:
-    print("<H1>Error</H1>")
-    print("Please fill in the name and addr fields.")
-    return
-print("<p>List of somethings:", form["input"].value)
+if form.getvalue("name"):
+	name = form.getvalue("name")
+    print("<h1 style='color: green;'> Hello, " + name + "!</h1>")
+print("</body></html>")
