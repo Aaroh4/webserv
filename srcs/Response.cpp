@@ -27,7 +27,7 @@ Response Response::operator=(const Response &input)
 	return (*this);
 }
 
-void Response::respond(int clientfd)
+void Response::respond(int clientfd, ServerInfo server)
 {
 	std::fstream file;
 	std::streampos fsize = 0;
@@ -35,12 +35,16 @@ void Response::respond(int clientfd)
 	std::string response = "HTTP/1.1 200 OK\n";
 	if (this->_url == "/")
 	{
-		//for (size_t i = 0; i < )
-		//this->_url = "/index.html";
-		//file.open("./www/index.html");
-
-		file = this->directorylist();
-		this->_url = "./dir.html";
+		if (server.getlocationinfo()["/"].dirList == false)
+		{
+			this->_url = "/index.html";
+			file.open("./www/index.html");
+		}
+		else
+		{
+			file = this->directorylist();
+			this->_url = "./dir.html";
+		}
 	}
 	else
 		file.open("./www" + this->_url);

@@ -6,7 +6,7 @@
 /*   By: ahamalai <ahamalai@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/04 13:23:09 by ahamalai          #+#    #+#             */
-/*   Updated: 2024/09/19 14:18:59 by ahamalai         ###   ########.fr       */
+/*   Updated: 2024/09/19 14:57:59 by ahamalai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,6 +38,7 @@ ServerManager::~ServerManager()
 void	ServerManager::start_servers()
 {
 	std::vector<struct pollfd> poll_fds;
+	std::unordered_map<int, int> connections;
 	//int pollcount;
 
 	for (size_t i = 0; i < this->get_info().size(); i++)
@@ -82,6 +83,7 @@ void	ServerManager::start_servers()
 					client_pollfd.fd = client_socket;
 					client_pollfd.events = POLLIN;
 					poll_fds.push_back(client_pollfd);
+					connections[client_socket] = i;
 					std::cout << "New client connected on server " << i << std::endl;
 				} 
 				else 
@@ -95,6 +97,7 @@ void	ServerManager::start_servers()
 						std::cout << "Client disconnected" << std::endl;
 						close(client_socket);
 						poll_fds.erase(poll_fds.begin() + i);
+						connections.erase(client_socket);
 						i--;
 					}
 					else 
@@ -103,7 +106,7 @@ void	ServerManager::start_servers()
 						Request request(buffer);
 						request.parse();
 						Response respond(request);
-						respond.respond(client_socket);
+						respond.respond(client_socket, this->_info[connections.at(client_socket)]);
 					}
 				}
 			}

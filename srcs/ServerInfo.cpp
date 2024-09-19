@@ -6,7 +6,7 @@
 /*   By: ahamalai <ahamalai@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/04 13:02:43 by ahamalai          #+#    #+#             */
-/*   Updated: 2024/09/19 14:03:01 by ahamalai         ###   ########.fr       */
+/*   Updated: 2024/09/19 15:16:13 by ahamalai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -73,10 +73,10 @@ int		ServerInfo::getsocketfd()
 
 void	ServerInfo::setnewlocation(location input)
 {
-	this->_locationinfo.push_back(input);
+	this->_locationinfo[input.name] = input;
 }
 
-std::vector<location>	ServerInfo::getlocationinfo() const
+std::unordered_map<std::string, location>	ServerInfo::getlocationinfo() const
 {
 	return (this->_locationinfo);
 }

@@ -6,7 +6,7 @@
 /*   By: ahamalai <ahamalai@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/03 16:18:51 by ahamalai          #+#    #+#             */
-/*   Updated: 2024/09/19 14:02:19 by ahamalai         ###   ########.fr       */
+/*   Updated: 2024/09/19 15:07:15 by ahamalai         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -46,6 +46,14 @@ int brackets(std::string configfile, std::string type, ServerInfo &server)
 		location temploc;
 
 		temploc.name = temp.substr(0, temp.find(" "));
+		
+		static int asd;				// THIS IS FOR TESTING REMEMBER TO SWITCH OUT
+		asd++;						// THIS IS FOR TESTING REMEMBER TO SWITCH OUT
+		if (asd == 1)				// THIS IS FOR TESTING REMEMBER TO SWITCH OUT
+			temploc.dirList = true; // THIS IS FOR TESTING REMEMBER TO SWITCH OUT
+		else						// THIS IS FOR TESTING REMEMBER TO SWITCH OUT
+			temploc.dirList = false; // THIS IS FOR TESTING REMEMBER TO SWITCH OUT
+			
 		server.setnewlocation(temploc);
 		config_server(temp.substr(temp.find("{"), temp.size()), server);
 	}

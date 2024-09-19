@@ -2,6 +2,7 @@
 #define RESPONSE_HPP
 
 #include "Request.hpp"
+#include "ServerInfo.hpp"
 #include <filesystem>
 
 class Response: public Request
@@ -13,7 +14,7 @@ class Response: public Request
 			Response(const Response &);
 			Response operator=(const Response &);
 
-			void			respond(int clientf);
+			void			respond(int clientf, ServerInfo server);
 			std::fstream	directorylist();
 	private:
 
