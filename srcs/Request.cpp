@@ -52,15 +52,20 @@ Request& Request::operator=(Request const& src)
 void	Request::_runCgi(void)
 {
 	std::filesystem::path file = "./www" + this->_url;
-	if (!std::filesystem::exists(file) || !std::filesystem::is_regular_file(file))
+	if (!std::filesystem::exists(file))
 	{
-		this->_sanitizeStatus = 666;
+		this->_sanitizeStatus = 404; //Not Found
+		return;
+	}
+	else if (!std::filesystem::is_regular_file(file))
+	{
+		this->_sanitizeStatus = 403; //Forbidden
 		return;
 	}
 	int permissions = access(file.c_str(), X_OK);
 	if (permissions != 0)
 	{
-		this->_sanitizeStatus = 666;
+		this->_sanitizeStatus = 403; //Forbidden
 		return;
 	}
 	//pid_t	pid = fork();
@@ -151,12 +156,13 @@ void	Request::_getContentType(void)
 void	Request::_parseRequestLine(void)
 {
 	//Parses method and put's it to string attribute _method, then erases it from the request
-	
+
 	const char* methods[3] = {"GET", "POST", "DELETE"};
 	size_t i = this->_request.find_first_of(" ");
 	this->_method = this->_request.substr(0, i);
 	size_t index;
-	
+	this->_sanitizeStatus = 200;
+
 	for (index = 0; index < 3; index++)
 	{
 		if (this->_method == methods[index])
@@ -165,11 +171,11 @@ void	Request::_parseRequestLine(void)
 		}
 	}
 	if (index == 3)
-		this->_sanitizeStatus = 666;
+		this->_sanitizeStatus = 501; // error: Unsupported method
 	this->_request.erase(0, this->_method.length() + 1);
-	
+
 	//Parses URI and put's it to string attribute _url, then erases it from the request
-	
+
 	i = this->_request.find_first_of("?");
 	index = this->_request.find_first_of(" ");
 	if (i < index)
@@ -179,9 +185,9 @@ void	Request::_parseRequestLine(void)
 		this->_url = this->_request.substr(0, index);
 		this->_request.erase(0, this->_url.length() + 1);
 	}
-	
-	//Checks if there was query string attached to URI and if there was put's it to _queryString attribute, then erases it from the request 
-	
+
+	//Checks if there was query string attached to URI and if there was put's it to _queryString attribute, then erases it from the request
+
 	if (this->_request.find("?") == 0)
 	{
 		this->_request.erase(0, 1);
@@ -190,7 +196,7 @@ void	Request::_parseRequestLine(void)
 		this->_request.erase(0, this->_queryString.length() + 1);
 	}
 	this->_getContentType();
-	
+
 	//Parses HTTP Version nd put's it to string attribute _httpVersion, then erases it from the request
 
 	i = this->_request.find_first_of("\r\n");
@@ -234,12 +240,12 @@ void	Request::sanitize(void)
 {
 	if (this->_httpVersion != "HTTP/1.0" && this->_httpVersion != "HTTP/1.1")
 	{
-		this->_sanitizeStatus = 505;
+		this->_sanitizeStatus = 505; //Unsupported HTTP
 		return;
 	}
 	if (this->_url.find("..") != std::string::npos)
 	{
-		this->_sanitizeStatus = 666;
+		this->_sanitizeStatus = 403; //Forbidden
 		return;
 	}
  	int i = this->_url.find_last_of("/");
@@ -250,19 +256,19 @@ void	Request::sanitize(void)
 	}
 	if (this->_queryString.find_first_of("&;|`<>") != std::string::npos)
 	{
-		this->_sanitizeStatus = 666;
+		this->_sanitizeStatus = 400; //Bad request
 		return;
 	}
 	for (const auto& map_content : this->_headers)
 	{
 		if (map_content.first.find_first_of("&;|`<>()#") || map_content.first.length() > INT_MAX)
 		{
-			this->_sanitizeStatus = 666;
+			this->_sanitizeStatus = 400; //Bad request
 			break;
 		}
 		if (map_content.second.find_first_of("\r\n&;|`<>()#") != std::string::npos || map_content.second.length() > INT_MAX)
 		{
-			this->_sanitizeStatus = 666;
+			this->_sanitizeStatus = 400; //Bad request
 			break;
 		}
 	}
@@ -272,11 +278,11 @@ void	Request::sanitize(void)
 		{
 		 size_t len = std::stoi(this->_headers["Content-Length"]);
 			if (this->_body.length() != len)
-				this->_sanitizeStatus = 666;
+				this->_sanitizeStatus = 400; //Bad request
 		}
 		catch(const std::exception& e)
 		{
-			this->_sanitizeStatus = 666;
+			this->_sanitizeStatus = 400; //Bad request
 		}
 	}
 }

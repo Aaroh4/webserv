@@ -66,7 +66,8 @@ void Response::respondGet(int clientfd, ServerInfo server)
 
 	(void) server; // THIS WILLLLLLLLLLLLLLLLLLLLLL BREAK THE CODE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-	std::string response = "HTTP/1.1 200 OK\r\n";
+	std::string response = getStatusMessage(this->_sanitizeStatus);
+	std::string filePath = "./www" + this->_url;
 	if (this->_url == "/")
 	{
 		//if (server.getlocationinfo()["/"].dirList == false)
@@ -83,7 +84,14 @@ void Response::respondGet(int clientfd, ServerInfo server)
 	else
 	{
 		//if (server.getlocationinfo()[this->_url].dirList == false)
-			file.open("./www" + this->_url);
+		std::cout << filePath << std::endl;
+		if (access(filePath.c_str(), R_OK) != 0)
+		{
+			this->_sanitizeStatus = 403; //Forbidden
+			response = getStatusMessage(this->_sanitizeStatus);
+		}
+		else
+			file.open(filePath);
 		//else
 		//{
 		//	file = this->directorylist("./www" + this->_url);
@@ -93,16 +101,21 @@ void Response::respondGet(int clientfd, ServerInfo server)
 	//std::cout << "hello!" <<this->_url << "asd!" << std::endl;
 	if (file.is_open() == false)
 	{
+		if (errno == EIO || errno == ENOMEM)
+		{
+			this->_sanitizeStatus = 500; //internal error when I/O problem or no memory
+			response = getStatusMessage(this->_sanitizeStatus);
+		}
 		file.open("./www/404.html");
-		response = "HTTP/1.1 404 Not Found\r\n";
-		this->_url = "/404.html";
 		this->_sanitizeStatus = 404;
+		response = getStatusMessage(this->_sanitizeStatus);
+		this->_url = "/404.html";
+
 	}
-	//else if (this->_sanitizeStatus != 200 && this->_sanitizeStatus != 404)
-	//{
-	//	response = this->_httpVersion + " ";
-	//	response += getStatusMessage(this->_sanitizeStatus) + "\r\n";
-	//}
+	else if (this->_sanitizeStatus != 200 && this->_sanitizeStatus != 404)
+	{
+		response = getStatusMessage(this->_sanitizeStatus);
+	}
 	if (this->_type.empty())
 		this->_type = "text/html";
 	response += "Content-Type: " + this->_type + "\r\n";
@@ -112,11 +125,11 @@ void Response::respondGet(int clientfd, ServerInfo server)
 	fsize = file.tellg();
 	file.seekg(0, std::ios::beg);
 	response += "Content-Length: " + std::to_string(fsize) + "\r\n";
-	std::cout << "statuscode: "<< this->_sanitizeStatus << std::endl;
-	//if (this->_sanitizeStatus == 200)
-	response += "Keep-Alive: timeout=5, max=100\r\n\r\n";
-	//else
-	//	response += "Connection: Close\r\n\r\n";
+	std::cout << "sanitizecode: "<< this->_sanitizeStatus << std::endl;
+	if (this->_sanitizeStatus == 200)
+		response += "Keep-Alive: timeout=5, max=100\r\n\r\n";
+	else
+		response += "Connection: Close\r\n\r\n";
 
 	send(clientfd, response.c_str(), response.length(), 0);
 
@@ -139,11 +152,12 @@ std::fstream Response::directorylist(std::string name)
 	return (directory);
 }
 
-std::string getStatusMessage(int statusCode)
+std::string Response::getStatusMessage(int statusCode)
 {
 	std::string statusMessage;
 
-	statusMessage = std::to_string(statusCode);
+	statusMessage = this->_httpVersion + " ";
+	statusMessage += std::to_string(this->_sanitizeStatus);
 	statusMessage += " ";
 	switch(statusCode)
 	{
@@ -249,5 +263,6 @@ std::string getStatusMessage(int statusCode)
 			statusMessage += "Unknown Status Code";
 			break;
 	}
+	statusMessage += "\r\n";
 	return statusMessage;
 }

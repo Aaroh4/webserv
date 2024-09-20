@@ -4,6 +4,7 @@
 #include "Request.hpp"
 #include "ServerInfo.hpp"
 #include <filesystem>
+#include <cerrno>
 
 class Response: public Request
 {
@@ -19,10 +20,10 @@ class Response: public Request
 			void	respondGet(int clientfd, ServerInfo server);
 			void	respondPost(int clientfd);
 			void	respondDelete(int clientfd);
+			std::string getStatusMessage(int statusCode);
 	private:
 
 };
 
-std::string getStatusMessage(int statusCode);
 
 #endif
