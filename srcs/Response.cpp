@@ -64,33 +64,31 @@ void Response::respondGet(int clientfd, ServerInfo server)
 	std::fstream file;
 	std::streampos fsize = 0;
 
-	(void) server; // THIS WILLLLLLLLLLLLLLLLLLLLLL BREAK THE CODE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
 	std::string response = "HTTP/1.1 200 OK\r\n";
 	if (this->_url == "/")
 	{
-		//if (server.getlocationinfo()["/"].dirList == false)
-		//{
+		if (server.getlocationinfo()["/"].dirList == false)
+		{
 			this->_url = "/index.html";
 			file.open("./www/index.html");
-		//}
-		//else
-		//{
-		//	file = this->directorylist("./www" + this->_url);
-		//	this->_url = "./dir.html";
-		//}
+		}
+		else
+		{
+			file = this->directorylist("./www" + this->_url);
+			this->_url = "./dir.html";
+		}
 	}
 	else
 	{
-		//if (server.getlocationinfo()[this->_url].dirList == false)
+		std::cout << this->_url << std::endl;
+		if (server.getlocationinfo()[this->_url].dirList == false)
 			file.open("./www" + this->_url);
-		//else
-		//{
-		//	file = this->directorylist("./www" + this->_url);
-		//	this->_url = "./dir.html";
-		//}
+		else
+		{
+			file = this->directorylist("./www" + this->_url);
+			this->_url = "./dir.html";
+		}
 	}
-	//std::cout << "hello!" <<this->_url << "asd!" << std::endl;
 	if (file.is_open() == false)
 	{
 		file.open("./www/404.html");

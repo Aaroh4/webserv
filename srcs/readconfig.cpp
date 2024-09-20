@@ -16,9 +16,10 @@ std::string toLowerCase(const std::string str)
     return lowerStr;
 }
 
-inline std::string	cutFromTo(std::string input, int start, int end)
+inline std::string cutFromTo(std::string input, int start, std::string last)
 {
-	return (input.substr(start, end - start));
+	input = input.substr(start, std::string::npos);
+	return (input.substr(0, input.find(last)));
 }
 
 int brackets(std::string configfile, std::string type, ServerInfo &server)
@@ -40,12 +41,13 @@ int brackets(std::string configfile, std::string type, ServerInfo &server)
 		location temploc;
 
 		temploc.name = temp.substr(0, temp.find(" "));
-		
-		if (std::filesystem::is_directory(temploc.name) && cutFromTo(temp, temp.find("dir-listing: "), temp.find("\n")).find("true") != std::string::npos)														// THIS IS FOR TESTING REMEMBER TO SWITCH OUT
+		temploc.root = cutFromTo(temp, temp.find("root: ") + 6, "\n");
+		//std::cout << "root: " << temploc.root << "\n";
+		if (std::filesystem::is_directory(temploc.root + temploc.name) && cutFromTo(temp, temp.find("dir-listing: "), "\n").find("true") != std::string::npos)														// THIS IS FOR TESTING REMEMBER TO SWITCH OUT
 			temploc.dirList = true; 					// THIS IS FOR TESTING REMEMBER TO SWITCH OUT
 		else											// THIS IS FOR TESTING REMEMBER TO SWITCH OUT
 			temploc.dirList = false; 					// THIS IS FOR TESTING REMEMBER TO SWITCH OUT
-			
+		//std:: cout << "name : " << temploc.name << temploc.dirList << std::endl;
 		server.setnewlocation(temploc);
 		config_server(temp.substr(temp.find("{"), temp.size()), server);
 	}

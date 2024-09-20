@@ -8,6 +8,7 @@
 struct	location
 {
 	std::string		name;
+	std::string		root;
 	bool			dirList = false;
 };
 
