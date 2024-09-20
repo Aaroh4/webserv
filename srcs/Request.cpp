@@ -146,6 +146,7 @@ void	Request::_getContentType(void)
     else if (this->_url != "/")
 		  this->_statusCode = 415; // Error: Unsupported Media Type
 	}
+}
 
 void	Request::_parseRequestLine(void)
 {
@@ -233,7 +234,7 @@ void	Request::parse(void)
 
 void	Request::sanitize(void)
 {
-	if (this->_httpVersion != "HTTP/1.0" && this->_httpVersion != "HTTP/1.1")
+	if (this->_httpVersion != "HTTP/1.0\r" && this->_httpVersion != "HTTP/1.1\r")
 	{
 		this->_statusCode = 505;
 		return;
