@@ -232,7 +232,7 @@ void	Request::parse(void)
 
 void	Request::sanitize(void)
 {
-	if (this->_httpVersion != "HTTP/1.0\r" && this->_httpVersion != "HTTP/1.1\r")
+	if (this->_httpVersion != "HTTP/1.0" && this->_httpVersion != "HTTP/1.1")
 	{
 		this->_sanitizeStatus = 505;
 		return;
