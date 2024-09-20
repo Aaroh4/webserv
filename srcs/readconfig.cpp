@@ -1,57 +1,124 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   readconfig.cpp                                     :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: ahamalai <ahamalai@student.hive.fi>        +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/09/03 16:18:51 by ahamalai          #+#    #+#             */
-/*   Updated: 2024/09/10 14:32:07 by ahamalai         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
 #include "../includes/ServerInfo.hpp"
 #include "../includes/ServerManager.hpp"
 #include <fstream>
+#include <unordered_map>
+#include <sstream>
+#include <filesystem>
 
-ServerInfo	config_server(std::vector<std::string> temp)
+ServerInfo	config_server(std::string temp, ServerInfo &server);
+int brackets(std::string configfile, std::string type, ServerInfo &server);
+
+std::string toLowerCase(const std::string str) 
 {
-	ServerInfo server;
-	
-	server.setsocketfd(socket(AF_INET, SOCK_STREAM, 0));
-	for (size_t i = 0; i < temp.size() ; i++)
-	{
-		if (temp[i].find("host: ") != std::string::npos)
-			server.set_ip(temp[i].substr(7, std::string::npos));
-		if (temp[i].find("port: ") != std::string::npos)
-			server.setnew_port(stoi(temp[i].substr(7, std::string::npos)));
-	}
-	//std::cout << server.get_ip() << std::endl;
-		//std::cout << line.substr(7, std::string::npos) << std::endl;
-	return (server);
+    std::string lowerStr = str;
+    std::transform(lowerStr.begin(), lowerStr.end(), lowerStr.begin(),
+                   [](unsigned char c) { return std::tolower(c); });
+    return lowerStr;
 }
 
-void brackets(std::ifstream &configfile, std::string line, std::string type, ServerManager &manager)
+inline std::string	cutFromTo(std::string input, int start, int end)
 {
-	std::vector<std::string> temp;
-	
-	if (line.find(type) != std::string::npos && line.find("{") != std::string::npos)
+	return (input.substr(start, end - start));
+}
+
+int brackets(std::string configfile, std::string type, ServerInfo &server)
+{
+	std::string 		temp;
+	int					brackets = 1;
+	std::istringstream	file(configfile);
+
+	for (std::string line; std::getline(file, line) && brackets != 0;)
 	{
-		for (std::string line; std::getline(configfile, line) && line.find("}") == std::string::npos;)
-			temp.push_back(line);
-		if (type == "server")
-			manager.setnew_info(config_server(temp));
-		temp.clear();
+		temp += line + "\n";
+		if (line.find("{") != std::string::npos)
+			brackets++;
+		if (line.find("}") != std::string::npos && brackets > 0)
+			brackets--;
 	}
+	if (type == "location")
+	{
+		location temploc;
+
+		temploc.name = temp.substr(0, temp.find(" "));
+		
+		if (std::filesystem::is_directory(temploc.name) && cutFromTo(temp, temp.find("dir-listing: "), temp.find("\n")).find("true") != std::string::npos)														// THIS IS FOR TESTING REMEMBER TO SWITCH OUT
+			temploc.dirList = true; 					// THIS IS FOR TESTING REMEMBER TO SWITCH OUT
+		else											// THIS IS FOR TESTING REMEMBER TO SWITCH OUT
+			temploc.dirList = false; 					// THIS IS FOR TESTING REMEMBER TO SWITCH OUT
+			
+		server.setnewlocation(temploc);
+		config_server(temp.substr(temp.find("{"), temp.size()), server);
+	}
+	else if (type == "server")
+		config_server(temp, server);
+	return (temp.size());
+}
+
+ServerInfo	config_server(std::string temp, ServerInfo &server)
+{
+	std::vector<std::string> string_to_case
+	{
+		{"host: "},
+		{"host:"},
+		{"port: "},
+		{"port:"},
+		{"location "},
+	};
+
+	server.setsocketfd(socket(AF_INET, SOCK_STREAM, 0));
+	for (size_t j = 0; j < string_to_case.size(); j++)
+	{
+		size_t pos = toLowerCase(temp).find(string_to_case.at(j));
+		if (pos != std::string::npos)
+		{
+			std::string	value;
+			std::istringstream stream(temp.substr(pos + string_to_case.at(j).size(), std::string::npos));
+			std::getline(stream, value, '\n');
+			switch (j)
+			{
+				case 0:
+				case 1:
+					server.set_ip(value);
+					break;
+				case 2:
+				case 3:
+					server.setnew_port(std::stoi(value));
+					break;
+				 case 4:
+				 	if (value.find("{") != std::string::npos)
+				 		brackets(temp.substr(temp.find(value), std::string::npos), "location", server);
+					else
+						std::cout << "No opening bracket on the same line as location!" << std::endl;
+					break;
+				default:
+					break;
+			}
+		}
+	}
+	return (server);
 }
 
 int	readconfig(std::string name, ServerManager &manager)
 {
-	std::ifstream configfile(name);
+	std::ifstream	configfile(name);
+	std::string		temp;
+	int				i = 0;
 
 	for (std::string line; std::getline(configfile, line);)
 	{
-		brackets(configfile, line, "server", manager);
+		if (i > 0)
+			temp += line + "\n";
+		if (line.find("server") != std::string::npos && line.find("{") != std::string::npos)
+			i++;
 	}
+	for (int info = 1; info <= i; info++)
+	{
+		ServerInfo server;
+		temp = temp.substr(brackets(temp, "server", server), std::string::npos);
+		manager.setnew_info(server);
+		//std::cout << server.getlocation() << std::endl;
+	}
+	//std::cout << manager.get_info()[0].getlocation() << std::endl;
+	//std::cout << manager.get_info()[0].get_ip() << std::endl;
 	return (0);
 }

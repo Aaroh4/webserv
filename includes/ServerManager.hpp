@@ -1,20 +1,10 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   ServerManager.hpp                                  :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: ahamalai <ahamalai@student.hive.fi>        +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/09/04 12:46:27 by ahamalai          #+#    #+#             */
-/*   Updated: 2024/09/12 12:54:43 by ahamalai         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
 #ifndef SERVERMANAGER_HPP
 #define SERVERMANAGER_HPP
 
 #include "ServerInfo.hpp"
 #include "libraries.hpp"
+#include <algorithm> 
+#include <unordered_map>
 
 class ServerManager
 {

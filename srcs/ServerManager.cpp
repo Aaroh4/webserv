@@ -26,6 +26,7 @@ ServerManager::~ServerManager()
 void	ServerManager::start_servers()
 {
 	std::vector<struct pollfd> poll_fds;
+	std::unordered_map<int, int> connections;
 	//int pollcount;
 
 	for (size_t i = 0; i < this->get_info().size(); i++)
@@ -55,23 +56,22 @@ void	ServerManager::start_servers()
 			break ;
 		for (size_t i = 0; i < poll_fds.size(); i++)
 		{
-			// static int asd;
-			// asd++;
-			// std::cout << asd << ":" << i << std::endl;
-			if (poll_fds[i].revents & POLLIN)
+			if (poll_fds[i].revents & POLLIN) 
 			{
 				if (i < this->get_info().size())
 				{
 					int client_socket = accept(poll_fds[i].fd, nullptr, nullptr);
-					if (client_socket < 0) {
+					if (client_socket < 0) 
+					{
 						perror("Accept failed");
 						continue;
-				}
+					}
 					fcntl(client_socket, F_SETFL, O_NONBLOCK, FD_CLOEXEC);
 					struct pollfd client_pollfd;
 					client_pollfd.fd = client_socket;
 					client_pollfd.events = POLLIN;
 					poll_fds.push_back(client_pollfd);
+					connections[client_socket] = i;
 					std::cout << "New client connected on server " << i << std::endl;
 				}
 				else
@@ -85,6 +85,7 @@ void	ServerManager::start_servers()
 						std::cout << "Client disconnected" << std::endl;
 						close(client_socket);
 						poll_fds.erase(poll_fds.begin() + i);
+						connections.erase(client_socket);
 						i--;
 					}
 					else
@@ -94,7 +95,7 @@ void	ServerManager::start_servers()
 						request.parse();
 						request.sanitize();
 						Response respond(request);
-						respond.respond(client_socket);
+						respond.respond(client_socket, this->_info[connections.at(client_socket)]);
 					}
 				}
 			}

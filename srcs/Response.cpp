@@ -30,7 +30,7 @@ Response Response::operator=(const Response &input)
 void	Response::respond(int clientfd)
 {
 	if (this->_method == "GET")
-		respondGet(clientfd);
+		respondGet(clientfd, server);
 	else if (this->_method == "POST")
 		respondPost(clientfd);
 	else if (this->_method == "DELETE")
@@ -59,23 +59,40 @@ void	Response::respondPost(int clientfd)
 	}*/
 }
 
-void Response::respondGet(int clientfd)
+void Response::respondGet(int clientfd, ServerInfo server)
 {
-	std::ifstream index;
+	std::fstream file;
+	std::streampos fsize = 0;
+
+	(void) server; // THIS WILLLLLLLLLLLLLLLLLLLLLL BREAK THE CODE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 	std::string response = "HTTP/1.1 200 OK\r\n";
-
-
 	if (this->_url == "/")
 	{
-		this->_url = "/index.html";
-		index.open("./www/index.html");
+		//if (server.getlocationinfo()["/"].dirList == false)
+		//{
+			this->_url = "/index.html";
+			file.open("./www/index.html");
+		//}
+		//else
+		//{
+		//	file = this->directorylist("./www" + this->_url);
+		//	this->_url = "./dir.html";
+		//}
 	}
 	else
-		index.open("./www" + this->_url);
-	if (index.is_open() == false)
 	{
-		index.open("./www/404.html");
+		//if (server.getlocationinfo()[this->_url].dirList == false)
+			file.open("./www" + this->_url);
+		//else
+		//{
+		//	file = this->directorylist("./www" + this->_url);
+		//	this->_url = "./dir.html";
+		//}
+	}
+	if (file.is_open() == false)
+	{
+		file.open("./www/404.html");
 		response = "HTTP/1.1 404 Not Found\r\n";
 		this->_url = "/404.html";
 		this->_statusCode = 404;
@@ -90,7 +107,10 @@ void Response::respondGet(int clientfd)
 	response += "Content-Type: " + this->_type + "\r\n";
 	if (this->_type == "video/mp4" || this->_type == "image/png")
 		response += "Content-Disposition: attachment; filename=\"" + this->_url + "\r\n";
-	response += "Content-Length: " + std::to_string(std::filesystem::file_size("./www" + this->_url)) + "\r\n";
+  file.seekg(0, std::ios::end);
+  fsize = file.tellg();
+	file.seekg(0, std::ios::beg);
+	response += "Content-Length: " + std::to_string(fsize) + "\r\n";
 	std::cout << "statuscode: "<< this->_statusCode << std::endl;
 	if (this->_statusCode == 200)
 		response += "Keep-Alive: timeout=5, max=100\r\n\r\n";
@@ -104,7 +124,17 @@ void Response::respondGet(int clientfd)
 	while (index.read(buffer, chunkSize) || index.gcount() > 0)
 		send(clientfd, buffer, index.gcount(), 0);
 
-	std::cout << "DONE " << std::filesystem::file_size("./www" + this->_url) << " " << "./www" + this->_url << std::endl;
+std::fstream Response::directorylist(std::string name)
+{
+	//std::string	directory;
+	std::fstream directory("dir.html", std::ios::out | std::ios::in | std::ios::trunc);
+	directory << "<!DOCTYPE html>\n <html lang=\"en\">\n <head>\n </head>\n <body>\n <ol>\n";
+	for (const auto & entry : std::filesystem::directory_iterator(name)) 
+	{
+   		directory << "<li><a href=" << entry.path().string().erase(0, 6) << ">" << entry.path() << "</a> </li>" << std::endl;
+ 	}
+	directory << "</ol>\n <h1>Welcome to My Website</h1>\n </body>\n </html>\n";
+	return (directory);
 }
 
 std::string getStatusMessage(int statusCode)
@@ -219,4 +249,3 @@ std::string getStatusMessage(int statusCode)
 	}
 	return statusMessage;
 }
-

@@ -1,15 +1,3 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   ServerInfo.cpp                                     :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: ahamalai <ahamalai@student.hive.fi>        +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/09/04 13:02:43 by ahamalai          #+#    #+#             */
-/*   Updated: 2024/09/10 11:54:38 by ahamalai         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
 #include "../includes/ServerInfo.hpp"
 
 ServerInfo::ServerInfo()
@@ -20,6 +8,8 @@ ServerInfo::ServerInfo(const ServerInfo &input)
 	this->_ip = input._ip;
 	this->_port = input._port;
 	this->_socketfd = input._socketfd;
+	this->_locations = input._locations;
+	this->_locationinfo = input._locationinfo;
 }
 
 ServerInfo ServerInfo::operator=(const ServerInfo &input)
@@ -29,6 +19,8 @@ ServerInfo ServerInfo::operator=(const ServerInfo &input)
 		this->_ip = input._ip;
 		this->_port = input._port;
 		this->_socketfd = input._socketfd;
+		this->_locations = input._locations;
+		this->_locationinfo = input._locationinfo;
 	}
 	return (input);
 }
@@ -65,4 +57,14 @@ void	ServerInfo::setsocketfd(int fd)
 int		ServerInfo::getsocketfd()
 {
 	return (this->_socketfd);
+}
+
+void	ServerInfo::setnewlocation(location input)
+{
+	this->_locationinfo[input.name] = input;
+}
+
+std::unordered_map<std::string, location>	ServerInfo::getlocationinfo() const
+{
+	return (this->_locationinfo);
 }
