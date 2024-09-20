@@ -1,12 +1,13 @@
 #include "../includes/Request.hpp"
 #include <iostream>
+#include <climits>
+#include <filesystem>
 
-
-Request::Request(void)
+Request::Request(void) : _sanitizeStatus(0)
 {
 }
 
-Request::Request(std::string request) : _request(request)
+Request::Request(std::string request) :  _sanitizeStatus(0), _request(request) 
 {
 	return;
 }
@@ -25,6 +26,7 @@ Request::Request(Request const& src)
 	this->_request = src._request;
 	this->_url = src._url;
 	this->_headers = src._headers;
+	this->_statusCode = src._statusCode;
 }
 
 Request& Request::operator=(Request const& src)
@@ -37,38 +39,125 @@ Request& Request::operator=(Request const& src)
 		this->_type = src._type;
 		this->_request = src._request;
 		this->_url = src._url;
+		this->_statusCode = src._statusCode;
 		this->_headers.clear();
 		for (const auto& map_content : src._headers)
 		{
 			this->_headers[map_content.first] = map_content.second;
 		}
-	}	
+	}
 	return *this;
 }
+
+void	Request::_runCgi(void)
+{
+	std::filesystem::path file = "./www" + this->_url;
+	if (!std::filesystem::exists(file) || !std::filesystem::is_regular_file(file)) 
+	{
+		this->_sanitizeStatus = 666;
+		return;
+	}
+	int permissions = access(file.c_str(), X_OK);
+	if (permissions != 0)
+	{
+		this->_sanitizeStatus = 666;
+		return;
+	}
+	pid_t	pid = fork();
+	
+	if (pid == 0)
+	{
+		char* envp[100000];
+		std::string url = "./www" + this->_url;
+		std::string envVar0 = "REQUEST_METHOD=" + this->_method;
+		std::string envVar1 = "CONTENT_LENGTH=" + this->_headers["Content-Length"];
+		std::string envVar2 = "CONTENT_TYPE=" + this->_headers["Content-Type"];
+		std::string envVar3 = "QUERY_STRING=" + this->_queryString;
+		std::string envVar4 = "SCRIPT_FILENAME=" + url;
+		std::string envVar5 = "GATEWAY_INTERFACE=CGI/1.1";
+		std::string envVar6 = "SERVER_PROTOCOL=" + this->_httpVersion;
+		std::string envVar7 = "SERVER_NAME=" + this->_headers["Host"];
+		std::string envVar8 = "SERVER_PORT=8080";
+		std::string envVar9 = "REMOTE_ADDR=192.168.0.1";
+		
+		if (this->_method == "GET")
+		{
+			envp = {
+			envVar0.c_str(),
+			envVar3.c_str(),
+			envVar4.c_str(),
+			envVar5.c_str(),
+			envVar6.c_str(),
+			envVar7.c_str(),
+			envVar8.c_str(),
+			envVar9.c_str(),
+			nullptr
+			};
+		}
+		else
+		{
+			envp = {
+			envVar0.c_str(),
+			envVar1.c_str(),
+			envVar2.c_str(),
+			envVar3.c_str(),
+			envVar4.c_str(),
+			envVar5.c_str(),
+			envVar6.c_str(),
+			envVar7.c_str(),
+			envVar8.c_str(),
+			envVar9.c_str(),
+			nullptr
+			};
+		}
+		char *args[2] = {url.c_str(), nullptr};
+		if (execve(args[0], args, envp) < 0)
+		{
+			this->_sanitizeStatus = 666;
+			return;
+		}
+	}
+	else if (pid > 0)
+		if (waitpid(pid, 0, 0) == -1)
+		{
+			this->_sanitizeStatus = 666;
+			return;
+		}	
+	else
+		this->_sanitizeStatus = 666;
+}	
 
 void	Request::_getContentType(void)
 {
 	//Parses File type from url and set's the return content type to string attribute _type
-	
-	int	i = this->_url.find_last_of(".");
-	std::string type = this->_url.substr(i + 1, this->_url.length());
-	if (type == "css" || type == "js" || type == "html")
-		this->_type = "text/" + type;
-	else if (type == "jpg" || type == "png" || type == "jpeg" || type == "gif")
-		this->_type = "image/" + type;
-	else if (type == "mpeg" || type == "avi" || type == "mp4")
-		this->_type = "video/" + type;
-}
+  
+	size_t	i = this->_url.find_last_of(".");
+	if (i != std::string::npos)
+	{
+		std::string type = this->_url.substr(i + 1, this->_url.length());
+		if (type == "css" || type == "js" || type == "html")
+			this->_type = "text/" + type;
+		else if (type == "jpg" || type == "png" || type == "jpeg" || type == "gif")
+			this->_type = "image/" + type;
+		else if (type == "mpeg" || type == "avi" || type == "mp4")
+			this->_type = "video/" + type;
+		else if(type == "py")
+			this->_runCgi();
+    else if (this->_url != "/")
+		  this->_statusCode = 415; // Error: Unsupported Media Type
+	}
 
 void	Request::_parseRequestLine(void)
 {
 	//Parses method and put's it to string attribute _method, then erases it from the request
-	
+
 	const char* methods[3] = {"GET", "POST", "DELETE"};
+
+	this->_statusCode = 200;
 	int i = this->_request.find_first_of(" ");
 	this->_method = this->_request.substr(0, i);
 	int index;
-	
+  
 	for (index = 0; index < 3; index++)
 	{
 		if (this->_method == methods[index])
@@ -77,39 +166,56 @@ void	Request::_parseRequestLine(void)
 		}
 	}
 
-	// if (index == 3)
-	// 	/*ERROR*/;
+	if (index == 3)
+		this->_sanitizeStatus = 666;
 	this->_request.erase(0, this->_method.length() + 1);
-	//Parses URI and put's it to string attribute _url, then erases it from the request
-	i = this->_request.find_first_of(" ");
-
-	this->_url = this->_request.substr(0, i);
-	this->_request.erase(0, this->_url.length() + 1);
 	
+	//Parses URI and put's it to string attribute _url, then erases it from the request
+	
+	i = this->_request.find_first_of("?");
+	index = this->_request.find_first_of(" ");
+	if (i < index)
+		this->_url = this->_request.substr(0, i);
+	else
+		this->_url = this->_request.substr(0, index);
+	this->_request.erase(0, this->_url.length());
+	
+	//Checks if there was query string attached to URI and if there was put's it to _queryString attribute, then erases it from the request 
+	
+	if (this->_request.find("?") == 0)
+	{
+		this->_request.erase(0, 1);
+		i = this->_request.find_first_of(" ");
+		this->_queryString = this->_request.substr(0, i);
+		this->_request.erase(0, this->_queryString.length() + 1);
+	}
 	this->_getContentType();
-	//Parses HTTP Veresion nd put's it to string attribute _httpVersion, then erases it from the request
+	
+	//Parses HTTP Version nd put's it to string attribute _httpVersion, then erases it from the request
 
-	i = this->_request.find_first_of("\n");
+	i = this->_request.find_first_of("\r\n");
+
 	this->_httpVersion = this->_request.substr(0, i);
 	this->_request.erase(0, this->_httpVersion.length() + 1);
 }
 
-//Parses headers line by line and adds the header(before :) and value (after :) to map container attribute _headers
 void	Request::_parseHeaders(void)
 {
+	//Parses headers line by line and adds the header(before :) and value (after :) to map container attribute _headers
+	
 	std::string line;
 
 	size_t	lineEnd = 0;
 	size_t	i = 0;
 
-	while (line != "\r\n")
+	while (line != "\r\n\r\n")
 	{
-		lineEnd = this->_request.find_first_of("\n");
+		lineEnd = this->_request.find_first_of("\r\n");
 		line = this->_request.substr(0, lineEnd);
 		i = line.find_first_of(":");
 		if (i == std::string::npos)
 		{
-			i = this->_request.find_last_of("\n");
+			i = this->_request.find_last_of("\r\n");
 			this->_request.erase(0, i + 1);
 			break;
 		}
@@ -123,6 +229,57 @@ void	Request::parse(void)
 {
 	this->_parseRequestLine();
 	this->_parseHeaders();
+}
+
+void	Request::sanitize(void)
+{
+	if (this->_httpVersion != "HTTP/1.0" && this->_httpVersion != "HTTP/1.1")
+	{
+		this->_statusCode = 505;
+		return;
+	}
+	if (this->_url.find("..") != std::string::npos)
+	{
+		this->_sanitizeStatus = 666;
+		return;
+	}
+ 	int i = this->_url.find_last_of("/");
+	while (this->_url[i - 1] == '/')
+	{
+		this->_url.pop_back();
+		i--;
+	}
+	if (this->_queryString.find_first_of("&;|`<>") != std::string::npos)
+	{
+		this->_sanitizeStatus = 666;
+		return;
+	}
+	for (const auto& map_content : this->_headers)
+	{
+		if (map_content.first.find_first_of("&;|`<>()#") || map_content.first.length() > INT_MAX)
+		{
+			this->_sanitizeStatus = 666;
+			break;
+		}
+		if (map_content.second.find_first_of("\r\n&;|`<>()#") != std::string::npos || map_content.second.length() > INT_MAX)
+		{
+			this->_sanitizeStatus = 666;
+			break;
+		}
+	}
+	if (this->_body.empty() == false)
+	{
+		try
+		{
+		 size_t len = std::stoi(this->_headers["Content-Length"]);
+			if (this->_body.length() != len)
+				this->_sanitizeStatus = 666;
+		}
+		catch(const std::exception& e)
+		{
+			this->_sanitizeStatus = 666;
+		}
+	}
 }
 
 std::string  Request::getMethod(void) const

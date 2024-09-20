@@ -42,7 +42,7 @@ void	ServerManager::start_servers()
 		bind(this->get_info()[i].getsocketfd(), (struct sockaddr *) &serverAddress, sizeof(serverAddress)); // ERROR CHECK HERE TOO LAZY
 		fcntl(this->get_info()[i].getsocketfd(), F_SETFL, O_NONBLOCK, FD_CLOEXEC);
 		listen(this->get_info()[i].getsocketfd(), 5); // ERROR CHECK HERE TOO LAZY
-	
+
 		struct pollfd temp_s_pollfd;
 		temp_s_pollfd.fd = this->get_info()[i].getsocketfd();
 		temp_s_pollfd.events = POLLIN;
@@ -54,11 +54,11 @@ void	ServerManager::start_servers()
 
 		if (pollcount < 0)
 			break ;
-		for (size_t i = 0; i < poll_fds.size(); i++) 
+		for (size_t i = 0; i < poll_fds.size(); i++)
 		{
 			if (poll_fds[i].revents & POLLIN) 
 			{
-				if (i < this->get_info().size()) 
+				if (i < this->get_info().size())
 				{
 					int client_socket = accept(poll_fds[i].fd, nullptr, nullptr);
 					if (client_socket < 0) 
@@ -73,14 +73,14 @@ void	ServerManager::start_servers()
 					poll_fds.push_back(client_pollfd);
 					connections[client_socket] = i;
 					std::cout << "New client connected on server " << i << std::endl;
-				} 
-				else 
+				}
+				else
 				{
 					char buffer[1024] = {0};
 					int client_socket = poll_fds[i].fd;
 					int bytes_received = recv(client_socket, buffer, sizeof(buffer), 0);
-					
-					if (bytes_received <= 0) 
+
+					if (bytes_received <= 0)
 					{
 						std::cout << "Client disconnected" << std::endl;
 						close(client_socket);
@@ -88,11 +88,12 @@ void	ServerManager::start_servers()
 						connections.erase(client_socket);
 						i--;
 					}
-					else 
+					else
 					{
-						//std::cout << buffer << std::endl;
+						std::cout << buffer << std::endl;
 						Request request(buffer);
 						request.parse();
+						request.sanitize();
 						Response respond(request);
 						respond.respond(client_socket, this->_info[connections.at(client_socket)]);
 					}

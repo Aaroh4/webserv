@@ -10,4 +10,8 @@ h1 {
 	/*padding: 10px;*/
 }
 
+a {
+	font-weight: bold;
+}
+
 #my_image {width:200px; height:100px; }

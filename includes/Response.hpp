@@ -14,11 +14,15 @@ class Response: public Request
 			Response(const Response &);
 			Response operator=(const Response &);
 
-			void			respond(int clientf, ServerInfo server);
 			std::fstream	directorylist(std::string name);
+			void	respond(int clientfd, ServerInfo server);
+			void	respondGet(int clientfd, ServerInfo server);
+			void	respondPost(int clientfd);
+			void	respondDelete(int clientfd);
 	private:
 
 };
 
+std::string getStatusMessage(int statusCode);
 
 #endif
