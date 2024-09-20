@@ -1,15 +1,3 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   ServerManager.cpp                                  :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: llitovuo <llitovuo@student.hive.fi>        +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/09/04 13:23:09 by ahamalai          #+#    #+#             */
-/*   Updated: 2024/09/18 13:10:51 by llitovuo         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
 #include "../includes/Response.hpp"
 #include "../includes/ServerManager.hpp"
 #include "../includes/Request.hpp"
@@ -101,9 +89,10 @@ void	ServerManager::start_servers()
 					}
 					else
 					{
-						//std::cout << buffer << std::endl;
+						std::cout << buffer << std::endl;
 						Request request(buffer);
 						request.parse();
+						request.sanitize();
 						Response respond(request);
 						respond.respond(client_socket);
 					}

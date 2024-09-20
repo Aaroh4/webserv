@@ -27,7 +27,39 @@ Response Response::operator=(const Response &input)
 	return (*this);
 }
 
-void Response::respond(int clientfd)
+void	Response::respond(int clientfd)
+{
+	if (this->_method == "GET")
+		respondGet(clientfd);
+	else if (this->_method == "POST")
+		respondPost(clientfd);
+	else if (this->_method == "DELETE")
+		respondDelete(clientfd);
+	else
+		std::cout << "method not supported" << std::endl;
+}
+
+void	Response::respondDelete(int clientfd)
+{
+	std::string fileToDelete = "./www" + this->_url;
+	if (remove(fileToDelete.c_str()) < 0)
+		std::cout << "error\n";
+	std::string response = "HTTP/1.1 200 OK\r\n";
+
+	send (clientfd, response.c_str(), response.length(), 0);
+}
+
+void	Response::respondPost(int clientfd)
+{
+	(void)clientfd;
+	/*if (index.is_open() == false)
+	{
+		index.open("./www/404.html");
+		response = "HTTP/1.1 404 Not Found\r\n";
+	}*/
+}
+
+void Response::respondGet(int clientfd)
 {
 	std::ifstream index;
 

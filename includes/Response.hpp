@@ -12,7 +12,10 @@ class Response: public Request
 			Response(const Response &);
 			Response operator=(const Response &);
 
-			void	respond(int clientf);
+			void	respond(int clientfd);
+			void	respondGet(int clientfd);
+			void	respondPost(int clientfd);
+			void	respondDelete(int clientfd);
 	private:
 
 };
