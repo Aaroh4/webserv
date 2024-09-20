@@ -155,9 +155,9 @@ void	Request::_parseRequestLine(void)
 	const char* methods[3] = {"GET", "POST", "DELETE"};
 
 	this->_statusCode = 200;
-	int i = this->_request.find_first_of(" ");
+	size_t i = this->_request.find_first_of(" ");
 	this->_method = this->_request.substr(0, i);
-	int index;
+	size_t index;
   
 	for (index = 0; index < 3; index++)
 	{
@@ -179,7 +179,6 @@ void	Request::_parseRequestLine(void)
 		this->_url = this->_request.substr(0, i);
 	else
 		this->_url = this->_request.substr(0, index);
-	this->_request.erase(0, this->_url.length());
 	
 	//Checks if there was query string attached to URI and if there was put's it to _queryString attribute, then erases it from the request 
 	
