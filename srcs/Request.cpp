@@ -7,7 +7,7 @@ Request::Request(void) : _sanitizeStatus(0)
 {
 }
 
-Request::Request(std::string request) :  _sanitizeStatus(0), _request(request) 
+Request::Request(std::string request) :  _sanitizeStatus(0), _request(request)
 {
 	return;
 }
@@ -26,7 +26,7 @@ Request::Request(Request const& src)
 	this->_request = src._request;
 	this->_url = src._url;
 	this->_headers = src._headers;
-	this->_statusCode = src._statusCode;
+	this->_sanitizeStatus = src._sanitizeStatus;
 }
 
 Request& Request::operator=(Request const& src)
@@ -39,7 +39,7 @@ Request& Request::operator=(Request const& src)
 		this->_type = src._type;
 		this->_request = src._request;
 		this->_url = src._url;
-		this->_statusCode = src._statusCode;
+		this->_sanitizeStatus = src._sanitizeStatus;
 		this->_headers.clear();
 		for (const auto& map_content : src._headers)
 		{
@@ -52,7 +52,7 @@ Request& Request::operator=(Request const& src)
 void	Request::_runCgi(void)
 {
 	std::filesystem::path file = "./www" + this->_url;
-	if (!std::filesystem::exists(file) || !std::filesystem::is_regular_file(file)) 
+	if (!std::filesystem::exists(file) || !std::filesystem::is_regular_file(file))
 	{
 		this->_sanitizeStatus = 666;
 		return;
@@ -64,7 +64,7 @@ void	Request::_runCgi(void)
 		return;
 	}
 	//pid_t	pid = fork();
-	
+
 	//if (pid == 0)
 	//{
 	//	char* envp[100000];
@@ -79,7 +79,7 @@ void	Request::_runCgi(void)
 	//	std::string envVar7 = "SERVER_NAME=" + this->_headers["Host"];
 	//	std::string envVar8 = "SERVER_PORT=8080";
 	//	std::string envVar9 = "REMOTE_ADDR=192.168.0.1";
-		
+
 	//	if (this->_method == "GET")
 	//	{
 	//		envp = {
@@ -122,15 +122,15 @@ void	Request::_runCgi(void)
 	//	{
 	//		this->_sanitizeStatus = 666;
 	//		return;
-	//	}	
+	//	}
 	//else
 	//	this->_sanitizeStatus = 666;
-}	
+}
 
 void	Request::_getContentType(void)
 {
 	//Parses File type from url and set's the return content type to string attribute _type
-  
+
 	size_t	i = this->_url.find_last_of(".");
 	if (i != std::string::npos)
 	{
@@ -144,7 +144,7 @@ void	Request::_getContentType(void)
 		else if(type == "py")
 			this->_runCgi();
     else if (this->_url != "/")
-		  this->_statusCode = 415; // Error: Unsupported Media Type
+		  this->_sanitizeStatus = 415; // Error: Unsupported Media Type
 	}
 }
 
@@ -154,11 +154,10 @@ void	Request::_parseRequestLine(void)
 
 	const char* methods[3] = {"GET", "POST", "DELETE"};
 
-	this->_statusCode = 200;
-	size_t i = this->_request.find_first_of(" ");
+	this->_sanitizeStatus = 200;
+	int i = this->_request.find_first_of(" ");
 	this->_method = this->_request.substr(0, i);
-	size_t index;
-  
+	int index;
 	for (index = 0; index < 3; index++)
 	{
 		if (this->_method == methods[index])
@@ -170,18 +169,18 @@ void	Request::_parseRequestLine(void)
 	if (index == 3)
 		this->_sanitizeStatus = 666;
 	this->_request.erase(0, this->_method.length() + 1);
-	
+
 	//Parses URI and put's it to string attribute _url, then erases it from the request
-	
+
 	i = this->_request.find_first_of("?");
 	index = this->_request.find_first_of(" ");
 	if (i < index)
 		this->_url = this->_request.substr(0, i);
 	else
 		this->_url = this->_request.substr(0, index);
-	
-	//Checks if there was query string attached to URI and if there was put's it to _queryString attribute, then erases it from the request 
-	
+	this->_request.erase(0, this->_url.length());
+
+	//Checks if there was query string attached to URI and if there was put's it to _queryString attribute, then erases it from the request
 	if (this->_request.find("?") == 0)
 	{
 		this->_request.erase(0, 1);
@@ -190,7 +189,7 @@ void	Request::_parseRequestLine(void)
 		this->_request.erase(0, this->_queryString.length() + 1);
 	}
 	this->_getContentType();
-	
+
 	//Parses HTTP Version nd put's it to string attribute _httpVersion, then erases it from the request
 
 	i = this->_request.find_first_of("\r\n");
@@ -202,7 +201,7 @@ void	Request::_parseRequestLine(void)
 void	Request::_parseHeaders(void)
 {
 	//Parses headers line by line and adds the header(before :) and value (after :) to map container attribute _headers
-	
+
 	std::string line;
 
 	size_t	lineEnd = 0;
@@ -235,7 +234,7 @@ void	Request::sanitize(void)
 {
 	if (this->_httpVersion != "HTTP/1.0\r" && this->_httpVersion != "HTTP/1.1\r")
 	{
-		this->_statusCode = 505;
+		this->_sanitizeStatus = 505;
 		return;
 	}
 	if (this->_url.find("..") != std::string::npos)

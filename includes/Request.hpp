@@ -11,7 +11,7 @@ class Request
 		~Request(void);
 		Request(Request const& src);
 		Request& operator=(Request const& src);
-  
+
 		virtual void	parse(void);
 		virtual	void	sanitize(void);
 		virtual std::string	getMethod(void) const;
@@ -28,7 +28,6 @@ class Request
 		std::string _url;
 		std::string _body;
 		std::string _httpVersion;
-		int			_statusCode;
 		std::map<std::string, std::string> _headers;
 		void	_parseRequestLine(void);
 		void 	_parseHeaders(void);
