@@ -96,12 +96,12 @@ void Response::respondGet(int clientfd, ServerInfo server)
 		file.open("./www/404.html");
 		response = "HTTP/1.1 404 Not Found\r\n";
 		this->_url = "/404.html";
-		this->_statusCode = 404;
+		this->_sanitizeStatus = 404;
 	}
-	//else if (this->_statusCode != 200 && this->_statusCode != 404)
+	//else if (this->_sanitizeStatus != 200 && this->_sanitizeStatus != 404)
 	//{
 	//	response = this->_httpVersion + " ";
-	//	response += getStatusMessage(this->_statusCode) + "\r\n";
+	//	response += getStatusMessage(this->_sanitizeStatus) + "\r\n";
 	//}
 	if (this->_type.empty())
 		this->_type = "text/html";
@@ -112,9 +112,9 @@ void Response::respondGet(int clientfd, ServerInfo server)
 	fsize = file.tellg();
 	file.seekg(0, std::ios::beg);
 	response += "Content-Length: " + std::to_string(fsize) + "\r\n";
-	std::cout << "statuscode: "<< this->_statusCode << std::endl;
-	//if (this->_statusCode == 200)
-		response += "Keep-Alive: timeout=5, max=100\r\n\r\n";
+	std::cout << "statuscode: "<< this->_sanitizeStatus << std::endl;
+	//if (this->_sanitizeStatus == 200)
+	response += "Keep-Alive: timeout=5, max=100\r\n\r\n";
 	//else
 	//	response += "Connection: Close\r\n\r\n";
 
@@ -131,7 +131,7 @@ std::fstream Response::directorylist(std::string name)
 	//std::string	directory;
 	std::fstream directory("dir.html", std::ios::out | std::ios::in | std::ios::trunc);
 	directory << "<!DOCTYPE html>\n <html lang=\"en\">\n <head>\n </head>\n <body>\n <ol>\n";
-	for (const auto & entry : std::filesystem::directory_iterator(name)) 
+	for (const auto & entry : std::filesystem::directory_iterator(name))
 	{
    		directory << "<li><a href=" << entry.path().string().erase(0, 6) << ">" << entry.path() << "</a> </li>" << std::endl;
  	}
