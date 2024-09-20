@@ -1,15 +1,3 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   Request.cpp                                        :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: tkartasl <tkartasl@student.hive.fi>        +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/09/06 14:49:12 by tkartasl          #+#    #+#             */
-/*   Updated: 2024/09/19 15:53:59 by tkartasl         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
 #include "../includes/Request.hpp"
 #include <iostream>
 #include <climits>
@@ -38,6 +26,7 @@ Request::Request(Request const& src)
 	this->_request = src._request;
 	this->_url = src._url;
 	this->_headers = src._headers;
+	this->_statusCode = src._statusCode;
 }
 
 Request& Request::operator=(Request const& src)
@@ -50,12 +39,13 @@ Request& Request::operator=(Request const& src)
 		this->_type = src._type;
 		this->_request = src._request;
 		this->_url = src._url;
+		this->_statusCode = src._statusCode;
 		this->_headers.clear();
 		for (const auto& map_content : src._headers)
 		{
 			this->_headers[map_content.first] = map_content.second;
 		}
-	}	
+	}
 	return *this;
 }
 
@@ -140,7 +130,7 @@ void	Request::_runCgi(void)
 void	Request::_getContentType(void)
 {
 	//Parses File type from url and set's the return content type to string attribute _type
-	
+  
 	size_t	i = this->_url.find_last_of(".");
 	if (i != std::string::npos)
 	{
@@ -153,18 +143,21 @@ void	Request::_getContentType(void)
 			this->_type = "video/" + type;
 		else if(type == "py")
 			this->_runCgi();
+    else if (this->_url != "/")
+		  this->_statusCode = 415; // Error: Unsupported Media Type
 	}
-}
 
 void	Request::_parseRequestLine(void)
 {
 	//Parses method and put's it to string attribute _method, then erases it from the request
-	
+
 	const char* methods[3] = {"GET", "POST", "DELETE"};
-	size_t i = this->_request.find_first_of(" ");
+
+	this->_statusCode = 200;
+	int i = this->_request.find_first_of(" ");
 	this->_method = this->_request.substr(0, i);
-	size_t index;
-	
+	int index;
+  
 	for (index = 0; index < 3; index++)
 	{
 		if (this->_method == methods[index])
@@ -172,6 +165,7 @@ void	Request::_parseRequestLine(void)
 			break;
 		}
 	}
+
 	if (index == 3)
 		this->_sanitizeStatus = 666;
 	this->_request.erase(0, this->_method.length() + 1);
@@ -200,10 +194,10 @@ void	Request::_parseRequestLine(void)
 	//Parses HTTP Version nd put's it to string attribute _httpVersion, then erases it from the request
 
 	i = this->_request.find_first_of("\r\n");
+
 	this->_httpVersion = this->_request.substr(0, i);
 	this->_request.erase(0, this->_httpVersion.length() + 1);
 }
-
 
 void	Request::_parseHeaders(void)
 {
@@ -241,7 +235,7 @@ void	Request::sanitize(void)
 {
 	if (this->_httpVersion != "HTTP/1.0" && this->_httpVersion != "HTTP/1.1")
 	{
-		this->_sanitizeStatus = 666;
+		this->_statusCode = 505;
 		return;
 	}
 	if (this->_url.find("..") != std::string::npos)
