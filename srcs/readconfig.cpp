@@ -38,38 +38,19 @@ int brackets(std::string configfile, std::string type, ServerInfo &server)
 	}
 	if (type == "location")
 	{
-		std::vector<std::string> string_to_case
-		{
-			{"GET"},
-			{"POST"},
-			{"DELETE"},
-			{"HEAD"}
-		};
+		std::unordered_set<std::string> all_methods = 
+		{"GET", "POST", "DELETE", "HEAD"};
 
 		location temploc;		
 		temploc.name = temp.substr(0, temp.find(" "));
 		temploc.root = cutFromTo(temp, temp.find("root: ") + 6, "\n");
 		std::string temp1;
 		if (temp.find("allowedmethods: ") != std::string::npos)
-			temp1 = cutFromTo(temp, temp.find("allowedmethods: "), "\n");
-		//std::cout << temp1 << std::endl;
-		for (size_t i = 0; i < string_to_case.size(); i++)
 		{
-			switch (temp1.find(string_to_case.at(i)))
-			{
-				case 0:
-					temploc.methods.insert("END");
-					break;
-				case 1:
-					temploc.methods.insert("POST");
-					break;
-				case 2:
-					temploc.methods.insert("DELETE");
-					break;
-				case 3:
-					temploc.methods.insert("HEAD");
-					break;
-			}
+			temp1 = cutFromTo(temp, temp.find("allowedmethods: ") + 15, "\n");
+			for (std::string method : all_methods)
+				if (temp1.find(method) != std::string::npos)
+					temploc.methods.insert(method);
 		}
 		//std::cout << "root: " << temploc.root << "\n";
 		if (std::filesystem::is_directory(temploc.root + temploc.name) && cutFromTo(temp, temp.find("dir-listing: "), "\n").find("true") != std::string::npos)														// THIS IS FOR TESTING REMEMBER TO SWITCH OUT
