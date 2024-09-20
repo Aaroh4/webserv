@@ -3,13 +3,14 @@
 
 #include "libraries.hpp"
 #include <unordered_map>
-
+#include <unordered_set>
 
 struct	location
 {
-	std::string		name;
-	std::string		root;
-	bool			dirList = false;
+	std::string									name;
+	std::string									root;
+	bool										dirList = false;
+	std::unordered_set<std::string>				methods;
 };
 
 class ServerInfo
