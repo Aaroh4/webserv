@@ -158,7 +158,6 @@ void	Request::_parseRequestLine(void)
 	int i = this->_request.find_first_of(" ");
 	this->_method = this->_request.substr(0, i);
 	int index;
-
 	for (index = 0; index < 3; index++)
 	{
 		if (this->_method == methods[index])
@@ -182,7 +181,6 @@ void	Request::_parseRequestLine(void)
 	this->_request.erase(0, this->_url.length());
 
 	//Checks if there was query string attached to URI and if there was put's it to _queryString attribute, then erases it from the request
-
 	if (this->_request.find("?") == 0)
 	{
 		this->_request.erase(0, 1);
