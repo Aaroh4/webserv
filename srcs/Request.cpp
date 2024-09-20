@@ -63,68 +63,68 @@ void	Request::_runCgi(void)
 		this->_sanitizeStatus = 666;
 		return;
 	}
-	pid_t	pid = fork();
+	//pid_t	pid = fork();
 	
-	if (pid == 0)
-	{
-		char* envp[100000];
-		std::string url = "./www" + this->_url;
-		std::string envVar0 = "REQUEST_METHOD=" + this->_method;
-		std::string envVar1 = "CONTENT_LENGTH=" + this->_headers["Content-Length"];
-		std::string envVar2 = "CONTENT_TYPE=" + this->_headers["Content-Type"];
-		std::string envVar3 = "QUERY_STRING=" + this->_queryString;
-		std::string envVar4 = "SCRIPT_FILENAME=" + url;
-		std::string envVar5 = "GATEWAY_INTERFACE=CGI/1.1";
-		std::string envVar6 = "SERVER_PROTOCOL=" + this->_httpVersion;
-		std::string envVar7 = "SERVER_NAME=" + this->_headers["Host"];
-		std::string envVar8 = "SERVER_PORT=8080";
-		std::string envVar9 = "REMOTE_ADDR=192.168.0.1";
+	//if (pid == 0)
+	//{
+	//	char* envp[100000];
+	//	std::string url = "./www" + this->_url;
+	//	std::string envVar0 = "REQUEST_METHOD=" + this->_method;
+	//	std::string envVar1 = "CONTENT_LENGTH=" + this->_headers["Content-Length"];
+	//	std::string envVar2 = "CONTENT_TYPE=" + this->_headers["Content-Type"];
+	//	std::string envVar3 = "QUERY_STRING=" + this->_queryString;
+	//	std::string envVar4 = "SCRIPT_FILENAME=" + url;
+	//	std::string envVar5 = "GATEWAY_INTERFACE=CGI/1.1";
+	//	std::string envVar6 = "SERVER_PROTOCOL=" + this->_httpVersion;
+	//	std::string envVar7 = "SERVER_NAME=" + this->_headers["Host"];
+	//	std::string envVar8 = "SERVER_PORT=8080";
+	//	std::string envVar9 = "REMOTE_ADDR=192.168.0.1";
 		
-		if (this->_method == "GET")
-		{
-			envp = {
-			envVar0.c_str(),
-			envVar3.c_str(),
-			envVar4.c_str(),
-			envVar5.c_str(),
-			envVar6.c_str(),
-			envVar7.c_str(),
-			envVar8.c_str(),
-			envVar9.c_str(),
-			nullptr
-			};
-		}
-		else
-		{
-			envp = {
-			envVar0.c_str(),
-			envVar1.c_str(),
-			envVar2.c_str(),
-			envVar3.c_str(),
-			envVar4.c_str(),
-			envVar5.c_str(),
-			envVar6.c_str(),
-			envVar7.c_str(),
-			envVar8.c_str(),
-			envVar9.c_str(),
-			nullptr
-			};
-		}
-		char *args[2] = {url.c_str(), nullptr};
-		if (execve(args[0], args, envp) < 0)
-		{
-			this->_sanitizeStatus = 666;
-			return;
-		}
-	}
-	else if (pid > 0)
-		if (waitpid(pid, 0, 0) == -1)
-		{
-			this->_sanitizeStatus = 666;
-			return;
-		}	
-	else
-		this->_sanitizeStatus = 666;
+	//	if (this->_method == "GET")
+	//	{
+	//		envp = {
+	//		envVar0.c_str(),
+	//		envVar3.c_str(),
+	//		envVar4.c_str(),
+	//		envVar5.c_str(),
+	//		envVar6.c_str(),
+	//		envVar7.c_str(),
+	//		envVar8.c_str(),
+	//		envVar9.c_str(),
+	//		nullptr
+	//		};
+	//	}
+	//	else
+	//	{
+	//		envp = {
+	//		envVar0.c_str(),
+	//		envVar1.c_str(),
+	//		envVar2.c_str(),
+	//		envVar3.c_str(),
+	//		envVar4.c_str(),
+	//		envVar5.c_str(),
+	//		envVar6.c_str(),
+	//		envVar7.c_str(),
+	//		envVar8.c_str(),
+	//		envVar9.c_str(),
+	//		nullptr
+	//		};
+	//	}
+	//	char *args[2] = {url.c_str(), nullptr};
+	//	if (execve(args[0], args, envp) < 0)
+	//	{
+	//		this->_sanitizeStatus = 666;
+	//		return;
+	//	}
+	//}
+	//else if (pid > 0)
+	//	if (waitpid(pid, 0, 0) == -1)
+	//	{
+	//		this->_sanitizeStatus = 666;
+	//		return;
+	//	}	
+	//else
+	//	this->_sanitizeStatus = 666;
 }	
 
 void	Request::_getContentType(void)
