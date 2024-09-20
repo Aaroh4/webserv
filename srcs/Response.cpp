@@ -32,26 +32,36 @@ void Response::respond(int clientfd, ServerInfo server)
 	std::fstream file;
 	std::streampos fsize = 0;
 
-	std::string response = "HTTP/1.1 200 OK\n";
+	(void) server; // THIS WILLLLLLLLLLLLLLLLLLLLLL BREAK THE CODE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+	std::string response = "HTTP/1.1 200 OK\r\n";
 	if (this->_url == "/")
 	{
-		if (server.getlocationinfo()["/"].dirList == false)
-		{
+		//if (server.getlocationinfo()["/"].dirList == false)
+		//{
 			this->_url = "/index.html";
 			file.open("./www/index.html");
-		}
-		else
-		{
-			file = this->directorylist();
-			this->_url = "./dir.html";
-		}
+		//}
+		//else
+		//{
+		//	file = this->directorylist("./www" + this->_url);
+		//	this->_url = "./dir.html";
+		//}
 	}
 	else
-		file.open("./www" + this->_url);
+	{
+		//if (server.getlocationinfo()[this->_url].dirList == false)
+			file.open("./www" + this->_url);
+		//else
+		//{
+		//	file = this->directorylist("./www" + this->_url);
+		//	this->_url = "./dir.html";
+		//}
+	}
 	if (file.is_open() == false)
 	{
 		file.open("./www/404.html");
-		response = "HTTP/1.1 404 Not Found\n";
+		response = "HTTP/1.1 404 Not Found\r\n";
 		this->_url = "/404.html";
 	}
 	if (this->_type.empty())
@@ -69,17 +79,16 @@ void Response::respond(int clientfd, ServerInfo server)
 	char buffer[chunkSize];
 	while (file.read(buffer, chunkSize) || file.gcount() > 0) 
 		send(clientfd, buffer, file.gcount(), 0);
-
 	//std::cout << "DONE " << std::filesystem::file_size("./www" + this->_url) << " " << "./www" + this->_url << std::endl;
 }
 
-std::fstream Response::directorylist()
+std::fstream Response::directorylist(std::string name)
 {
 	//std::string	directory;
 	std::fstream directory("dir.html", std::ios::out | std::ios::in | std::ios::trunc);
 
 	directory << "<!DOCTYPE html>\n <html lang=\"en\">\n <head>\n </head>\n <body>\n <ol>\n";
-	for (const auto & entry : std::filesystem::directory_iterator("./www")) 
+	for (const auto & entry : std::filesystem::directory_iterator(name)) 
 	{
    		directory << "<li><a href=" << entry.path().string().erase(0, 6) << ">" << entry.path() << "</a> </li>" << std::endl;
  	}

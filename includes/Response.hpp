@@ -15,7 +15,7 @@ class Response: public Request
 			Response operator=(const Response &);
 
 			void			respond(int clientf, ServerInfo server);
-			std::fstream	directorylist();
+			std::fstream	directorylist(std::string name);
 	private:
 
 };

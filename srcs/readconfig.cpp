@@ -1,20 +1,9 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   readconfig.cpp                                     :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: ahamalai <ahamalai@student.hive.fi>        +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/09/03 16:18:51 by ahamalai          #+#    #+#             */
-/*   Updated: 2024/09/19 16:24:30 by ahamalai         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
 #include "../includes/ServerInfo.hpp"
 #include "../includes/ServerManager.hpp"
 #include <fstream>
 #include <unordered_map>
 #include <sstream>
+#include <filesystem>
 
 ServerInfo	config_server(std::string temp, ServerInfo &server);
 int brackets(std::string configfile, std::string type, ServerInfo &server);
@@ -27,7 +16,7 @@ std::string toLowerCase(const std::string str)
     return lowerStr;
 }
 
-std::string	cutFromTo(std::string input, int start, int end)
+inline std::string	cutFromTo(std::string input, int start, int end)
 {
 	return (input.substr(start, end - start));
 }
@@ -52,7 +41,7 @@ int brackets(std::string configfile, std::string type, ServerInfo &server)
 
 		temploc.name = temp.substr(0, temp.find(" "));
 		
-		if (cutFromTo(temp, temp.find("dir-listing: "), temp.find("\n")).find("true") != std::string::npos)														// THIS IS FOR TESTING REMEMBER TO SWITCH OUT
+		if (std::filesystem::is_directory(temploc.name) && cutFromTo(temp, temp.find("dir-listing: "), temp.find("\n")).find("true") != std::string::npos)														// THIS IS FOR TESTING REMEMBER TO SWITCH OUT
 			temploc.dirList = true; 					// THIS IS FOR TESTING REMEMBER TO SWITCH OUT
 		else											// THIS IS FOR TESTING REMEMBER TO SWITCH OUT
 			temploc.dirList = false; 					// THIS IS FOR TESTING REMEMBER TO SWITCH OUT
