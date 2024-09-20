@@ -151,13 +151,12 @@ void	Request::_getContentType(void)
 void	Request::_parseRequestLine(void)
 {
 	//Parses method and put's it to string attribute _method, then erases it from the request
-
+	
 	const char* methods[3] = {"GET", "POST", "DELETE"};
-
-	this->_sanitizeStatus = 200;
-	int i = this->_request.find_first_of(" ");
+	size_t i = this->_request.find_first_of(" ");
 	this->_method = this->_request.substr(0, i);
-	int index;
+	size_t index;
+	
 	for (index = 0; index < 3; index++)
 	{
 		if (this->_method == methods[index])
@@ -165,22 +164,24 @@ void	Request::_parseRequestLine(void)
 			break;
 		}
 	}
-
 	if (index == 3)
 		this->_sanitizeStatus = 666;
 	this->_request.erase(0, this->_method.length() + 1);
-
+	
 	//Parses URI and put's it to string attribute _url, then erases it from the request
-
+	
 	i = this->_request.find_first_of("?");
 	index = this->_request.find_first_of(" ");
 	if (i < index)
 		this->_url = this->_request.substr(0, i);
 	else
+	{
 		this->_url = this->_request.substr(0, index);
-	this->_request.erase(0, this->_url.length());
-
-	//Checks if there was query string attached to URI and if there was put's it to _queryString attribute, then erases it from the request
+		this->_request.erase(0, this->_url.length() + 1);
+	}
+	
+	//Checks if there was query string attached to URI and if there was put's it to _queryString attribute, then erases it from the request 
+	
 	if (this->_request.find("?") == 0)
 	{
 		this->_request.erase(0, 1);
@@ -189,11 +190,10 @@ void	Request::_parseRequestLine(void)
 		this->_request.erase(0, this->_queryString.length() + 1);
 	}
 	this->_getContentType();
-
+	
 	//Parses HTTP Version nd put's it to string attribute _httpVersion, then erases it from the request
 
 	i = this->_request.find_first_of("\r\n");
-
 	this->_httpVersion = this->_request.substr(0, i);
 	this->_request.erase(0, this->_httpVersion.length() + 1);
 }
