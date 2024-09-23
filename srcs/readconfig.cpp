@@ -8,6 +8,7 @@
 ServerInfo	config_server(std::string temp, ServerInfo &server);
 int brackets(std::string configfile, std::string type, ServerInfo &server);
 
+// Function to make a string lowercase
 std::string toLowerCase(const std::string str) 
 {
     std::string lowerStr = str;
@@ -16,22 +17,25 @@ std::string toLowerCase(const std::string str)
     return lowerStr;
 }
 
+// Function for simplifying cutting string without having to mess around with substr
 inline std::string cutFromTo(std::string input, int start, std::string last)
 {
 	input = input.substr(start, std::string::npos);
 	return (input.substr(0, input.find(last)));
 }
 
+// Location parsing
 void locations(std::string temp, ServerInfo &server)
 {
-	std::vector<std::string> location_configs = {"root:", "dir-listing:", "allowed-methods:"};
+	std::vector<std::string> location_configs = 
+	{"root:", "dir-listing:", "allowed-methods:", "upload:"};
 	std::unordered_set<std::string> all_methods = 
 	{"GET", "POST", "DELETE", "HEAD"};
 
 	location temploc;
 	
 	temploc.name = temp.substr(0, temp.find(" "));
-	for (size_t i = 0; i < location_configs.size(); i++)
+	for (size_t i = 0; i < location_configs.size(); i++) // Loop that checks out which configs are added
 	{
 		size_t pos = temp.find(location_configs.at(i));
 		if (pos != std::string::npos)
@@ -61,6 +65,7 @@ void locations(std::string temp, ServerInfo &server)
 	server.setnewlocation(temploc);
 }
 
+// Recursive function which parses for brackets
 int brackets(std::string configfile, std::string type, ServerInfo &server)
 {
 	std::string 		temp;
@@ -85,6 +90,7 @@ int brackets(std::string configfile, std::string type, ServerInfo &server)
 	return (temp.size());
 }
 
+// Recursive function for parsing
 ServerInfo	config_server(std::string temp, ServerInfo &server)
 {
 	std::vector<std::string> server_configs
@@ -95,7 +101,7 @@ ServerInfo	config_server(std::string temp, ServerInfo &server)
 	};
 
 	server.setsocketfd(socket(AF_INET, SOCK_STREAM, 0));
-	for (size_t j = 0; j < server_configs.size(); j++)
+	for (size_t j = 0; j < server_configs.size(); j++) // Loop that checks out which configs are added
 	{
 		size_t pos = toLowerCase(temp).find(server_configs.at(j));
 		if (pos != std::string::npos)
@@ -126,6 +132,7 @@ ServerInfo	config_server(std::string temp, ServerInfo &server)
 	return (server);
 }
 
+// start of the config reading
 int	readconfig(std::string name, ServerManager &manager)
 {
 	std::ifstream	configfile(name);
