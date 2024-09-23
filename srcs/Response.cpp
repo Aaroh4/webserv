@@ -68,6 +68,13 @@ void Response::respondGet(int clientfd, ServerInfo server)
 
 	std::string response = getStatusMessage(this->_sanitizeStatus);
 	std::string filePath = "./www" + this->_url;
+	if (this->_sanitizeStatus != 200)
+	{
+		response += "Content-Type: text/html\r\n";
+		response += "Connection: close\r\n\r\n";
+		send(clientfd, response.c_str(), response.length(), 0);
+		return ;
+	}
 	if (this->_url == "/")
 	{
 		//if (server.getlocationinfo()["/"].dirList == false)
@@ -84,11 +91,10 @@ void Response::respondGet(int clientfd, ServerInfo server)
 	else
 	{
 		//if (server.getlocationinfo()[this->_url].dirList == false)
-		std::cout << filePath << std::endl;
 		if (access(filePath.c_str(), R_OK) != 0)
 		{
+			std::cout << "error: " << errno << std::endl;
 			this->_sanitizeStatus = 403; //Forbidden
-			response = getStatusMessage(this->_sanitizeStatus);
 		}
 		else
 			file.open(filePath);
@@ -98,38 +104,23 @@ void Response::respondGet(int clientfd, ServerInfo server)
 		//	this->_url = "./dir.html";
 		//}
 	}
-	//std::cout << "hello!" <<this->_url << "asd!" << std::endl;
 	if (file.is_open() == false)
 	{
 		if (errno == EIO || errno == ENOMEM)
 		{
 			this->_sanitizeStatus = 500; //internal error when I/O problem or no memory
-			response = getStatusMessage(this->_sanitizeStatus);
 		}
 		file.open("./www/404.html");
 		this->_sanitizeStatus = 404;
-		response = getStatusMessage(this->_sanitizeStatus);
 		this->_url = "/404.html";
 
 	}
-	else if (this->_sanitizeStatus != 200 && this->_sanitizeStatus != 404)
-	{
-		response = getStatusMessage(this->_sanitizeStatus);
-	}
-	if (this->_type.empty())
-		this->_type = "text/html";
-	response += "Content-Type: " + this->_type + "\r\n";
-	if (this->_type == "video/mp4" || this->_type == "image/png")
-		response += "Content-Disposition: attachment; filename=\"" + this->_url + "\r\n";
 	file.seekg(0, std::ios::end);
 	fsize = file.tellg();
 	file.seekg(0, std::ios::beg);
 	response += "Content-Length: " + std::to_string(fsize) + "\r\n";
-	std::cout << "sanitizecode: "<< this->_sanitizeStatus << std::endl;
-	if (this->_sanitizeStatus == 200)
-		response += "Keep-Alive: timeout=5, max=100\r\n\r\n";
-	else
-		response += "Connection: Close\r\n\r\n";
+
+
 
 	send(clientfd, response.c_str(), response.length(), 0);
 
@@ -150,6 +141,23 @@ std::fstream Response::directorylist(std::string name)
  	}
 	directory << "</ol>\n <h1>Welcome to My Website</h1>\n </body>\n </html>\n";
 	return (directory);
+}
+
+std::string Response::formatGetResponseMsg( void )
+{
+	std::string response;
+
+	response = getStatusMessage(this->_sanitizeStatus);
+	if (this->_type.empty())
+		this->_type = "text/html";
+	response += "Content-Type: " + this->_type + "\r\n";
+	if (this->_type == "video/mp4" || this->_type == "image/png")
+		response += "Content-Disposition: attachment; filename=\"" + this->_url + "\r\n";
+	
+	if (this->_sanitizeStatus == 500 || this->_sanitizeStatus == 404)
+		response += "Connection: close\r\n\r\n";
+	else
+		response += "Keep-Alive: timeout=5, max=100\r\n\r\n";
 }
 
 std::string Response::getStatusMessage(int statusCode)

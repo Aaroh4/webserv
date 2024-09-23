@@ -21,6 +21,7 @@ class Response: public Request
 			void	respondPost(int clientfd);
 			void	respondDelete(int clientfd);
 			std::string getStatusMessage(int statusCode);
+			std::string formatGetResponseMsg( void )
 	private:
 
 };
