@@ -28,16 +28,17 @@ inline std::string cutFromTo(std::string input, int start, std::string last)
 void locations(std::string temp, ServerInfo &server)
 {
 	std::vector<std::string> location_configs = 
-	{"root:", "dir-listing:", "allowed-methods:", "upload:"};
+	{"root:", "dir-listing:", "allowed-methods:", "upload:", "index:"};
 	std::unordered_set<std::string> all_methods = 
 	{"GET", "POST", "DELETE", "HEAD"};
 
 	location temploc;
 	
 	temploc.name = temp.substr(0, temp.find(" "));
+	std::cout << temp << std::endl;
 	for (size_t i = 0; i < location_configs.size(); i++) // Loop that checks out which configs are added
 	{
-		size_t pos = temp.find(location_configs.at(i));
+		size_t pos = toLowerCase(temp).find(location_configs.at(i));
 		if (pos != std::string::npos)
 		{
 			std::string value;
@@ -46,6 +47,7 @@ void locations(std::string temp, ServerInfo &server)
 			switch (i)
 			{
 				case 0:
+						std::cout << "root: " << value << std::endl;
 						temploc.root = value;
 						break;
 				case 1:
@@ -58,6 +60,12 @@ void locations(std::string temp, ServerInfo &server)
 						for (std::string method : all_methods)
 							if (value.find(method) != std::string::npos)
 								temploc.methods.insert(method);
+						break;
+				case 3:
+						temploc.upload = value;
+						break;
+				case 4:
+						temploc.index = value;
 						break;
 			}
 		}

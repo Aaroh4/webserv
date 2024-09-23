@@ -86,6 +86,11 @@ void Response::respondGet(int clientfd, ServerInfo server)
 		file.open("./www" + this->_url);
 		if (file.is_open() == false)
 		{
+			file.open("./" + server.getlocationinfo()[this->_url].root + "/" + server.getlocationinfo()[this->_url].index);
+			std::cout << "./" + server.getlocationinfo()[this->_url].root + "/" + server.getlocationinfo()[this->_url].index;
+		}
+		if (file.is_open() == false)
+		{
 			file.open("./www/404.html");
 			response = "HTTP/1.1 404 Not Found\r\n";
 			this->_url = "/404.html";
