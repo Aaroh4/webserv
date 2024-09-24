@@ -81,7 +81,7 @@ void Response::respondGet(int clientfd, ServerInfo server)
 	if (server.getlocationinfo()[this->_url].dirList != false)
 	{
 		std::cout << "root: " << server.getlocationinfo()[this->_url].root << std::endl;
-		this->directorylisting(clientfd, server, this->directorylist(server.getlocationinfo()[this->_url].root));
+		this->directorylisting(clientfd, server, this->directorylist(server.getlocationinfo()[this->_url].root, server.getlocationinfo()[this->_url].root.size()));
 	}
 	else
 	{
@@ -123,7 +123,7 @@ void Response::respondGet(int clientfd, ServerInfo server)
 	}
 }
 
-std::string Response::directorylist(std::string name)
+std::string Response::directorylist(std::string name, int rootsize)
 {
 	std::string	directory;
 	//std::fstream directory("dir.html", std::ios::out | std::ios::in | std::ios::trunc);
@@ -131,7 +131,7 @@ std::string Response::directorylist(std::string name)
 	directory += " <h1>Directory listing<h1>\n <h1>[---------------------]</h1>\n <ol>\n";
 	for (const auto & entry : std::filesystem::directory_iterator(name))
 	{
-   		directory += "<li><a href=" + entry.path().string() + ">" + entry.path().string().erase(0, 6) + "</a> </li>" + "\n";
+   		directory += "<li><a href=" + entry.path().string() + ">" + entry.path().string().erase(0, rootsize + 1) + "</a> </li>" + "\n";
  	}
 	directory += "</ol>\n <h1>[---------------------]</h1>\n </body>\n </html>\n";
 	return (directory);

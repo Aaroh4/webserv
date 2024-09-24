@@ -14,7 +14,7 @@ class Response: public Request
 			Response(const Response &);
 			Response operator=(const Response &);
 
-			std::string directorylist(std::string name);
+			std::string directorylist(std::string name, int rootsize);
 			void		directorylisting(int clientfd, ServerInfo server, std::string file);
 			void		respond(int clientfd, ServerInfo server);
 			void		respondGet(int clientfd, ServerInfo server);
