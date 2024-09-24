@@ -49,8 +49,18 @@ Request& Request::operator=(Request const& src)
 	return *this;
 }
 
+void	Request::_parsePostInput(void)
+{
+	size_t		len = this->_headers["Content-Type"].length();
+	size_t		i = this->_headers["Content-Type"].find_first_of("=");
+	std::string	boundary = "--" + this->_headers["Content-Type"].substr(i + 1, len - (i + 1));
+	
+}
+
 void	Request::_runCgi(void)
 {
+	if (this->_headers["Content-Type"].find("multipart/form-data") != std::string::npos)
+		this->_parsePostInput();
 	std::filesystem::path file = "./www" + this->_url;
 	if (!std::filesystem::exists(file) || !std::filesystem::is_regular_file(file))
 	{
@@ -195,7 +205,7 @@ void	Request::_parseRequestLine(void)
 
 	i = this->_request.find_first_of("\r\n");
 	this->_httpVersion = this->_request.substr(0, i);
-	this->_request.erase(0, this->_httpVersion.length() + 1);
+	this->_request.erase(0, this->_httpVersion.length() + 2);
 }
 
 void	Request::_parseHeaders(void)
@@ -207,20 +217,22 @@ void	Request::_parseHeaders(void)
 	size_t	lineEnd = 0;
 	size_t	i = 0;
 
+	//std::cout << "request before " << this->_request << std::endl; 
 	while (line != "\r\n\r\n")
 	{
-		lineEnd = this->_request.find_first_of("\r\n");
-		line = this->_request.substr(0, lineEnd);
+		lineEnd = this->_request.find_first_of("\n");
+		line = this->_request.substr(0, lineEnd + 1);
 		i = line.find_first_of(":");
 		if (i == std::string::npos)
 		{
-			i = this->_request.find_last_of("\r\n");
+			i = this->_request.find_last_of("n\n");
 			this->_request.erase(0, i + 1);
 			break;
 		}
-		this->_headers[line.substr(0, i)] = line.substr(i + 2, lineEnd);
+		this->_headers[line.substr(0, i)] = line.substr(i + 2, lineEnd - (i + 3));
 		this->_request.erase(0, lineEnd + 1);
 	}
+	//std::cout << "request after " << this->_request << std::endl; 
 	this->_body = this->_request;
 }
 
@@ -248,19 +260,14 @@ void	Request::sanitize(void)
 		this->_url.pop_back();
 		i--;
 	}
-	if (this->_queryString.find_first_of("&;|`<>") != std::string::npos)
+	if (this->_queryString.find_first_of(";|`<>") != std::string::npos)
 	{
 		this->_sanitizeStatus = 666;
 		return;
 	}
 	for (const auto& map_content : this->_headers)
 	{
-		if (map_content.first.find_first_of("&;|`<>()#") || map_content.first.length() > INT_MAX)
-		{
-			this->_sanitizeStatus = 666;
-			break;
-		}
-		if (map_content.second.find_first_of("\r\n&;|`<>()#") != std::string::npos || map_content.second.length() > INT_MAX)
+		if (map_content.first.find_first_of("&;|`<>()#") != std::string::npos || map_content.first.length() > INT_MAX)
 		{
 			this->_sanitizeStatus = 666;
 			break;
@@ -273,6 +280,7 @@ void	Request::sanitize(void)
 		 size_t len = std::stoi(this->_headers["Content-Length"]);
 			if (this->_body.length() != len)
 				this->_sanitizeStatus = 666;
+
 		}
 		catch(const std::exception& e)
 		{

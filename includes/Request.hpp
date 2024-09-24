@@ -34,6 +34,7 @@ class Request
 		void	_getContentType(void);
 		void 	_parseQueryString(void);
 		void	_runCgi(void);
+		void	_parsePostInput(void);
 };
 
 #endif
