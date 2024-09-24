@@ -29,6 +29,14 @@ Response Response::operator=(const Response &input)
 
 void	Response::respond(int clientfd, ServerInfo server)
 {
+	std::string response = getStatusMessage(this->_sanitizeStatus);
+	if (this->_sanitizeStatus != 200)
+	{
+		response += "Content-Type: text/html\r\n";
+		response += "Connection: close\r\n\r\n";
+		send(clientfd, response.c_str(), response.length(), 0);
+		return ;
+	}
 	if (this->_method == "GET")
 		respondGet(clientfd, server);
 	else if (this->_method == "POST")
@@ -36,11 +44,17 @@ void	Response::respond(int clientfd, ServerInfo server)
 	else if (this->_method == "DELETE")
 		respondDelete(clientfd);
 	else
-		std::cout << "method not supported" << std::endl;
+	{
+		response = getStatusMessage(405);
+		response += "Content-Type: text/html\r\n";
+		response += "Connection: close\r\n\r\n";
+		send(clientfd, response.c_str(), response.length(), 0);
+	}
 }
 
 void	Response::respondDelete(int clientfd)
 {
+	
 	std::string fileToDelete = "./www" + this->_url;
 	if (remove(fileToDelete.c_str()) < 0)
 		std::cout << "error\n";
@@ -67,14 +81,8 @@ void Response::respondGet(int clientfd, ServerInfo server)
 	(void) server; // THIS WILLLLLLLLLLLLLLLLLLLLLL BREAK THE CODE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 	std::string response = getStatusMessage(this->_sanitizeStatus);
+
 	std::string filePath = "./www" + this->_url;
-	if (this->_sanitizeStatus != 200)
-	{
-		response += "Content-Type: text/html\r\n";
-		response += "Connection: close\r\n\r\n";
-		send(clientfd, response.c_str(), response.length(), 0);
-		return ;
-	}
 	if (this->_url == "/")
 	{
 		//if (server.getlocationinfo()["/"].dirList == false)
