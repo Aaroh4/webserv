@@ -77,9 +77,12 @@ void Response::respondGet(int clientfd, ServerInfo server)
 	std::fstream file;
 	std::streampos fsize = 0;
 
-	std::cout << this->_url << std::endl;
+	//std::cout << this->_url << std::endl;
 	if (server.getlocationinfo()[this->_url].dirList != false)
-		this->directorylisting(clientfd, server, this->directorylist("./www" + this->_url));
+	{
+		std::cout << "root: " << server.getlocationinfo()[this->_url].root << std::endl;
+		this->directorylisting(clientfd, server, this->directorylist(server.getlocationinfo()[this->_url].root));
+	}
 	else
 	{
 		std::string response = "HTTP/1.1 200 OK\r\n";

@@ -141,7 +141,7 @@ void	Request::_getContentType(void)
 			this->_type = "image/" + type;
 		else if (type == "mpeg" || type == "avi" || type == "mp4")
 			this->_type = "video/" + type;
-		else if(type == "py")
+		else if(type == "py" || type == "php")
 			this->_runCgi();
     else if (this->_url != "/")
 		  this->_sanitizeStatus = 415; // Error: Unsupported Media Type

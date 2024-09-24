@@ -39,11 +39,10 @@ void locations(std::string temp, ServerInfo &server)
 			switch (i)
 			{
 				case 0:
-						std::cout << "root: " << value << std::endl;
 						temploc.root = value;
 						break;
 				case 1:
-						if (std::filesystem::is_directory(temploc.root + temploc.name) && value.find("true") != std::string::npos)														// THIS IS FOR TESTING REMEMBER TO SWITCH OUT
+						if (std::filesystem::is_directory(temploc.root) && value.find("true") != std::string::npos)														// THIS IS FOR TESTING REMEMBER TO SWITCH OUT
 							temploc.dirList = true;
 						else
 							temploc.dirList = false; 
