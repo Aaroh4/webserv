@@ -5,6 +5,13 @@
 #include <unordered_map>
 #include <unordered_set>
 
+// Function for simplifying cutting string without having to mess around with substr
+inline std::string cutFromTo(std::string input, int start, std::string last)
+{
+	input = input.substr(start, std::string::npos);
+	return (input.substr(0, input.find(last)));
+}
+
 struct	location
 {
 	std::string									name;

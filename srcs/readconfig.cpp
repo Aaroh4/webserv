@@ -17,13 +17,6 @@ std::string toLowerCase(const std::string str)
     return lowerStr;
 }
 
-// Function for simplifying cutting string without having to mess around with substr
-inline std::string cutFromTo(std::string input, int start, std::string last)
-{
-	input = input.substr(start, std::string::npos);
-	return (input.substr(0, input.find(last)));
-}
-
 // Location parsing
 void locations(std::string temp, ServerInfo &server)
 {
@@ -35,7 +28,6 @@ void locations(std::string temp, ServerInfo &server)
 	location temploc;
 	
 	temploc.name = temp.substr(0, temp.find(" "));
-	std::cout << temp << std::endl;
 	for (size_t i = 0; i < location_configs.size(); i++) // Loop that checks out which configs are added
 	{
 		size_t pos = toLowerCase(temp).find(location_configs.at(i));
