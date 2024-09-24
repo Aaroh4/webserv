@@ -128,7 +128,7 @@ std::string Response::directorylist(std::string name)
 	directory += " <h1>Directory listing<h1>\n <h1>[---------------------]</h1>\n <ol>\n";
 	for (const auto & entry : std::filesystem::directory_iterator(name))
 	{
-   		directory += "<li><a href=" + entry.path().string() + ">" + entry.path().string() + "</a> </li>" + "\n";
+   		directory += "<li><a href=" + entry.path().string() + ">" + entry.path().string().erase(0, 6) + "</a> </li>" + "\n";
  	}
 	directory += "</ol>\n <h1>[---------------------]</h1>\n </body>\n </html>\n";
 	return (directory);
