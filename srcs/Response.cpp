@@ -54,7 +54,7 @@ void	Response::respond(int clientfd, ServerInfo server)
 
 void	Response::respondDelete(int clientfd)
 {
-	
+
 	std::string fileToDelete = "./www" + this->_url;
 	if (remove(fileToDelete.c_str()) < 0)
 		std::cout << "error\n";
@@ -123,6 +123,7 @@ void Response::respondGet(int clientfd, ServerInfo server)
 		this->_url = "/404.html";
 
 	}
+	response = formatGetResponseMsg();
 	file.seekg(0, std::ios::end);
 	fsize = file.tellg();
 	file.seekg(0, std::ios::beg);
@@ -166,6 +167,7 @@ std::string Response::formatGetResponseMsg( void )
 		response += "Connection: close\r\n\r\n";
 	else
 		response += "Keep-Alive: timeout=5, max=100\r\n\r\n";
+	return response;
 }
 
 std::string Response::getStatusMessage(int statusCode)
