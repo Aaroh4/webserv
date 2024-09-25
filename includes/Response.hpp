@@ -16,12 +16,13 @@ class Response: public Request
 			Response operator=(const Response &);
 
 			std::fstream	directorylist(std::string name);
-			void	respond(int clientfd, ServerInfo server);
-			void	respondGet(int clientfd, ServerInfo server);
-			void	respondPost(int clientfd);
-			void	respondDelete(int clientfd);
-			std::string getStatusMessage(int statusCode);
-			std::string formatGetResponseMsg( void );
+			void			respond(int clientfd, ServerInfo server);
+			void			respondGet(int clientfd, ServerInfo server);
+			void			respondPost(int clientfd);
+			void			respondDelete(int clientfd);
+			std::string 	getStatusMessage(int statusCode);
+			std::string 	formatGetResponseMsg( void );
+			void			sendErrorResponse( int clientfd );
 
 			// Response exceptions
 			class ResponseException: public std::exception
@@ -86,6 +87,11 @@ class Response: public Request
 
 	private:
 
+			std::string _fileSize;
+			std::string _contentType;
+			std::string _response;
+			std::string _body;
+			std::string _errorMessage;
 };
 
 

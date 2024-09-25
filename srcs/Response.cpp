@@ -29,14 +29,12 @@ Response Response::operator=(const Response &input)
 
 void	Response::respond(int clientfd, ServerInfo server)
 {
-	std::string response = getStatusMessage(this->_sanitizeStatus);
 	if (this->_sanitizeStatus != 200)
 	{
-		response += "Content-Type: text/html\r\n";
-		response += "Connection: close\r\n\r\n";
-		send(clientfd, response.c_str(), response.length(), 0);
-		return ;
+		sendErrorResponse( clientfd );
+		return;
 	}
+	//std::cout << "method: "<< this->_method << std::endl;
 	if (this->_method == "GET")
 		respondGet(clientfd, server);
 	else if (this->_method == "POST")
@@ -45,7 +43,8 @@ void	Response::respond(int clientfd, ServerInfo server)
 		respondDelete(clientfd);
 	else
 	{
-		response = getStatusMessage(405);
+		this->_sanitizeStatus = 405; //Method not allowed
+		std::string response = getStatusMessage(405);
 		response += "Content-Type: text/html\r\n";
 		response += "Connection: close\r\n\r\n";
 		send(clientfd, response.c_str(), response.length(), 0);
@@ -80,7 +79,7 @@ void Response::respondGet(int clientfd, ServerInfo server)
 
 	(void) server; // THIS WILLLLLLLLLLLLLLLLLLLLLL BREAK THE CODE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-	std::string response = getStatusMessage(this->_sanitizeStatus);
+	std::string response = "";
 
 	std::string filePath = "./www" + this->_url;
 	if (this->_url == "/")
@@ -121,16 +120,15 @@ void Response::respondGet(int clientfd, ServerInfo server)
 		file.open("./www/404.html");
 		this->_sanitizeStatus = 404;
 		this->_url = "/404.html";
-
 	}
 	response = formatGetResponseMsg();
 	file.seekg(0, std::ios::end);
 	fsize = file.tellg();
+	this->_fileSize = std::to_string(fsize);
 	file.seekg(0, std::ios::beg);
-	response += "Content-Length: " + std::to_string(fsize) + "\r\n";
 
 
-
+	response = formatGetResponseMsg();
 	send(clientfd, response.c_str(), response.length(), 0);
 
 	const std::size_t chunkSize = 8192;
@@ -162,17 +160,15 @@ std::string Response::formatGetResponseMsg( void )
 	response += "Content-Type: " + this->_type + "\r\n";
 	if (this->_type == "video/mp4" || this->_type == "image/png")
 		response += "Content-Disposition: attachment; filename=\"" + this->_url + "\r\n";
-	
-	if (this->_sanitizeStatus == 500 || this->_sanitizeStatus == 404)
-		response += "Connection: close\r\n\r\n";
-	else
-		response += "Keep-Alive: timeout=5, max=100\r\n\r\n";
+	response += "Content-Length: " + this->_fileSize + "\r\n";
+	response += "Keep-Alive: timeout=5, max=100\r\n\r\n";
 	return response;
 }
 
 std::string Response::getStatusMessage(int statusCode)
 {
 	std::string statusMessage;
+	std::string message;
 
 	statusMessage = this->_httpVersion + " ";
 	statusMessage += std::to_string(this->_sanitizeStatus);
@@ -182,105 +178,128 @@ std::string Response::getStatusMessage(int statusCode)
 		// 2XX Success responses
 
 		case 200:
-			statusMessage += "OK";
+			message += "OK";
 			break;
 		case 201:
-			statusMessage += "Created";
+			message += "Created";
 			break;
 		case 202:
-			statusMessage += "Accepted";
+			message += "Accepted";
 			break;
 		case 203:
-			statusMessage += "Non-Authoritative Information";
+			message += "Non-Authoritative Information";
 			break;
 		case 204:
-			statusMessage += "No Content";
+			message += "No Content";
 			break;
 
 		// 3XX Redirection responses
 
 		case 301:
-			statusMessage += "Moved Permanently";
+			message += "Moved Permanently";
 			break;
 		case 302:
-			statusMessage += "Found";
+			message += "Found";
 			break;
 		case 303:
-			statusMessage += "See Other";
+			message += "See Other";
 			break;
 		case 304:
-			statusMessage += "Not Modified";
+			message += "Not Modified";
 			break;
 		case 307:
-			statusMessage += "Temporary Redirect";
+			message += "Temporary Redirect";
 			break;
 		case 308:
-			statusMessage += "Permanent Redirect";
+			message += "Permanent Redirect";
 			break;
 
 		// 4XX Client error responses
 
 		case 400:
-			statusMessage += "Bad Request";
+			message += "Bad Request";
 			break;
 		case 401:
-			statusMessage += "Unauthorized";
+			message += "Unauthorized";
 			break;
 		case 403:
-			statusMessage += "Forbidden";
+			message += "Forbidden";
 			break;
 		case 404:
-			statusMessage += "Not Found";
+			message += "Not Found";
 			break;
 		case 405:
-			statusMessage += "Method Not Allowed";
+			message += "Method Not Allowed";
 			break;
 		case 406:
-			statusMessage += "Not Acceptable";
+			message += "Not Acceptable";
 			break;
 		case 408:
-			statusMessage += "Request Timeout";
+			message += "Request Timeout";
 			break;
 		case 413:
-			statusMessage += "Payload Too Large";
+			message += "Payload Too Large";
 			break;
 		case 414:
 			statusMessage += "URI Too Long";
 			break;
 		case 415:
-			statusMessage += "Unsupported Media Type";
+			message += "Unsupported Media Type";
 			break;
 		case 418:
-			statusMessage += "I'm a teapot";
+			message += "I'm a teapot";
 			break;
 		case 429:
-			statusMessage += "Too Many Requests";
+			message += "Too Many Requests";
 			break;
 		case 431:
-			statusMessage += "Request Header Fields Too Large";
+			message += "Request Header Fields Too Large";
 			break;
 
 		// 5XX Server error responses
 
 		case 500:
-			statusMessage += "Internal Server Error";
+			message += "Internal Server Error";
 			break;
 		case 501:
-			statusMessage += "Not Implemented";
+			message += "Not Implemented";
 			break;
 		case 502:
-			statusMessage += "Bad Gateway";
+			message += "Bad Gateway";
 			break;
 		case 503:
-			statusMessage += "Service Unavailable";
+			message += "Service Unavailable";
 			break;
 		case 505:
-			statusMessage += "HTTP Version Not Supported";
+			message += "HTTP Version Not Supported";
 			break;
 		default:
-			statusMessage += "Unknown Status Code";
+			message += "Unknown Status Code";
 			break;
 	}
+	statusMessage += message;
 	statusMessage += "\r\n";
+	if (this->_sanitizeStatus > 299)
+	{
+		this->_fileSize = std::to_string(message.length());
+		this->_errorMessage = message;
+	}
 	return statusMessage;
 }
+
+std::string makeErrorContent( int statusCode, std::string message )
+{
+	std::string content = "<html>\n<head>\n<title>" + std::to_string(statusCode) + " " + message + "</title>\n</head>\n<body>\n<h1>";
+	return content;
+}
+
+void Response::sendErrorResponse( int clientfd )
+{
+	std::string response = getStatusMessage(this->_sanitizeStatus);
+	response += "Content-Type: text/html\r\n";
+	response += "Connection: close\r\n\r\n";
+	response += makeErrorContent(this->_sanitizeStatus, this->_errorMessage);
+	send(clientfd, response.c_str(), response.length(), 0);
+}
+
+
