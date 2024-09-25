@@ -23,7 +23,6 @@ class Request
 		int	_sanitizeStatus;
 		std::string	_type;
 		std::string _request;
-		std::string _queryString;
 		std::string _method;
 		std::string _url;
 		std::string _body;
@@ -36,9 +35,9 @@ class Request
 		void 	_parseQueryString(void);
 		void	_runCgi(void);
 		void	_parsePostInput(void);
-		void	_parseBlock(std::string& block);
-		std::string	_splitMultiFormBlocks(std::string& boundary);
-		std::string	_parseFileName(std::string line);
+		void	_parsePart(std::string& part);
+		std::string	_splitMultiFormParts(std::string& boundary);
+		std::string	_parseFileName(std::string& line);
 };
 
 #endif

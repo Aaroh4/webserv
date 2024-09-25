@@ -49,15 +49,15 @@ Request& Request::operator=(Request const& src)
 	return *this;
 }
 
-std::string Request::_splitMultiFormBlocks(std::string& boundary)
+std::string Request::_splitMultiFormParts(std::string& boundary)
 {
 	size_t		i = this->_body.find(boundary);
-	std::string block = this->_body.substr(0, i - 1);
-	this->_body.erase(0, i + boundary.length());
-	return block;
+	std::string part = this->_body.substr(0, i - 1);
+	this->_body.erase(0, i + boundary.length() + 2);
+	return part;
 }
 
-std::string	Request::_parseFileName(std::string& boundary)
+std::string	Request::_parseFileName(std::string& line)
 {
 	size_t start = 0;
 	size_t end = 0;
@@ -68,18 +68,37 @@ std::string	Request::_parseFileName(std::string& boundary)
 	return (line.substr(start, end - start));
 }
 
-void	Request::_parseBlock(std::string& block)
+void	Request::_parsePart(std::string& part)
 {
 	size_t	start = 0;
 	size_t	end = 0;
-	if (block.find("filename") == std::string::npos)
+	std::ofstream newFile;
+
+	if (part.find("filename") == std::string::npos)
 	{
 		if (this->_formInput.empty() == false)
 			this->_formInput += "&";
-		start = block.find_first_of("\"");
-		end = block.find_first_of("\"", start + 1);
-		this->_formInput += block.substr(start + 1, end - 1) + "=";
-		
+		start = part.find_first_of("\"");
+		start++;
+		end = part.find_first_of("\"", start);
+		this->_formInput += part.substr(start, end - start) + "=";
+		part.erase(0, end + 2);
+		start = part.find_first_not_of("\r\n");
+		end = part.find_last_of("\n");
+		this->_formInput += part.substr(start, end - (start + 1));
+	}
+	else
+	{
+		end = part.find_first_of("\n");
+		std::string line = part.substr(0, end);
+		part.erase(0, end + 1);
+		std::string	fileName = this->_parseFileName(line);
+		newFile.open("./www/uploads/" + fileName, std::ios::binary);
+		end = part.find_first_of("\n");
+		part.erase(0, end + 1);
+		start = part.find_first_not_of("\r\n");
+		end = part.find_last_of("\n");
+		newFile << part.substr(start, end - (start + 1));
 	}
 }
 
@@ -92,11 +111,9 @@ void	Request::_parsePostInput(void)
 	std::string	boundary = "--" + this->_headers["Content-Type"].substr(ind + 1, len - (ind + 1));
 	std::string end = boundary + "--";
 	std::string	value;
-	std::string	fileName;
-	std::string block;
+	std::string part;
 	//std::string	line;
 	//std::stringstream body(this->_body);
-	std::ofstream newFile;
 
 	this->_body.replace(0, boundary.length(), "");
 	ind = 0;
@@ -107,8 +124,8 @@ void	Request::_parsePostInput(void)
 	}
 	for (int i = 0; i < blockCount; i++)
 	{
-		block = this->_splitMultiFormBlock(boundary);
-		this->_parseBlock(block);
+		part = this->_splitMultiFormParts(boundary);
+		this->_parsePart(part);
 	}
 }
 
@@ -253,8 +270,8 @@ void	Request::_parseRequestLine(void)
 	{
 		this->_request.erase(0, 1);
 		i = this->_request.find_first_of(" ");
-		this->_queryString = this->_request.substr(0, i);
-		this->_request.erase(0, this->_queryString.length() + 1);
+		this->_formInput = this->_request.substr(0, i);
+		this->_request.erase(0, this->_formInput.length() + 1);
 	}
 	this->_getContentType();
 	
