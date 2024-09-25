@@ -49,18 +49,75 @@ Request& Request::operator=(Request const& src)
 	return *this;
 }
 
+std::string Request::_splitMultiFormBlocks(std::string& boundary)
+{
+	size_t		i = this->_body.find(boundary);
+	std::string block = this->_body.substr(0, i - 1);
+	this->_body.erase(0, i + boundary.length());
+	return block;
+}
+
+std::string	Request::_parseFileName(std::string& boundary)
+{
+	size_t start = 0;
+	size_t end = 0;
+
+	end = line.find_last_of("\"");
+	for (start = end - 1; line[start] != '\"'; start--);
+	start++;
+	return (line.substr(start, end - start));
+}
+
+void	Request::_parseBlock(std::string& block)
+{
+	size_t	start = 0;
+	size_t	end = 0;
+	if (block.find("filename") == std::string::npos)
+	{
+		if (this->_formInput.empty() == false)
+			this->_formInput += "&";
+		start = block.find_first_of("\"");
+		end = block.find_first_of("\"", start + 1);
+		this->_formInput += block.substr(start + 1, end - 1) + "=";
+		
+	}
+}
+
 void	Request::_parsePostInput(void)
 {
 	size_t		len = this->_headers["Content-Type"].length();
-	size_t		i = this->_headers["Content-Type"].find_first_of("=");
-	std::string	boundary = "--" + this->_headers["Content-Type"].substr(i + 1, len - (i + 1));
-	
+	size_t		ind = this->_headers["Content-Type"].find_first_of("=");
+	size_t		lineEnd = 0;
+	int			blockCount = 0;
+	std::string	boundary = "--" + this->_headers["Content-Type"].substr(ind + 1, len - (ind + 1));
+	std::string end = boundary + "--";
+	std::string	value;
+	std::string	fileName;
+	std::string block;
+	//std::string	line;
+	//std::stringstream body(this->_body);
+	std::ofstream newFile;
+
+	this->_body.replace(0, boundary.length(), "");
+	ind = 0;
+	for (int i = 0; ind != std::string::npos; i++)
+	{
+		ind = this->_body.find(boundary, ind + 1);
+		blockCount = i;
+	}
+	for (int i = 0; i < blockCount; i++)
+	{
+		block = this->_splitMultiFormBlock(boundary);
+		this->_parseBlock(block);
+	}
 }
 
 void	Request::_runCgi(void)
 {
 	if (this->_headers["Content-Type"].find("multipart/form-data") != std::string::npos)
 		this->_parsePostInput();
+	else
+		this->_formInput = this->_body;
 	std::filesystem::path file = "./www" + this->_url;
 	if (!std::filesystem::exists(file) || !std::filesystem::is_regular_file(file))
 	{

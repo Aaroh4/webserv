@@ -28,6 +28,7 @@ class Request
 		std::string _url;
 		std::string _body;
 		std::string _httpVersion;
+		std::string _formInput;
 		std::map<std::string, std::string> _headers;
 		void	_parseRequestLine(void);
 		void 	_parseHeaders(void);
@@ -35,6 +36,9 @@ class Request
 		void 	_parseQueryString(void);
 		void	_runCgi(void);
 		void	_parsePostInput(void);
+		void	_parseBlock(std::string& block);
+		std::string	_splitMultiFormBlocks(std::string& boundary);
+		std::string	_parseFileName(std::string line);
 };
 
 #endif
