@@ -31,6 +31,7 @@ void	Response::respond(int clientfd, ServerInfo server)
 {
 	if (this->_sanitizeStatus != 200)
 	{
+		std::cout << "error\n";
 		sendErrorResponse( clientfd );
 		return;
 	}
@@ -72,69 +73,125 @@ void	Response::respondPost(int clientfd)
 	}*/
 }
 
+// void Response::respondGet(int clientfd, ServerInfo server)
+// {
+// 	std::fstream file;
+// 	std::streampos fsize = 0;
+
+// 	(void) server; // THIS WILLLLLLLLLLLLLLLLLLLLLL BREAK THE CODE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+// 	std::string response = "";
+
+// 	std::string filePath = "./www" + this->_url;
+// 	if (this->_url == "/")
+// 	{
+// 		//if (server.getlocationinfo()["/"].dirList == false)
+// 		//{
+// 			this->_url = "/index.html";
+// 			file.open("./www/index.html");
+// 		//}
+// 		//else
+// 		//{
+// 		//	file = this->directorylist("./www" + this->_url);
+// 		//	this->_url = "./dir.html";
+// 		//}
+// 	}
+// 	else
+// 	{
+// 		//if (server.getlocationinfo()[this->_url].dirList == false)
+// 		if (access(filePath.c_str(), R_OK) != 0)
+// 		{
+// 			std::cout << "error: " << errno << std::endl;
+// 			this->_sanitizeStatus = 403; //Forbidden
+// 		}
+// 		else
+// 			file.open(filePath);
+// 		//else
+// 		//{
+// 		//	file = this->directorylist("./www" + this->_url);
+// 		//	this->_url = "./dir.html";
+// 		//}
+// 	}
+// 	if (file.is_open() == false)
+// 	{
+// 		if (errno == EIO || errno == ENOMEM)
+// 		{
+// 			this->_sanitizeStatus = 500; //internal error when I/O problem or no memory
+// 		}
+// 		file.open("./www/404.html");
+// 		this->_sanitizeStatus = 404;
+// 		this->_url = "/404.html";
+// 	}
+// 	response = formatGetResponseMsg();
+// 	file.seekg(0, std::ios::end);
+// 	fsize = file.tellg();
+// 	this->_fileSize = std::to_string(fsize);
+// 	file.seekg(0, std::ios::beg);
+
+
+// 	response = formatGetResponseMsg();
+// 	send(clientfd, response.c_str(), response.length(), 0);
+
+// 	const std::size_t chunkSize = 8192;
+// 	char buffer[chunkSize];
+// 	while (file.read(buffer, chunkSize) || file.gcount() > 0)
+// 		send(clientfd, buffer, file.gcount(), 0);
+// }
+
 void Response::respondGet(int clientfd, ServerInfo server)
 {
-	std::fstream file;
 	std::streampos fsize = 0;
 
 	(void) server; // THIS WILLLLLLLLLLLLLLLLLLLLLL BREAK THE CODE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 	std::string response = "";
 
-	std::string filePath = "./www" + this->_url;
 	if (this->_url == "/")
-	{
-		//if (server.getlocationinfo()["/"].dirList == false)
-		//{
-			this->_url = "/index.html";
-			file.open("./www/index.html");
-		//}
-		//else
-		//{
-		//	file = this->directorylist("./www" + this->_url);
-		//	this->_url = "./dir.html";
-		//}
+		this->_url = "/index.html";
+	std::string filePath = "./www" + this->_url;
+	try{
+		openFile(filePath);
 	}
-	else
+	catch(ResponseException &e)
 	{
-		//if (server.getlocationinfo()[this->_url].dirList == false)
-		if (access(filePath.c_str(), R_OK) != 0)
-		{
-			std::cout << "error: " << errno << std::endl;
-			this->_sanitizeStatus = 403; //Forbidden
-		}
-		else
-			file.open(filePath);
-		//else
-		//{
-		//	file = this->directorylist("./www" + this->_url);
-		//	this->_url = "./dir.html";
-		//}
+		this->_errorMessage = e.what();
+		sendErrorResponse(clientfd);
+		return;
 	}
-	if (file.is_open() == false)
+	response = formatGetResponseMsg();
+	send(clientfd, response.c_str(), response.length(), 0);
+	const std::size_t chunkSize = 8192;
+	char buffer[chunkSize];
+	while (this->_file.read(buffer, chunkSize) || this->_file.gcount() > 0)
+		send(clientfd, buffer, this->_file.gcount(), 0);
+}
+
+void Response::openFile(std::string filePath)
+{
+	this->_fsize = 0;
+	this->_file.open(filePath);
+	if (this->_file.is_open() == false)
 	{
 		if (errno == EIO || errno == ENOMEM)
 		{
 			this->_sanitizeStatus = 500; //internal error when I/O problem or no memory
+			throw ResponseException("Internal Server Error");
 		}
-		file.open("./www/404.html");
-		this->_sanitizeStatus = 404;
-		this->_url = "/404.html";
+		else if (errno == ENOENT)
+		{
+			this->_sanitizeStatus = 404;
+			throw ResponseException("Not Found");
+		}
+		else if (errno == EACCES)
+		{
+			this->_sanitizeStatus = 403;
+			throw ResponseException("Forbidden");
+		}
 	}
-	response = formatGetResponseMsg();
-	file.seekg(0, std::ios::end);
-	fsize = file.tellg();
-	this->_fileSize = std::to_string(fsize);
-	file.seekg(0, std::ios::beg);
-
-
-	response = formatGetResponseMsg();
-	send(clientfd, response.c_str(), response.length(), 0);
-
-	const std::size_t chunkSize = 8192;
-	char buffer[chunkSize];
-	while (file.read(buffer, chunkSize) || file.gcount() > 0)
-		send(clientfd, buffer, file.gcount(), 0);
+	this->_file.seekg(0, std::ios::end);
+	this->_fsize = this->_file.tellg();
+	this->_fileSize = std::to_string(this->_fsize);
+	this->_file.seekg(0, std::ios::beg);
 }
 
 std::fstream Response::directorylist(std::string name)
@@ -279,11 +336,7 @@ std::string Response::getStatusMessage(int statusCode)
 	}
 	statusMessage += message;
 	statusMessage += "\r\n";
-	if (this->_sanitizeStatus > 299)
-	{
-		this->_fileSize = std::to_string(message.length());
-		this->_errorMessage = message;
-	}
+	this->_errorMessage = message;
 	return statusMessage;
 }
 
@@ -293,13 +346,62 @@ std::string makeErrorContent( int statusCode, std::string message )
 	return content;
 }
 
+void Response::sendNotFound( int clientfd )
+{
+	std::cout << "error 404\n" << std::endl;
+	this->_file.open("./www/404.html");
+	this->_url = "/404.html";
+	this->_file.seekg(0, std::ios::end);
+	this->_fsize = this->_file.tellg();
+	this->_fileSize = std::to_string(this->_fsize);
+	this->_file.seekg(0, std::ios::beg);
+	
+	std::string response = getStatusMessage(404);
+	response += "Content-Type: text/html\r\n";
+	response += "Content-Length: " + this->_fileSize + "\r\n";
+	response += "Keep-Alive: timeout=5, max=100\r\n\r\n";
+	
+	send(clientfd, response.c_str(), response.length(), 0);
+	
+	const std::size_t chunkSize = 8192;
+	char buffer[chunkSize];
+	while (this->_file.read(buffer, chunkSize) || this->_file.gcount() > 0)
+		send(clientfd, buffer, this->_file.gcount(), 0);
+}
+
 void Response::sendErrorResponse( int clientfd )
 {
+	if (this->_sanitizeStatus == 0)
+		this->_sanitizeStatus = 500;
+	if (this->_sanitizeStatus == 404)
+	{
+		sendNotFound(clientfd);
+		return ;
+	}
 	std::string response = getStatusMessage(this->_sanitizeStatus);
 	response += "Content-Type: text/html\r\n";
 	response += "Connection: close\r\n\r\n";
 	response += makeErrorContent(this->_sanitizeStatus, this->_errorMessage);
 	send(clientfd, response.c_str(), response.length(), 0);
+	const std::size_t chunkSize = 8192;
+	char buffer[chunkSize];
+	while (this->_file.read(buffer, chunkSize) || this->_file.gcount() > 0)
+		send(clientfd, buffer, this->_file.gcount(), 0);
 }
+
+Response::ResponseException::ResponseException(const std::string& message): _message(message)
+{
+}
+
+Response::ResponseException::~ResponseException() noexcept
+{
+}
+
+const char* Response::ResponseException::what() const noexcept
+{
+	return _message.c_str();
+}
+
+
 
 

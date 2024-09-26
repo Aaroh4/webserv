@@ -23,64 +23,16 @@ class Response: public Request
 			std::string 	getStatusMessage(int statusCode);
 			std::string 	formatGetResponseMsg( void );
 			void			sendErrorResponse( int clientfd );
+			void			openFile(std::string filePath);
+			void 			sendNotFound( int clientfd );
 
-			// Response exceptions
+			// Response exception
 			class ResponseException: public std::exception
 			{
 				public:
-					ResponseException(std::string const &message) throw();
-					virtual ~ResponseException() throw();
-					virtual const char *what() const throw();
-				private:
-					std::string _message;
-			};
-
-			class ResponseException404: public ResponseException
-			{
-				public:
-					ResponseException404(std::string const &message) throw();
-					virtual ~ResponseException404() throw();
-					virtual const char *what() const throw();
-				private:
-					std::string _message;
-			};
-
-			class ResponseException500: public ResponseException
-			{
-				public:
-					ResponseException500(std::string const &message) throw();
-					virtual ~ResponseException500() throw();
-					virtual const char *what() const throw();
-				private:
-					std::string _message;
-			};
-
-			class ResponseException400: public ResponseException
-			{
-				public:
-					ResponseException400(std::string const &message) throw();
-					virtual ~ResponseException400() throw();
-					virtual const char *what() const throw();
-				private:
-					std::string _message;
-			};
-
-			class ResponseException403: public ResponseException
-			{
-				public:
-					ResponseException403(std::string const &message) throw();
-					virtual ~ResponseException403() throw();
-					virtual const char *what() const throw();
-				private:
-					std::string _message;
-			};
-
-			class ResponseException405: public ResponseException
-			{
-				public:
-					ResponseException405(std::string const &message) throw();
-					virtual ~ResponseException405() throw();
-					virtual const char *what() const throw();
+					ResponseException(const std::string& message);
+					virtual ~ResponseException() noexcept;;
+					virtual const char* what() const noexcept override;
 				private:
 					std::string _message;
 			};
@@ -92,6 +44,8 @@ class Response: public Request
 			std::string _response;
 			std::string _body;
 			std::string _errorMessage;
+			std::fstream _file;
+			std::streampos _fsize;
 };
 
 
