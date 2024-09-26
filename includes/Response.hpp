@@ -16,9 +16,10 @@ class Response: public Request
 
 			std::string directorylist(std::string name, int rootsize);
 			void		directorylisting(int clientfd, ServerInfo server, std::string file);
+			void		handleCgi(std::string path, int client_socket);
 			void		respond(int clientfd, ServerInfo server);
 			void		respondGet(int clientfd, ServerInfo server);
-			void		respondPost(int clientfd);
+			void		respondPost(int clientfd, ServerInfo server);
 			void		respondDelete(int clientfd);
 	private:
 

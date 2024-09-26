@@ -1,5 +1,6 @@
 #include "../includes/Response.hpp"
 #include <filesystem>
+#include <sys/wait.h>
 
 Response::Response(): Request()
 {
@@ -32,7 +33,7 @@ void	Response::respond(int clientfd, ServerInfo server)
 	if (this->_method == "GET")
 		respondGet(clientfd, server);
 	else if (this->_method == "POST")
-		respondPost(clientfd);
+		respondPost(clientfd, server);
 	else if (this->_method == "DELETE")
 		respondDelete(clientfd);
 	else
@@ -49,14 +50,59 @@ void	Response::respondDelete(int clientfd)
 	send (clientfd, response.c_str(), response.length(), 0);
 }
 
-void	Response::respondPost(int clientfd)
+void	Response::respondPost(int clientfd, ServerInfo server)
 {
-	(void)clientfd;
-	/*if (index.is_open() == false)
+	this->handleCgi("." + server.getlocationinfo()["/" + cutFromTo(this->_url, 1, "/")].root + this->_url, clientfd);
+}
+
+void	Response::handleCgi(std::string path, int client_socket)
+{
+	int	pipefd[2];
+
+	if (this->_type == "cgi/py" || this->_type == "cgi/php")
 	{
-		index.open("./www/404.html");
-		response = "HTTP/1.1 404 Not Found\r\n";
-	}*/
+		pipe(pipefd);
+		int	pid = fork();
+		if (pid == 0)
+		{
+			std::string request = "REQUEST_METHOD=" + this->_method;
+			std::string query = "QUERY_STRING=" + this->_queryString;
+			std::string length = "CONTENT_LENGTH=" + this->_headers["CONTENT_LENGTH"];
+			char *envp[] = {
+				(char *) request.c_str(),
+				(char *) query.c_str(),
+				(char *) length.c_str(),
+				nullptr
+			};
+			close(pipefd[0]);
+			dup2(pipefd[1], STDOUT_FILENO);
+       		close(pipefd[1]);
+			char *argv[] = { (char*)path.c_str(), nullptr };
+			std::cerr << path << std::endl;
+			execve(path.c_str(), argv, envp);
+			while (1)
+			{
+				std::cerr << "hello\n";
+			}
+			exit(0); // THIS NEEDS TO BE RemOVED BECAUSE ITS NOT ALLOWED EXCVE SHOULD BE USED INSTEAD
+			// IF EXCVE FAILS YOU CAN THROW AN EXCEPTION INSTEAD OF USING EXIT
+		}
+		else 
+		{  // Parent process
+			// Close the write end of the pipe in the parent process
+			close(pipefd[1]);
+
+			// Read from the read end of the pipe (which contains the CGI output)
+			char buffer[1024];
+			ssize_t nbytes;
+			while ((nbytes = read(pipefd[0], buffer, sizeof(buffer))) > 0) {
+				send(client_socket, buffer, nbytes, 0);  // Send CGI output to client
+			}
+			close(pipefd[0]);
+			int	status;
+			waitpid(pid, &status, 0);
+    	}
+	}
 }
 
 void Response::directorylisting(int clientfd, ServerInfo server, std::string file)
@@ -77,7 +123,6 @@ void Response::respondGet(int clientfd, ServerInfo server)
 	std::fstream file;
 	std::streampos fsize = 0;
 
-	//std::cout << this->_url << std::endl;
 	if (server.getlocationinfo()[this->_url].dirList != false)
 	{
 		std::cout << "root: " << server.getlocationinfo()[this->_url].root << std::endl;
