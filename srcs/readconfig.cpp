@@ -97,6 +97,9 @@ ServerInfo	config_server(std::string temp, ServerInfo &server)
 		{"host:"},
 		{"port:"},
 		{"location "},
+		{"timeout:"},
+		{"bodylimit:"}
+
 	};
 
 	server.setsocketfd(socket(AF_INET, SOCK_STREAM, 0));
@@ -115,13 +118,19 @@ ServerInfo	config_server(std::string temp, ServerInfo &server)
 					server.set_ip(value);
 					break;
 				case 1:
-					server.setnew_port(std::stoi(value));
+					server.setnew_port(std::stoi(value)); // NEEDS ERROR CHECK FOR IF STOI FAILS
 					break;
 				case 2:
 				 	if (value.find("{") != std::string::npos)
 				 		brackets(temp.substr(temp.find(value), std::string::npos), "location", server);
 					else
 						std::cout << "No opening bracket on the same line as location!" << std::endl;
+					break;
+				case 3:
+					server.setTimeout(std::stoi(value));
+					break;
+				case 4:
+					server.setBodylimit(std::stoi(value));
 					break;
 				default:
 					break;

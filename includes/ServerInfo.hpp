@@ -38,9 +38,18 @@ class ServerInfo
 
 			void												setsocketfd(int fd);
 			int													getsocketfd();
+
 			void												setnewlocation(location input);
 			std::unordered_map<std::string, location>			getlocationinfo() const;
+
+			void												setTimeout(unsigned int input);
+			unsigned int										get_timeout() const;
+
+			void												setBodylimit(unsigned int input);
+			unsigned int										getBodylimit() const;
 	private:
+			unsigned int									_timeout;
+			unsigned int									_bodylimit;
 			unsigned int									_ip;
 			std::vector<int>								_port;
 			std::unordered_map<std::string, location>		_locationinfo;

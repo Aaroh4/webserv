@@ -131,13 +131,13 @@ void Response::respondGet(int clientfd, ServerInfo server)
 	else
 	{
 		std::string response = "HTTP/1.1 200 OK\r\n";
-		file.open("./" + server.getlocationinfo()["/" + cutFromTo(this->_url, 1, "/")].root + this->_url);
+		file.open("./" + server.getlocationinfo()[this->_url].root + "/" + server.getlocationinfo()[this->_url].index);
 		//std::cout << "./" + server.getlocationinfo()["/" + cutFromTo(this->_url, 1, "/")].root + this->_url << std::endl;
 		//std::cout << "url: " << this->_url << std::endl;
 		//std::cout << "root: " << server.getlocationinfo()["/" + cutFromTo(this->_url, 1, "/")].root << std::endl;
 		if (file.is_open() == false)
 		{
-			file.open("./" + server.getlocationinfo()[this->_url].root + "/" + server.getlocationinfo()[this->_url].index);
+			file.open("./" + server.getlocationinfo()["/" + cutFromTo(this->_url, 1, "/")].root + this->_url);
 		}
 		if (file.is_open() == false)
 		{

@@ -68,3 +68,23 @@ std::unordered_map<std::string, location>	ServerInfo::getlocationinfo() const
 {
 	return (this->_locationinfo);
 }
+
+void ServerInfo::setTimeout(unsigned int input)
+{
+	this->_timeout = input;
+}
+
+unsigned int	ServerInfo::get_timeout() const
+{
+	return (this->_timeout);
+}
+
+void			ServerInfo::setBodylimit(unsigned int input)
+{
+	this->_bodylimit = input;
+}
+
+unsigned int	ServerInfo::getBodylimit() const
+{
+	return (this->_bodylimit);
+}
