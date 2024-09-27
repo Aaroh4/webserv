@@ -106,7 +106,6 @@ void	Request::_parsePostInput(void)
 {
 	size_t		len = this->_headers["Content-Type"].length();
 	size_t		ind = this->_headers["Content-Type"].find_first_of("=");
-	size_t		lineEnd = 0;
 	int			blockCount = 0;
 	std::string	boundary = "--" + this->_headers["Content-Type"].substr(ind + 1, len - (ind + 1));
 	std::string end = boundary + "--";

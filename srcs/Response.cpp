@@ -66,11 +66,11 @@ void	Response::handleCgi(std::string path, int client_socket)
 		if (pid == 0)
 		{
 			std::string request = "REQUEST_METHOD=" + this->_method;
-			std::string query = "QUERY_STRING=" + this->_queryString;
+			//std::string query = "QUERY_STRING=" + this->_queryString;
 			std::string length = "CONTENT_LENGTH=" + this->_headers["CONTENT_LENGTH"];
 			char *envp[] = {
 				(char *) request.c_str(),
-				(char *) query.c_str(),
+				//(char *) query.c_str(),
 				(char *) length.c_str(),
 				nullptr
 			};
