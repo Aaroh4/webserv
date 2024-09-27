@@ -13,5 +13,5 @@ int	main(int argc, char **argv)
 	if (argc != 2)
 		return (1);
 	readconfig(argv[1], manager);
-	manager.start_servers();
+	return (manager.start_servers());
 }
