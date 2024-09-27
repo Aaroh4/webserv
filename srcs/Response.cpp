@@ -31,7 +31,6 @@ void	Response::respond(int clientfd, ServerInfo server)
 {
 	if (this->_sanitizeStatus != 200)
 	{
-		std::cout << "error\n";
 		sendErrorResponse( clientfd );
 		return;
 	}
@@ -340,15 +339,18 @@ std::string Response::getStatusMessage(int statusCode)
 	return statusMessage;
 }
 
-std::string makeErrorContent( int statusCode, std::string message )
+std::string makeErrorContent(int statusCode, std::string message)
 {
-	std::string content = "<html>\n<head>\n<title>" + std::to_string(statusCode) + " " + message + "</title>\n</head>\n<body>\n<h1>";
+	std::string content = "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<title>";
+	content += std::to_string(statusCode) + " " + message + "</title>\n<style>\n";
+	content += "body {background-color: powderblue;}\n";
+	content += "h1 {color: blue; font-style: italic; text-align: center;}\n</style>\n</head>\n<body>\n<h1>";
+	content += std::to_string(statusCode) + " " + message + "</h1>\n</body>\n</html>\n";
 	return content;
 }
 
-void Response::sendNotFound( int clientfd )
+void Response::sendNotFound(int clientfd)
 {
-	std::cout << "error 404\n" << std::endl;
 	this->_file.open("./www/404.html");
 	this->_url = "/404.html";
 	this->_file.seekg(0, std::ios::end);
@@ -369,24 +371,30 @@ void Response::sendNotFound( int clientfd )
 		send(clientfd, buffer, this->_file.gcount(), 0);
 }
 
+void Response::sendCustomError(int clientfd)
+{
+	std::string response = getStatusMessage(this->_sanitizeStatus);
+
+	this->_body = makeErrorContent(this->_sanitizeStatus, this->_errorMessage);
+	this->_fileSize = std::to_string(this->_body.length());
+
+	response += "Content-Type: text/html\r\n";
+	response += "Content-Length: " + this->_fileSize + "\r\n";
+	response += "Keep-Alive: timeout=5, max=100\r\n\r\n";
+
+	send(clientfd, response.c_str(), response.length(), 0);
+	send(clientfd, this->_body.c_str(), this->_body.length(), 0);
+}
+
 void Response::sendErrorResponse( int clientfd )
 {
-	if (this->_sanitizeStatus == 0)
-		this->_sanitizeStatus = 500;
 	if (this->_sanitizeStatus == 404)
 	{
 		sendNotFound(clientfd);
 		return ;
 	}
-	std::string response = getStatusMessage(this->_sanitizeStatus);
-	response += "Content-Type: text/html\r\n";
-	response += "Connection: close\r\n\r\n";
-	response += makeErrorContent(this->_sanitizeStatus, this->_errorMessage);
-	send(clientfd, response.c_str(), response.length(), 0);
-	const std::size_t chunkSize = 8192;
-	char buffer[chunkSize];
-	while (this->_file.read(buffer, chunkSize) || this->_file.gcount() > 0)
-		send(clientfd, buffer, this->_file.gcount(), 0);
+	else
+		sendCustomError(clientfd);
 }
 
 Response::ResponseException::ResponseException(const std::string& message): _message(message)

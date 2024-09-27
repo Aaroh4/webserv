@@ -24,7 +24,8 @@ class Response: public Request
 			std::string 	formatGetResponseMsg( void );
 			void			sendErrorResponse( int clientfd );
 			void			openFile(std::string filePath);
-			void 			sendNotFound( int clientfd );
+			void 			sendNotFound(int clientfd);
+			void			sendCustomError(int clientfd);
 
 			// Response exception
 			class ResponseException: public std::exception
