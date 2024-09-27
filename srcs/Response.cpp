@@ -52,7 +52,7 @@ void	Response::respondDelete(int clientfd)
 
 void	Response::respondPost(int clientfd, ServerInfo server)
 {
-	this->handleCgi("." + server.getlocationinfo()["/" + cutFromTo(this->_url, 1, "/")].root + this->_url, clientfd);
+	this->handleCgi("/home/ahamalai/Desktop/webserv" + server.getlocationinfo()["/" + cutFromTo(this->_url, 1, "/")].root + this->_url, clientfd);
 }
 
 void	Response::handleCgi(std::string path, int client_socket)
@@ -66,11 +66,12 @@ void	Response::handleCgi(std::string path, int client_socket)
 		if (pid == 0)
 		{
 			std::string request = "REQUEST_METHOD=" + this->_method;
-			//std::string query = "QUERY_STRING=" + this->_queryString;
-			std::string length = "CONTENT_LENGTH=" + this->_headers["CONTENT_LENGTH"];
+			std::string query = "QUERY_STRING=param=value";
+			std::string length = "CONTENT_LENGTH=" + this->_headers["Content-Length"];
+			std::cerr << path << std::endl;
 			char *envp[] = {
 				(char *) request.c_str(),
-				//(char *) query.c_str(),
+				(char *) query.c_str(),
 				(char *) length.c_str(),
 				nullptr
 			};
@@ -78,12 +79,8 @@ void	Response::handleCgi(std::string path, int client_socket)
 			dup2(pipefd[1], STDOUT_FILENO);
        		close(pipefd[1]);
 			char *argv[] = { (char*)path.c_str(), nullptr };
-			std::cerr << path << std::endl;
+			//std::cerr << path << std::endl;
 			execve(path.c_str(), argv, envp);
-			while (1)
-			{
-				std::cerr << "hello\n";
-			}
 			exit(0); // THIS NEEDS TO BE RemOVED BECAUSE ITS NOT ALLOWED EXCVE SHOULD BE USED INSTEAD
 			// IF EXCVE FAILS YOU CAN THROW AN EXCEPTION INSTEAD OF USING EXIT
 		}
