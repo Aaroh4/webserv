@@ -109,6 +109,7 @@ ServerInfo	config_server(std::string temp, ServerInfo &server)
 		if (pos != std::string::npos)
 		{
 			std::string	value;
+			int intvalue;
 			value = cutFromTo(temp.substr(pos + server_configs.at(j).size()), 0, "\n");
 			if (j != 2)
 				value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
@@ -118,7 +119,15 @@ ServerInfo	config_server(std::string temp, ServerInfo &server)
 					server.set_ip(value);
 					break;
 				case 1:
-					server.setnew_port(std::stoi(value)); // NEEDS ERROR CHECK FOR IF STOI FAILS
+					try
+					{
+						if ((intvalue = std::stoi(value)) >= 0)
+							server.setnew_port(intvalue);
+					}
+					catch (std::exception &e)
+					{
+						std::cout << "Wrong argument for port!" << std::endl;
+					}
 					break;
 				case 2:
 				 	if (value.find("{") != std::string::npos)
@@ -127,10 +136,26 @@ ServerInfo	config_server(std::string temp, ServerInfo &server)
 						std::cout << "No opening bracket on the same line as location!" << std::endl;
 					break;
 				case 3:
-					server.setTimeout(std::stoi(value));
+					try
+					{
+						if ((intvalue = std::stoi(value)) >= 0)
+							server.setTimeout(intvalue);
+					}
+					catch (std::exception &e)
+					{
+						std::cout << "Wrong argument for timeout!" << std::endl;
+					}
 					break;
 				case 4:
-					server.setBodylimit(std::stoi(value));
+					try
+					{
+						if ((intvalue = std::stoi(value)) >= 0)
+							server.setBodylimit(intvalue);
+					}
+					catch (std::exception &e)
+					{
+						std::cout << "Wrong argument for bodylimit!" << std::endl;
+					}
 					break;
 				default:
 					break;
