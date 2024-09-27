@@ -310,10 +310,46 @@ void	Request::_parseHeaders(void)
 	this->_body = this->_request;
 }
 
+void	Request::_splitKeyValuePairs(void)
+{
+	std::string data;
+	std::string key;
+	size_t start = 0;
+	size_t end = 0;
+
+	if (!this->_formInput.empty())
+		data = this->_formInput;
+	else if (this->_headers["Content-Type"].find("application/x-www-form-urlencoded") != std::string::npos
+	&& getContentLength() > 0)
+		data = this->_body;
+	else
+		return;
+	data = this->_formInput;
+	while (1)
+	{
+		end = data.find_first_of("=", end);
+		key = data.substr(start, end - start);
+		start = end + 1;
+		end = data.find_first_of("&", end);
+		if (end == std::string::npos)
+		{
+			end = data.find_last_not_of("\r\n");
+			this->_data[key] = data.substr(start, end - (start - 1));
+			break;
+		}
+		this->_data[key] = data.substr(start, end - start);
+		start = end + 1;
+	}
+}
+
 void	Request::parse(void)
 {
 	this->_parseRequestLine();
 	this->_parseHeaders();
+	if (this->_headers["Content-Type"].find("multipart/form-data") != std::string::npos)
+		this->_parsePostInput();
+	else 
+		this->_splitKeyValuePairs();
 }
 
 void	Request::sanitize(void)
@@ -334,7 +370,7 @@ void	Request::sanitize(void)
 		this->_url.pop_back();
 		i--;
 	}
-	if (this->_queryString.find_first_of(";|`<>") != std::string::npos)
+	if (this->_formInput.find_first_of(";|`<>") != std::string::npos)
 	{
 		this->_sanitizeStatus = 666;
 		return;
@@ -383,7 +419,22 @@ std::string  Request::getHttpVersion(void) const
 	return this->_httpVersion;
 }
 
-std::map<std::string, std::string> Request::getHeaders(void) const
+std::unordered_map<std::string, std::string> Request::getHeaders(void) const
 {
 	return this->_headers;
+}
+
+int	Request::getContentLength(void)
+{
+	int len = 0;
+	
+	try
+	{
+		len = std::stoi(this->_headers["Content-Length"]);
+	}
+	catch (std::exception& e)
+	{
+		this->_sanitizeStatus = 666;
+	}
+	return len;
 }
