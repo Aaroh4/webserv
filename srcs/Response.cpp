@@ -65,7 +65,9 @@ void	Response::respondDelete(int clientfd)
 
 void	Response::respondPost(int clientfd, ServerInfo server)
 {
-	this->handleCgi("/home/ahamalai/Desktop/webserv" + server.getlocationinfo()["/" + cutFromTo(this->_url, 1, "/")].root + this->_url, clientfd);
+	(void) clientfd;
+	(void) server;
+	//this->handleCgi("/home/ahamalai/Desktop/webserv" + server.getlocationinfo()["/" + cutFromTo(this->_url, 1, "/")].root + this->_url, clientfd);
 }
 
 void	Response::handleCgi(std::string path, int client_socket)
@@ -151,6 +153,7 @@ void Response::respondGet(int clientfd, ServerInfo server)
 	{
 		this->_errorMessage = e.what();
 		sendErrorResponse(clientfd);
+		std::cout << "?????????????????" << std::endl;
 		return;
 	}
 	response = formatGetResponseMsg();
@@ -178,17 +181,17 @@ void Response::openFile(std::string filePath, ServerInfo server)
 		if (errno == EIO || errno == ENOMEM)
 		{
 			this->_sanitizeStatus = 500; //internal error when I/O problem or no memory
-			throw ResponseException("Internal Server Error");
+			//throw ResponseException("Internal Server Error");
 		}
 		else if (errno == ENOENT)
 		{
 			this->_sanitizeStatus = 404;
-			throw ResponseException("Not Found");
+			//throw ResponseException("Not Found");
 		}
 		else if (errno == EACCES)
 		{
 			this->_sanitizeStatus = 403;
-			throw ResponseException("Forbidden");
+			//throw ResponseException("Forbidden");
 		}
 	}
 	this->_file.seekg(0, std::ios::end);
