@@ -18,7 +18,7 @@ class Response: public Request
 			std::string 	getStatusMessage(int statusCode);
 			std::string 	formatGetResponseMsg( void );
 			void			sendErrorResponse( int clientfd );
-			void			openFile(std::string filePath);
+			void			openFile(std::string filePath, ServerInfo server);
 			void 			sendNotFound(int clientfd);
 			void			sendCustomError(int clientfd);
       std::string directorylist(std::string name, int rootsize);

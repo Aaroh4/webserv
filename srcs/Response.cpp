@@ -139,14 +139,14 @@ void Response::respondGet(int clientfd, ServerInfo server)
 	if (this->_url == "/")
 		this->_url = "/index.html";
 	std::string filePath = "./www" + this->_url;
-  if (server.getlocationinfo()[this->_url].dirList != false)
+	if (server.getlocationinfo()[this->_url].dirList != false)
 	{
 		std::cout << "root: " << server.getlocationinfo()[this->_url].root << std::endl;
 		this->directorylisting(clientfd, server, this->directorylist(server.getlocationinfo()[this->_url].root, server.getlocationinfo()[this->_url].root.size()));
 	}
 	try{
-		openFile(filePath);
-  }
+		openFile(filePath, server);
+  	}
 	catch(ResponseException &e)
 	{
 		this->_errorMessage = e.what();
@@ -161,19 +161,18 @@ void Response::respondGet(int clientfd, ServerInfo server)
 		send(clientfd, buffer, this->_file.gcount(), 0);
 }
 
-void Response::openFile(std::string filePath)
+void Response::openFile(std::string filePath, ServerInfo server)
 {
-  std::fstream file;
 	this->_fsize = 0;
-  file.open("./" + server.getlocationinfo()[this->_url].root + "/" + server.getlocationinfo()[this->_url].index);
-		//std::cout << "./" + server.getlocationinfo()["/" + cutFromTo(this->_url, 1, "/")].root + this->_url << std::endl;
-		//std::cout << "url: " << this->_url << std::endl;
-		//std::cout << "root: " << server.getlocationinfo()["/" + cutFromTo(this->_url, 1, "/")].root << std::endl;
-	if (file.is_open() == false)
+	(void) filePath;
+	this->_file.open("./" + server.getlocationinfo()[this->_url].root + "/" + server.getlocationinfo()[this->_url].index);
+		// std::cout << "./" + server.getlocationinfo()["/" + cutFromTo(this->_url, 1, "/")].root + this->_url << std::endl;
+		// std::cout << "url: " << this->_url << std::endl;
+		// std::cout << "root: " << server.getlocationinfo()["/" + cutFromTo(this->_url, 1, "/")].root << std::endl;
+	if (this->_file.is_open() == false)
 	{
-		file.open("./" + server.getlocationinfo()["/" + cutFromTo(this->_url, 1, "/")].root + this->_url);
+		this->_file.open("./" + server.getlocationinfo()["/" + cutFromTo(this->_url, 1, "/")].root + this->_url);
 	}
-	this->_file = file;
 	if (this->_file.is_open() == false)
 	{
 		if (errno == EIO || errno == ENOMEM)
