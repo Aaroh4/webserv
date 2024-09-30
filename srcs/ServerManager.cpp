@@ -23,7 +23,7 @@ ServerManager::~ServerManager()
 {
 }
 
-void	ServerManager::start_servers()
+int	ServerManager::start_servers()
 {
 	std::vector<struct pollfd> poll_fds;
 	std::unordered_map<int, int> connections;
@@ -39,7 +39,11 @@ void	ServerManager::start_servers()
 		serverAddress.sin_addr.s_addr = htonl(this->get_info()[i].get_ip());
 
 		setsockopt(this->get_info()[i].getsocketfd(), SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
-		bind(this->get_info()[i].getsocketfd(), (struct sockaddr *) &serverAddress, sizeof(serverAddress)); // ERROR CHECK HERE TOO LAZY
+		if (bind(this->get_info()[i].getsocketfd(), (struct sockaddr *) &serverAddress, sizeof(serverAddress)) < 0)
+		{
+			std::cout << "Bind failed!" << std::endl;
+			return (1);
+		}
 		fcntl(this->get_info()[i].getsocketfd(), F_SETFL, O_NONBLOCK, FD_CLOEXEC);
 		listen(this->get_info()[i].getsocketfd(), 5); // ERROR CHECK HERE TOO LAZY
 
@@ -90,7 +94,7 @@ void	ServerManager::start_servers()
 					}
 					else
 					{
-						std::cout << buffer << std::endl;
+						//std::cout << buffer << std::endl;
 						Request request(buffer);
 						request.parse();
 						request.sanitize();
@@ -101,6 +105,7 @@ void	ServerManager::start_servers()
 			}
 		}
 	}
+	return (0);
 }
 
 

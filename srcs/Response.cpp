@@ -1,5 +1,6 @@
 #include "../includes/Response.hpp"
 #include <filesystem>
+#include <sys/wait.h>
 
 Response::Response(): Request()
 {
@@ -38,7 +39,7 @@ void	Response::respond(int clientfd, ServerInfo server)
 	if (this->_method == "GET")
 		respondGet(clientfd, server);
 	else if (this->_method == "POST")
-		respondPost(clientfd);
+		respondPost(clientfd, server);
 	else if (this->_method == "DELETE")
 		respondDelete(clientfd);
 	else
@@ -62,80 +63,70 @@ void	Response::respondDelete(int clientfd)
 	send (clientfd, response.c_str(), response.length(), 0);
 }
 
-void	Response::respondPost(int clientfd)
+void	Response::respondPost(int clientfd, ServerInfo server)
 {
-	(void)clientfd;
-	/*if (index.is_open() == false)
-	{
-		index.open("./www/404.html");
-		response = "HTTP/1.1 404 Not Found\r\n";
-	}*/
+	this->handleCgi("/home/ahamalai/Desktop/webserv" + server.getlocationinfo()["/" + cutFromTo(this->_url, 1, "/")].root + this->_url, clientfd);
 }
 
-// void Response::respondGet(int clientfd, ServerInfo server)
-// {
-// 	std::fstream file;
-// 	std::streampos fsize = 0;
+void	Response::handleCgi(std::string path, int client_socket)
+{
+	int	pipefd[2];
 
-// 	(void) server; // THIS WILLLLLLLLLLLLLLLLLLLLLL BREAK THE CODE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	if (this->_type == "cgi/py" || this->_type == "cgi/php")
+	{
+		pipe(pipefd);
+		int	pid = fork();
+		if (pid == 0)
+		{
+			std::string request = "REQUEST_METHOD=" + this->_method;
+			std::string query = "QUERY_STRING=param=value";
+			std::string length = "CONTENT_LENGTH=" + this->_headers["Content-Length"];
+			std::cerr << path << std::endl;
+			char *envp[] = {
+				(char *) request.c_str(),
+				(char *) query.c_str(),
+				(char *) length.c_str(),
+				nullptr
+			};
+			close(pipefd[0]);
+			dup2(pipefd[1], STDOUT_FILENO);
+       		close(pipefd[1]);
+			char *argv[] = { (char*)path.c_str(), nullptr };
+			//std::cerr << path << std::endl;
+			execve(path.c_str(), argv, envp);
+			exit(0); // THIS NEEDS TO BE RemOVED BECAUSE ITS NOT ALLOWED EXCVE SHOULD BE USED INSTEAD
+			// IF EXCVE FAILS YOU CAN THROW AN EXCEPTION INSTEAD OF USING EXIT
+		}
+		else 
+		{  // Parent process
+			// Close the write end of the pipe in the parent process
+			close(pipefd[1]);
 
-// 	std::string response = "";
+			// Read from the read end of the pipe (which contains the CGI output)
+			char buffer[1024];
+			ssize_t nbytes;
+			while ((nbytes = read(pipefd[0], buffer, sizeof(buffer))) > 0) {
+				send(client_socket, buffer, nbytes, 0);  // Send CGI output to client
+			}
+			close(pipefd[0]);
+			int	status;
+			waitpid(pid, &status, 0);
+    	}
+	}
+}
 
-// 	std::string filePath = "./www" + this->_url;
-// 	if (this->_url == "/")
-// 	{
-// 		//if (server.getlocationinfo()["/"].dirList == false)
-// 		//{
-// 			this->_url = "/index.html";
-// 			file.open("./www/index.html");
-// 		//}
-// 		//else
-// 		//{
-// 		//	file = this->directorylist("./www" + this->_url);
-// 		//	this->_url = "./dir.html";
-// 		//}
-// 	}
-// 	else
-// 	{
-// 		//if (server.getlocationinfo()[this->_url].dirList == false)
-// 		if (access(filePath.c_str(), R_OK) != 0)
-// 		{
-// 			std::cout << "error: " << errno << std::endl;
-// 			this->_sanitizeStatus = 403; //Forbidden
-// 		}
-// 		else
-// 			file.open(filePath);
-// 		//else
-// 		//{
-// 		//	file = this->directorylist("./www" + this->_url);
-// 		//	this->_url = "./dir.html";
-// 		//}
-// 	}
-// 	if (file.is_open() == false)
-// 	{
-// 		if (errno == EIO || errno == ENOMEM)
-// 		{
-// 			this->_sanitizeStatus = 500; //internal error when I/O problem or no memory
-// 		}
-// 		file.open("./www/404.html");
-// 		this->_sanitizeStatus = 404;
-// 		this->_url = "/404.html";
-// 	}
-// 	response = formatGetResponseMsg();
-// 	file.seekg(0, std::ios::end);
-// 	fsize = file.tellg();
-// 	this->_fileSize = std::to_string(fsize);
-// 	file.seekg(0, std::ios::beg);
-
-
-// 	response = formatGetResponseMsg();
-// 	send(clientfd, response.c_str(), response.length(), 0);
-
-// 	const std::size_t chunkSize = 8192;
-// 	char buffer[chunkSize];
-// 	while (file.read(buffer, chunkSize) || file.gcount() > 0)
-// 		send(clientfd, buffer, file.gcount(), 0);
-// }
+void Response::directorylisting(int clientfd, ServerInfo server, std::string file)
+{
+	(void) server; // THIS NEEDS TO BE CHANGED SINCE BEFORE TRYING ACCESS SOMETHING FROM IT
+	std::string response = "HTTP/1.1 200 OK\r\n";
+	if (this->_type.empty())
+			this->_type = "text/html";
+	response += "Content-Type: " + this->_type + "\r\n";
+	response += "Content-Length: " + std::to_string(file.size()) + "\r\n";
+	response += "Keep-Alive: timeout=5, max=100\r\n\r\n";
+	response += file;
+	send(clientfd, response.c_str(), response.length(), 0);
+}
 
 void Response::respondGet(int clientfd, ServerInfo server)
 {
@@ -148,9 +139,14 @@ void Response::respondGet(int clientfd, ServerInfo server)
 	if (this->_url == "/")
 		this->_url = "/index.html";
 	std::string filePath = "./www" + this->_url;
+  if (server.getlocationinfo()[this->_url].dirList != false)
+	{
+		std::cout << "root: " << server.getlocationinfo()[this->_url].root << std::endl;
+		this->directorylisting(clientfd, server, this->directorylist(server.getlocationinfo()[this->_url].root, server.getlocationinfo()[this->_url].root.size()));
+	}
 	try{
 		openFile(filePath);
-	}
+  }
 	catch(ResponseException &e)
 	{
 		this->_errorMessage = e.what();
@@ -167,8 +163,17 @@ void Response::respondGet(int clientfd, ServerInfo server)
 
 void Response::openFile(std::string filePath)
 {
+  std::fstream file;
 	this->_fsize = 0;
-	this->_file.open(filePath);
+  file.open("./" + server.getlocationinfo()[this->_url].root + "/" + server.getlocationinfo()[this->_url].index);
+		//std::cout << "./" + server.getlocationinfo()["/" + cutFromTo(this->_url, 1, "/")].root + this->_url << std::endl;
+		//std::cout << "url: " << this->_url << std::endl;
+		//std::cout << "root: " << server.getlocationinfo()["/" + cutFromTo(this->_url, 1, "/")].root << std::endl;
+	if (file.is_open() == false)
+	{
+		file.open("./" + server.getlocationinfo()["/" + cutFromTo(this->_url, 1, "/")].root + this->_url);
+	}
+	this->_file = file;
 	if (this->_file.is_open() == false)
 	{
 		if (errno == EIO || errno == ENOMEM)
@@ -193,16 +198,17 @@ void Response::openFile(std::string filePath)
 	this->_file.seekg(0, std::ios::beg);
 }
 
-std::fstream Response::directorylist(std::string name)
+std::string Response::directorylist(std::string name, int rootsize)
 {
-	//std::string	directory;
-	std::fstream directory("dir.html", std::ios::out | std::ios::in | std::ios::trunc);
-	directory << "<!DOCTYPE html>\n <html lang=\"en\">\n <head>\n </head>\n <body>\n <ol>\n";
+	std::string	directory;
+	//std::fstream directory("dir.html", std::ios::out | std::ios::in | std::ios::trunc);
+	directory += "<!DOCTYPE html>\n <html lang=\"en\">\n <head>\n </head>\n <body bgColor=\"#76ad0e\">\n";
+	directory += " <h1>Directory listing<h1>\n <h1>[---------------------]</h1>\n <ol>\n";
 	for (const auto & entry : std::filesystem::directory_iterator(name))
 	{
-   		directory << "<li><a href=" << entry.path().string().erase(0, 6) << ">" << entry.path() << "</a> </li>" << std::endl;
+   		directory += "<li><a href=" + entry.path().string() + ">" + entry.path().string().erase(0, rootsize + 1) + "</a> </li>" + "\n";
  	}
-	directory << "</ol>\n <h1>Welcome to My Website</h1>\n </body>\n </html>\n";
+	directory += "</ol>\n <h1>[---------------------]</h1>\n </body>\n </html>\n";
 	return (directory);
 }
 

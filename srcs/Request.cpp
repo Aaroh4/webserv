@@ -49,8 +49,91 @@ Request& Request::operator=(Request const& src)
 	return *this;
 }
 
+std::string Request::_splitMultiFormParts(std::string& boundary)
+{
+	size_t		i = this->_body.find(boundary);
+	std::string part = this->_body.substr(0, i - 1);
+	this->_body.erase(0, i + boundary.length() + 2);
+	return part;
+}
+
+std::string	Request::_parseFileName(std::string& line)
+{
+	size_t start = 0;
+	size_t end = 0;
+
+	end = line.find_last_of("\"");
+	for (start = end - 1; line[start] != '\"'; start--);
+	start++;
+	return (line.substr(start, end - start));
+}
+
+void	Request::_parsePart(std::string& part)
+{
+	size_t	start = 0;
+	size_t	end = 0;
+	std::ofstream newFile;
+
+	if (part.find("filename") == std::string::npos)
+	{
+		if (this->_formInput.empty() == false)
+			this->_formInput += "&";
+		start = part.find_first_of("\"");
+		start++;
+		end = part.find_first_of("\"", start);
+		this->_formInput += part.substr(start, end - start) + "=";
+		part.erase(0, end + 2);
+		start = part.find_first_not_of("\r\n");
+		end = part.find_last_of("\n");
+		this->_formInput += part.substr(start, end - (start + 1));
+	}
+	else
+	{
+		end = part.find_first_of("\n");
+		std::string line = part.substr(0, end);
+		part.erase(0, end + 1);
+		std::string	fileName = this->_parseFileName(line);
+		newFile.open("./www/uploads/" + fileName, std::ios::binary);
+		end = part.find_first_of("\n");
+		part.erase(0, end + 1);
+		start = part.find_first_not_of("\r\n");
+		end = part.find_last_of("\n");
+		newFile << part.substr(start, end - (start + 1));
+	}
+}
+
+void	Request::_parsePostInput(void)
+{
+	size_t		len = this->_headers["Content-Type"].length();
+	size_t		ind = this->_headers["Content-Type"].find_first_of("=");
+	int			blockCount = 0;
+	std::string	boundary = "--" + this->_headers["Content-Type"].substr(ind + 1, len - (ind + 1));
+	std::string end = boundary + "--";
+	std::string	value;
+	std::string part;
+	//std::string	line;
+	//std::stringstream body(this->_body);
+
+	this->_body.replace(0, boundary.length(), "");
+	ind = 0;
+	for (int i = 0; ind != std::string::npos; i++)
+	{
+		ind = this->_body.find(boundary, ind + 1);
+		blockCount = i;
+	}
+	for (int i = 0; i < blockCount; i++)
+	{
+		part = this->_splitMultiFormParts(boundary);
+		this->_parsePart(part);
+	}
+}
+
 void	Request::_runCgi(void)
 {
+	if (this->_headers["Content-Type"].find("multipart/form-data") != std::string::npos)
+		this->_parsePostInput();
+	else
+		this->_formInput = this->_body;
 	std::filesystem::path file = "./www" + this->_url;
 	if (!std::filesystem::exists(file))
 	{
@@ -146,8 +229,8 @@ void	Request::_getContentType(void)
 			this->_type = "image/" + type;
 		else if (type == "mpeg" || type == "avi" || type == "mp4")
 			this->_type = "video/" + type;
-		else if(type == "py")
-			this->_runCgi();
+		else if(type == "py" || type == "php")
+			this->_type = "cgi/" + type;
     else if (this->_url != "/")
 		  this->_sanitizeStatus = 415; // Error: Unsupported Media Type
 	}
@@ -192,8 +275,8 @@ void	Request::_parseRequestLine(void)
 	{
 		this->_request.erase(0, 1);
 		i = this->_request.find_first_of(" ");
-		this->_queryString = this->_request.substr(0, i);
-		this->_request.erase(0, this->_queryString.length() + 1);
+		this->_formInput = this->_request.substr(0, i);
+		this->_request.erase(0, this->_formInput.length() + 1);
 	}
 	this->_getContentType();
 
@@ -201,7 +284,7 @@ void	Request::_parseRequestLine(void)
 
 	i = this->_request.find_first_of("\r\n");
 	this->_httpVersion = this->_request.substr(0, i);
-	this->_request.erase(0, this->_httpVersion.length() + 1);
+	this->_request.erase(0, this->_httpVersion.length() + 2);
 }
 
 void	Request::_parseHeaders(void)
@@ -213,27 +296,65 @@ void	Request::_parseHeaders(void)
 	size_t	lineEnd = 0;
 	size_t	i = 0;
 
+	//std::cout << "request before " << this->_request << std::endl; 
 	while (line != "\r\n\r\n")
 	{
-		lineEnd = this->_request.find_first_of("\r\n");
-		line = this->_request.substr(0, lineEnd);
+		lineEnd = this->_request.find_first_of("\n");
+		line = this->_request.substr(0, lineEnd + 1);
 		i = line.find_first_of(":");
 		if (i == std::string::npos)
 		{
-			i = this->_request.find_last_of("\r\n");
+			i = this->_request.find_last_of("n\n");
 			this->_request.erase(0, i + 1);
 			break;
 		}
-		this->_headers[line.substr(0, i)] = line.substr(i + 2, lineEnd);
+		this->_headers[line.substr(0, i)] = line.substr(i + 2, lineEnd - (i + 3));
 		this->_request.erase(0, lineEnd + 1);
 	}
+	//std::cout << "request after " << this->_request << std::endl; 
 	this->_body = this->_request;
+}
+
+void	Request::_splitKeyValuePairs(void)
+{
+	std::string data;
+	std::string key;
+	size_t start = 0;
+	size_t end = 0;
+
+	if (!this->_formInput.empty())
+		data = this->_formInput;
+	else if (this->_headers["Content-Type"].find("application/x-www-form-urlencoded") != std::string::npos
+	&& getContentLength() > 0)
+		data = this->_body;
+	else
+		return;
+	data = this->_formInput;
+	while (1)
+	{
+		end = data.find_first_of("=", end);
+		key = data.substr(start, end - start);
+		start = end + 1;
+		end = data.find_first_of("&", end);
+		if (end == std::string::npos)
+		{
+			end = data.find_last_not_of("\r\n");
+			this->_data[key] = data.substr(start, end - (start - 1));
+			break;
+		}
+		this->_data[key] = data.substr(start, end - start);
+		start = end + 1;
+	}
 }
 
 void	Request::parse(void)
 {
 	this->_parseRequestLine();
 	this->_parseHeaders();
+	if (this->_headers["Content-Type"].find("multipart/form-data") != std::string::npos)
+		this->_parsePostInput();
+	else 
+		this->_splitKeyValuePairs();
 }
 
 void	Request::sanitize(void)
@@ -254,19 +375,14 @@ void	Request::sanitize(void)
 		this->_url.pop_back();
 		i--;
 	}
-	if (this->_queryString.find_first_of("&;|`<>") != std::string::npos)
+	if (this->_formInput.find_first_of(";|`<>") != std::string::npos)
 	{
 		this->_sanitizeStatus = 400; //Bad request
 		return;
 	}
 	for (const auto& map_content : this->_headers)
 	{
-		if (map_content.first.find_first_of("&;|`<>()#") || map_content.first.length() > INT_MAX)
-		{
-			this->_sanitizeStatus = 400; //Bad request
-			break;
-		}
-		if (map_content.second.find_first_of("\r\n&;|`<>()#") != std::string::npos || map_content.second.length() > INT_MAX)
+		if (map_content.first.find_first_of("&;|`<>()#") != std::string::npos || map_content.first.length() > INT_MAX)
 		{
 			this->_sanitizeStatus = 400; //Bad request
 			break;
@@ -307,7 +423,22 @@ std::string  Request::getHttpVersion(void) const
 	return this->_httpVersion;
 }
 
-std::map<std::string, std::string> Request::getHeaders(void) const
+std::unordered_map<std::string, std::string> Request::getHeaders(void) const
 {
 	return this->_headers;
+}
+
+int	Request::getContentLength(void)
+{
+	int len = 0;
+	
+	try
+	{
+		len = std::stoi(this->_headers["Content-Length"]);
+	}
+	catch (std::exception& e)
+	{
+		this->_sanitizeStatus = 666;
+	}
+	return len;
 }

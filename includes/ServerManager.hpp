@@ -14,7 +14,7 @@ class ServerManager
 			ServerManager operator=(const ServerManager &);
 			~ServerManager();
 
-			void	start_servers();
+			int		start_servers();
 			void	setnew_info(ServerInfo server);
 			std::vector<ServerInfo> get_info();
 	private:
