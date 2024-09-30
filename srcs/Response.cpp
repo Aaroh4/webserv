@@ -132,12 +132,12 @@ void Response::respondGet(int clientfd, ServerInfo server)
 {
 	std::streampos fsize = 0;
 
-	(void) server; // THIS WILLLLLLLLLLLLLLLLLLLLLL BREAK THE CODE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	//s(void) server; // THIS WILLLLLLLLLLLLLLLLLLLLLL BREAK THE CODE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 	std::string response = "";
 
-	if (this->_url == "/")
-		this->_url = "/index.html";
+	//if (this->_url == "/")
+	//	this->_url = "/index.html";
 	std::string filePath = "./www" + this->_url;
 	if (server.getlocationinfo()[this->_url].dirList != false)
 	{
