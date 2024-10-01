@@ -280,7 +280,31 @@ void	Request::_splitKeyValuePairs(void)
 
 void	Request::_decodeChunks(void)
 {
-	
+	int	size = 1;
+	std::string line;
+	std::string decodedBody;
+	size_t pos = 0;
+
+	while (size != 0)
+	{
+		pos = this->_body.find_first_of("\r\n");
+		line = this->_body.substr(0, pos);
+		this->_body.erase(0, pos + 2);
+		try
+		{
+			size = std::stoi(line, nullptr, 16);
+			if (size == 0)
+				break;
+		}
+		catch(const std::exception& e)
+		{
+			this->_sanitizeStatus = 666;
+			return;
+		}
+		decodedBody += this->_body.substr(0, size);
+		this->_body.erase(0, size + 2);
+	}
+	this->_body = decodedBody;
 }
 
 void	Request::parse(void)
@@ -365,29 +389,14 @@ void	Request::sanitize(void)
 	}
 }
 
-bool	Request::isRequestRead(void) const
+void	Request::appendBody(std::string& chunk)
+{
+	this->_body += chunk;
+}
+
+bool	Request::isReceived(void) const
 {
 	return this->_requestRead;
-}
-
-std::string  Request::getMethod(void) const
-{
-	return this->_method;
-}
-
-std::string  Request::getUrl(void) const
-{
-	return this->_url;
-}
-
-std::string  Request::getBody(void) const
-{
-	return this->_body;
-}
-
-std::string  Request::getHttpVersion(void) const
-{
-	return this->_httpVersion;
 }
 
 std::unordered_map<std::string, std::string> Request::getHeaders(void) const
@@ -409,3 +418,5 @@ int	Request::getContentLength(void)
 	}
 	return len;
 }
+
+               

@@ -15,12 +15,9 @@ class Request
 
 		virtual void		parse(void);
 		virtual	void		sanitize(void);
-		virtual std::string	getMethod(void) const;
-		virtual std::string	getUrl(void) const;
-		virtual std::string	getBody(void) const;
-		virtual std::string	getHttpVersion(void) const;
 		virtual int			getContentLength(void);
-		virtual bool		isRequestRead(void) const;
+		virtual bool		isReceived(void) const;
+		virtual void		appendBody(std::string& chunk);
 		virtual std::unordered_map<std::string, std::string>	getHeaders(void) const;
 	protected:
 		int	_sanitizeStatus;
