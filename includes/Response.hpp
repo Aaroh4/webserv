@@ -33,11 +33,7 @@ class Response: public Request
 			class ResponseException: public std::exception
 			{
 				public:
-					ResponseException(const std::string& message);
-					virtual ~ResponseException() noexcept;;
-					virtual const char* what() const noexcept override;
-				private:
-					std::string _message;
+				    	const char *what() const throw();
 			};
 
 

@@ -132,7 +132,7 @@ void Response::directorylisting(int clientfd, ServerInfo server, std::string fil
 
 void Response::respondGet(int clientfd, ServerInfo server)
 {
-	std::streampos fsize = 0;
+	//std::streampos fsize = 0;
 
 	//s(void) server; // THIS WILLLLLLLLLLLLLLLLLLLLLL BREAK THE CODE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -146,13 +146,14 @@ void Response::respondGet(int clientfd, ServerInfo server)
 		std::cout << "root: " << server.getlocationinfo()[this->_url].root << std::endl;
 		this->directorylisting(clientfd, server, this->directorylist(server.getlocationinfo()[this->_url].root, server.getlocationinfo()[this->_url].root.size()));
 	}
-	try{
+	try
+	{
 		openFile(filePath, server);
   	}
 	catch(ResponseException &e)
 	{
 		this->_errorMessage = e.what();
-		sendErrorResponse(clientfd);
+		//sendErrorResponse(clientfd);
 		std::cout << "?????????????????" << std::endl;
 		return;
 	}
@@ -186,7 +187,7 @@ void Response::openFile(std::string filePath, ServerInfo server)
 		else if (errno == ENOENT)
 		{
 			this->_sanitizeStatus = 404;
-			//throw ResponseException("Not Found");
+			throw ResponseException();
 		}
 		else if (errno == EACCES)
 		{
@@ -405,17 +406,9 @@ void Response::sendErrorResponse( int clientfd )
 		sendCustomError(clientfd);
 }
 
-Response::ResponseException::ResponseException(const std::string& message): _message(message)
-{
-}
-
-Response::ResponseException::~ResponseException() noexcept
-{
-}
-
 const char* Response::ResponseException::what() const noexcept
 {
-	return _message.c_str();
+	return "File not found\n";
 }
 
 
