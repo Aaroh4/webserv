@@ -65,7 +65,7 @@ void	Response::respondDelete(int clientfd)
 
 void	Response::respondPost(int clientfd, ServerInfo server)
 {
-	this->handleCgi("/home/ahamalai/Desktop/webserv" + server.getlocationinfo()["/" + cutFromTo(this->_url, 1, "/")].root + this->_url, clientfd);
+	this->handleCgi("/home/ahamalai/Desktop/webservcgi" + server.getlocationinfo()["/" + cutFromTo(this->_url, 1, "/")].root + this->_url, clientfd);
 }
 
 void	Response::handleCgi(std::string path, int client_socket)
@@ -81,7 +81,6 @@ void	Response::handleCgi(std::string path, int client_socket)
 			std::string request = "REQUEST_METHOD=" + this->_method;
 			std::string query = "QUERY_STRING=param=value";
 			std::string length = "CONTENT_LENGTH=" + this->_headers["Content-Length"];
-			std::cerr << path << "\n";
 			char *envp[] = {
 				(char *) request.c_str(),
 				(char *) query.c_str(),
@@ -108,8 +107,10 @@ void	Response::handleCgi(std::string path, int client_socket)
 
 			char buffer[1024];
 			ssize_t nbytes;
-			while ((nbytes = read(pipefd[0], buffer, sizeof(buffer))) > 0) {
-				std::cout << buffer;
+			
+			while ((nbytes = read(pipefd[0], buffer, sizeof(buffer))) > 0) 
+			{
+				std::cout.write(buffer, nbytes);
 				//send(client_socket, buffer, nbytes, 0);
 			}
 			close(pipefd[0]);
