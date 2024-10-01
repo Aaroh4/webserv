@@ -3,11 +3,11 @@
 #include <climits>
 #include <filesystem>
 
-Request::Request(void) : _sanitizeStatus(0)
+Request::Request(void) : _sanitizeStatus(0), _requestRead(false)
 {
 }
 
-Request::Request(std::string request) :  _sanitizeStatus(0), _request(request)
+Request::Request(std::string request) :  _sanitizeStatus(0), _requestRead(false), _request(request)
 {
 	return;
 }
@@ -291,22 +291,24 @@ void	Request::_parseHeaders(void)
 	size_t	lineEnd = 0;
 	size_t	i = 0;
 
-	//std::cout << "request before " << this->_request << std::endl; 
 	while (line != "\r\n\r\n")
 	{
 		lineEnd = this->_request.find_first_of("\n");
 		line = this->_request.substr(0, lineEnd + 1);
-		i = line.find_first_of(":");
-		if (i == std::string::npos)
+		if (line == "\r\n\r\n")
 		{
 			i = this->_request.find_last_of("n\n");
 			this->_request.erase(0, i + 1);
 			break;
 		}
+		i = line.find_first_of(":");
+		if (i == std::string::npos)
+		{
+			this->_sanitizeStatus = 666;
+		}
 		this->_headers[line.substr(0, i)] = line.substr(i + 2, lineEnd - (i + 3));
 		this->_request.erase(0, lineEnd + 1);
 	}
-	//std::cout << "request after " << this->_request << std::endl; 
 	this->_body = this->_request;
 }
 
@@ -346,10 +348,32 @@ void	Request::parse(void)
 {
 	this->_parseRequestLine();
 	this->_parseHeaders();
-	if (this->_headers["Content-Type"].find("multipart/form-data") != std::string::npos)
-		this->_parsePostInput();
-	else 
-		this->_splitKeyValuePairs();
+	if (!this->_headers["Content-Length"].empty())
+	{
+		try
+		{
+			size_t len = std::stoi(this->_headers["Content-Length"]);
+			if (this->_body.length() == len)
+				this->_requestRead = true;
+		}
+		catch(const std::exception& e)
+		{
+			this->_sanitizeStatus = 666;
+		}
+	}
+	else if (this->_headers["Transfer-Encoding"] == "chunked")
+	{
+		size_t	pos = this->_body.find_last_of("0\r\n");
+		if (pos != std::string::npos && this->_body.find_first_not_of("\r\n", pos + 1) == std::string::npos)
+			this->_requestRead = true;
+	}
+	if (this->_requestRead == true)
+	{
+		if (this->_headers["Content-Type"].find("multipart/form-data") != std::string::npos)
+			this->_parsePostInput();
+		else 
+			this->_splitKeyValuePairs();
+	}
 }
 
 void	Request::sanitize(void)
@@ -397,6 +421,11 @@ void	Request::sanitize(void)
 			this->_sanitizeStatus = 666;
 		}
 	}
+}
+
+bool	Request::isRequestRead(void) const
+{
+	return this->_requestRead;
 }
 
 std::string  Request::getMethod(void) const
