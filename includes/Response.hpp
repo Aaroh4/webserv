@@ -4,6 +4,7 @@
 #include "Request.hpp"
 #include "ServerInfo.hpp"
 #include <filesystem>
+#include <cerrno>
 
 class Response: public Request
 {
@@ -14,15 +15,38 @@ class Response: public Request
 			Response(const Response &);
 			Response operator=(const Response &);
 
-			std::fstream	directorylist(std::string name);
-			void	respond(int clientfd, ServerInfo server);
-			void	respondGet(int clientfd, ServerInfo server);
-			void	respondPost(int clientfd);
-			void	respondDelete(int clientfd);
+			std::string 	getStatusMessage(int statusCode);
+			std::string 	formatGetResponseMsg( void );
+			void			sendErrorResponse( int clientfd );
+			void			openFile(std::string filePath, ServerInfo server);
+			void 			sendNotFound(int clientfd);
+			void			sendCustomError(int clientfd);
+      std::string directorylist(std::string name, int rootsize);
+			void		directorylisting(int clientfd, ServerInfo server, std::string file);
+			void		handleCgi(std::string path, int client_socket);
+			void		respond(int clientfd, ServerInfo server);
+			void		respondGet(int clientfd, ServerInfo server);
+			void		respondPost(int clientfd, ServerInfo server);
+			void		respondDelete(int clientfd);
+
+			// Response exception
+			class ResponseException: public std::exception
+			{
+				public:
+				    	const char *what() const throw();
+			};
+
+
 	private:
 
+			std::string _fileSize;
+			std::string _contentType;
+			std::string _response;
+			std::string _body;
+			std::string _errorMessage;
+			std::fstream _file;
+			std::streampos _fsize;
 };
 
-std::string getStatusMessage(int statusCode);
 
 #endif

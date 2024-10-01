@@ -5,19 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="images/image.png" type="image/png">
     <title>Cat site</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="www/styles.css">
 </head>
 <body>
     <h1>Welcome to My Website</h1>
-	<img width="320" height="240" src="images/image.png" alt="Cat"> 
+	<img width="320" height="240" src="www/images/image.png" alt="Cat"> 
 	<video width="400" height="300" controls>
 		<source src="video.mp4" type="video/mp4">
 	</video>
 	<br />
-	<button>Delete image</button>
-	<script type="text/javascript" src="delete.js"></script>
-	<br>
-	<br>
-	<a href="./form.html">Fill a form</a>
+	<form action="www/cgi-bin/test.php" method="post">
+		<button type="submit">Print message</button>
+	</form>
+	<a href="www/form.html">Fill a form</a>
 </body>
 </html>
