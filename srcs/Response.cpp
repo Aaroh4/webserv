@@ -65,9 +65,7 @@ void	Response::respondDelete(int clientfd)
 
 void	Response::respondPost(int clientfd, ServerInfo server)
 {
-	(void) clientfd;
-	(void) server;
-	//this->handleCgi("/home/ahamalai/Desktop/webserv" + server.getlocationinfo()["/" + cutFromTo(this->_url, 1, "/")].root + this->_url, clientfd);
+	this->handleCgi("/home/ahamalai/Desktop/webserv" + server.getlocationinfo()["/" + cutFromTo(this->_url, 1, "/")].root + this->_url, clientfd);
 }
 
 void	Response::handleCgi(std::string path, int client_socket)
@@ -94,21 +92,25 @@ void	Response::handleCgi(std::string path, int client_socket)
 			dup2(pipefd[1], STDOUT_FILENO);
        		close(pipefd[1]);
 			char *argv[] = { (char*)path.c_str(), nullptr };
-			//std::cerr << path << "\n";
 			execve(path.c_str(), argv, envp);
 			exit(0); // THIS NEEDS TO BE RemOVED BECAUSE ITS NOT ALLOWED EXCVE SHOULD BE USED INSTEAD
 			// IF EXCVE FAILS YOU CAN THROW AN EXCEPTION INSTEAD OF USING EXIT
 		}
 		else 
-		{  // Parent process
-			// Close the write end of the pipe in the parent process
+		{
 			close(pipefd[1]);
 
-			// Read from the read end of the pipe (which contains the CGI output)
+			std::string response = "HTTP/1.1 204 No Content\r\n";
+			response += "Content-Type: text/plain\r\n";
+			//response += "Content-Length: " + std::to_string(file.size()) + "\r\n";
+			response += "Keep-Alive: timeout=5, max=100\r\n\r\n";
+			send(client_socket, response.c_str(), response.length(), 0);
+
 			char buffer[1024];
 			ssize_t nbytes;
 			while ((nbytes = read(pipefd[0], buffer, sizeof(buffer))) > 0) {
-				send(client_socket, buffer, nbytes, 0);  // Send CGI output to client
+				std::cout << buffer;
+				//send(client_socket, buffer, nbytes, 0);
 			}
 			close(pipefd[0]);
 			int	status;
@@ -132,18 +134,11 @@ void Response::directorylisting(int clientfd, ServerInfo server, std::string fil
 
 void Response::respondGet(int clientfd, ServerInfo server)
 {
-	//std::streampos fsize = 0;
+	std::string response;
 
-	//s(void) server; // THIS WILLLLLLLLLLLLLLLLLLLLLL BREAK THE CODE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-	std::string response = "";
-
-	//if (this->_url == "/")
-	//	this->_url = "/index.html";
 	std::string filePath = "./www" + this->_url;
 	if (server.getlocationinfo()[this->_url].dirList != false)
 	{
-		std::cout << "root: " << server.getlocationinfo()[this->_url].root << "\n";
 		this->directorylisting(clientfd, server, this->directorylist(server.getlocationinfo()[this->_url].root, server.getlocationinfo()[this->_url].root.size()));
 	}
 	try
@@ -168,11 +163,9 @@ void Response::respondGet(int clientfd, ServerInfo server)
 void Response::openFile(std::string filePath, ServerInfo server)
 {
 	this->_fsize = 0;
-	(void) filePath;
+	(void) filePath; // What to do with this??
+
 	this->_file.open("./" + server.getlocationinfo()[this->_url].root + "/" + server.getlocationinfo()[this->_url].index);
-		// std::cout << "./" + server.getlocationinfo()["/" + cutFromTo(this->_url, 1, "/")].root + this->_url << "\n";
-		// std::cout << "url: " << this->_url << "\n";
-		// std::cout << "root: " << server.getlocationinfo()["/" + cutFromTo(this->_url, 1, "/")].root << "\n";
 	if (this->_file.is_open() == false)
 	{
 		this->_file.open("./" + server.getlocationinfo()["/" + cutFromTo(this->_url, 1, "/")].root + this->_url);

@@ -13,15 +13,16 @@ class Request
 		Request(Request const& src);
 		Request& operator=(Request const& src);
 
-		virtual void		parse(void);
-		virtual	void		sanitize(void);
-		virtual int			getContentLength(void);
-		virtual bool		isReceived(void) const;
-		virtual void		appendBody(std::string& chunk);
+		virtual void	parse(void);
+		virtual	void	sanitize(void);
+		virtual std::string	getMethod(void) const;
+		virtual std::string	getUrl(void) const;
+		virtual std::string	getBody(void) const;
+		virtual std::string	getHttpVersion(void) const;
+		virtual int getContentLength(void);
 		virtual std::unordered_map<std::string, std::string>	getHeaders(void) const;
 	protected:
 		int	_sanitizeStatus;
-		bool _requestRead;
 		std::string	_type;
 		std::string _request;
 		std::string _method;
@@ -34,11 +35,10 @@ class Request
 		void	_parseRequestLine(void);
 		void 	_parseHeaders(void);
 		void	_getContentType(void);
-		void	_verifyPath(void);
+		void	_runCgi(void);
 		void	_parsePostInput(void);
 		void	_parsePart(std::string& part);
 		void	_splitKeyValuePairs(void);
-		void	_decodeChunks(void);
 		std::string	_splitMultiFormParts(std::string& boundary);
 		std::string	_parseFileName(std::string& line);
 };
