@@ -12,7 +12,7 @@ int	main(int argc, char **argv)
 
 	if (argc != 2)
 	{
-		std::cout << "Usage: ./webserv <config file>" << std::endl;
+		std::cout << "Usage: ./webserv <config file>" << "\n";
 		return (1);
 	}
 	readconfig(argv[1], manager);

@@ -126,14 +126,14 @@ ServerInfo	config_server(std::string temp, ServerInfo &server)
 					}
 					catch (std::exception &e)
 					{
-						std::cout << "Wrong argument for port!" << std::endl;
+						std::cout << "Wrong argument for port!" << "\n";
 					}
 					break;
 				case 2:
 				 	if (value.find("{") != std::string::npos)
 				 		brackets(temp.substr(temp.find(value), std::string::npos), "location", server);
 					else
-						std::cout << "No opening bracket on the same line as location!" << std::endl;
+						std::cout << "No opening bracket on the same line as location!" << "\n";
 					break;
 				case 3:
 					try
@@ -143,7 +143,7 @@ ServerInfo	config_server(std::string temp, ServerInfo &server)
 					}
 					catch (std::exception &e)
 					{
-						std::cout << "Wrong argument for timeout!" << std::endl;
+						std::cout << "Wrong argument for timeout!" << "\n";
 					}
 					break;
 				case 4:
@@ -154,7 +154,7 @@ ServerInfo	config_server(std::string temp, ServerInfo &server)
 					}
 					catch (std::exception &e)
 					{
-						std::cout << "Wrong argument for bodylimit!" << std::endl;
+						std::cout << "Wrong argument for bodylimit!" << "\n";
 					}
 					break;
 				default:

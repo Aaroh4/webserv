@@ -41,7 +41,7 @@ int	ServerManager::start_servers()
 		setsockopt(this->get_info()[i].getsocketfd(), SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
 		if (bind(this->get_info()[i].getsocketfd(), (struct sockaddr *) &serverAddress, sizeof(serverAddress)) < 0)
 		{
-			std::cout << "Bind failed!" << std::endl;
+			std::cout << "Bind failed!" << "\n";
 			return (1);
 		}
 		fcntl(this->get_info()[i].getsocketfd(), F_SETFL, O_NONBLOCK, FD_CLOEXEC);
@@ -76,7 +76,7 @@ int	ServerManager::start_servers()
 					client_pollfd.events = POLLIN;
 					poll_fds.push_back(client_pollfd);
 					connections[client_socket] = i;
-					std::cout << "New client connected on server " << i << std::endl;
+					std::cout << "New client connected on server " << i << "\n";
 				}
 				else
 				{
@@ -86,7 +86,7 @@ int	ServerManager::start_servers()
 
 					if (bytes_received <= 0)
 					{
-						std::cout << "Client disconnected" << std::endl;
+						std::cout << "Client disconnected" << "\n";
 						close(client_socket);
 						poll_fds.erase(poll_fds.begin() + i);
 						connections.erase(client_socket);
@@ -94,7 +94,7 @@ int	ServerManager::start_servers()
 					}
 					else
 					{
-						//std::cout << buffer << std::endl;
+						//std::cout << buffer << "\n";
 						Request request(buffer);
 						request.parse();
 						request.sanitize();

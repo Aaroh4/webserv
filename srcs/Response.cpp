@@ -35,7 +35,7 @@ void	Response::respond(int clientfd, ServerInfo server)
 		sendErrorResponse( clientfd );
 		return;
 	}
-	//std::cout << "method: "<< this->_method << std::endl;
+	//std::cout << "method: "<< this->_method << "\n";
 	if (this->_method == "GET")
 		respondGet(clientfd, server);
 	else if (this->_method == "POST")
@@ -83,7 +83,7 @@ void	Response::handleCgi(std::string path, int client_socket)
 			std::string request = "REQUEST_METHOD=" + this->_method;
 			std::string query = "QUERY_STRING=param=value";
 			std::string length = "CONTENT_LENGTH=" + this->_headers["Content-Length"];
-			std::cerr << path << std::endl;
+			std::cerr << path << "\n";
 			char *envp[] = {
 				(char *) request.c_str(),
 				(char *) query.c_str(),
@@ -94,7 +94,7 @@ void	Response::handleCgi(std::string path, int client_socket)
 			dup2(pipefd[1], STDOUT_FILENO);
        		close(pipefd[1]);
 			char *argv[] = { (char*)path.c_str(), nullptr };
-			//std::cerr << path << std::endl;
+			//std::cerr << path << "\n";
 			execve(path.c_str(), argv, envp);
 			exit(0); // THIS NEEDS TO BE RemOVED BECAUSE ITS NOT ALLOWED EXCVE SHOULD BE USED INSTEAD
 			// IF EXCVE FAILS YOU CAN THROW AN EXCEPTION INSTEAD OF USING EXIT
@@ -143,7 +143,7 @@ void Response::respondGet(int clientfd, ServerInfo server)
 	std::string filePath = "./www" + this->_url;
 	if (server.getlocationinfo()[this->_url].dirList != false)
 	{
-		std::cout << "root: " << server.getlocationinfo()[this->_url].root << std::endl;
+		std::cout << "root: " << server.getlocationinfo()[this->_url].root << "\n";
 		this->directorylisting(clientfd, server, this->directorylist(server.getlocationinfo()[this->_url].root, server.getlocationinfo()[this->_url].root.size()));
 	}
 	try
@@ -154,7 +154,7 @@ void Response::respondGet(int clientfd, ServerInfo server)
 	{
 		this->_errorMessage = e.what();
 		//sendErrorResponse(clientfd);
-		std::cout << "?????????????????" << std::endl;
+		std::cout << "?????????????????" << "\n";
 		return;
 	}
 	response = formatGetResponseMsg();
@@ -170,9 +170,9 @@ void Response::openFile(std::string filePath, ServerInfo server)
 	this->_fsize = 0;
 	(void) filePath;
 	this->_file.open("./" + server.getlocationinfo()[this->_url].root + "/" + server.getlocationinfo()[this->_url].index);
-		// std::cout << "./" + server.getlocationinfo()["/" + cutFromTo(this->_url, 1, "/")].root + this->_url << std::endl;
-		// std::cout << "url: " << this->_url << std::endl;
-		// std::cout << "root: " << server.getlocationinfo()["/" + cutFromTo(this->_url, 1, "/")].root << std::endl;
+		// std::cout << "./" + server.getlocationinfo()["/" + cutFromTo(this->_url, 1, "/")].root + this->_url << "\n";
+		// std::cout << "url: " << this->_url << "\n";
+		// std::cout << "root: " << server.getlocationinfo()["/" + cutFromTo(this->_url, 1, "/")].root << "\n";
 	if (this->_file.is_open() == false)
 	{
 		this->_file.open("./" + server.getlocationinfo()["/" + cutFromTo(this->_url, 1, "/")].root + this->_url);
@@ -410,7 +410,3 @@ const char* Response::ResponseException::what() const noexcept
 {
 	return "File not found\n";
 }
-
-
-
-

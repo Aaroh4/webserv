@@ -296,7 +296,7 @@ void	Request::_parseHeaders(void)
 	size_t	lineEnd = 0;
 	size_t	i = 0;
 
-	//std::cout << "request before " << this->_request << std::endl; 
+	//std::cout << "request before " << this->_request << "\n"; 
 	while (line != "\r\n\r\n")
 	{
 		lineEnd = this->_request.find_first_of("\n");
@@ -311,7 +311,7 @@ void	Request::_parseHeaders(void)
 		this->_headers[line.substr(0, i)] = line.substr(i + 2, lineEnd - (i + 3));
 		this->_request.erase(0, lineEnd + 1);
 	}
-	//std::cout << "request after " << this->_request << std::endl; 
+	//std::cout << "request after " << this->_request << "\n"; 
 	this->_body = this->_request;
 }
 
