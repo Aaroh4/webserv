@@ -37,10 +37,11 @@ class Request
 		void	_parseRequestLine(void);
 		void 	_parseHeaders(void);
 		void	_getContentType(void);
-		void	_runCgi(void);
+		void	_verifyPath(void);
 		void	_parsePostInput(void);
 		void	_parsePart(std::string& part);
 		void	_splitKeyValuePairs(void);
+		void	_decodeChunks(void);
 		std::string	_splitMultiFormParts(std::string& boundary);
 		std::string	_parseFileName(std::string& line);
 };
