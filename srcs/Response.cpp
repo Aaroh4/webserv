@@ -400,3 +400,29 @@ const char* Response::ResponseException::what() const noexcept
 {
 	return "File not found\n";
 }
+
+const char* Response::ResponseError404::what() const noexcept
+{
+	return "File not found\n";
+}
+
+const char* Response::ResponseError500::what() const noexcept
+{
+	return "Internal Server Error\n";
+}
+
+const char* Response::ResponseError501::what() const noexcept
+{
+	return "Not Implemented\n";
+}
+
+const char* Response::ResponseError400::what() const noexcept
+{
+	return "Bad Request\n";
+}
+
+const char* Response::ResponseError403::what() const noexcept
+{
+	return "Forbidden\n";
+}
+

@@ -36,6 +36,35 @@ class Response: public Request
 				    	const char *what() const throw();
 			};
 
+			class ResponseError404: public ResponseException
+			{
+				public:
+				    	const char *what() const throw();
+			};
+
+			class ResponseError500: public ResponseException
+			{
+				public:
+				    	const char *what() const throw();
+			};
+
+			class ResponseError501: public ResponseException
+			{
+				public:
+				    	const char *what() const throw();
+			};
+
+			class ResponseError400: public ResponseException
+			{
+				public:
+				    	const char *what() const throw();
+			};
+
+			class ResponseError403: public ResponseException
+			{
+				public:
+				    	const char *what() const throw();
+			};
 
 	private:
 
