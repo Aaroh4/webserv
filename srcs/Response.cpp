@@ -132,18 +132,11 @@ void Response::directorylisting(int clientfd, ServerInfo server, std::string fil
 
 void Response::respondGet(int clientfd, ServerInfo server)
 {
-	//std::streampos fsize = 0;
+	std::string response;
 
-	//s(void) server; // THIS WILLLLLLLLLLLLLLLLLLLLLL BREAK THE CODE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-	std::string response = "";
-
-	//if (this->_url == "/")
-	//	this->_url = "/index.html";
 	std::string filePath = "./www" + this->_url;
 	if (server.getlocationinfo()[this->_url].dirList != false)
 	{
-		std::cout << "root: " << server.getlocationinfo()[this->_url].root << "\n";
 		this->directorylisting(clientfd, server, this->directorylist(server.getlocationinfo()[this->_url].root, server.getlocationinfo()[this->_url].root.size()));
 	}
 	try
@@ -153,7 +146,7 @@ void Response::respondGet(int clientfd, ServerInfo server)
 	catch(ResponseException &e)
 	{
 		this->_errorMessage = e.what();
-		//sendErrorResponse(clientfd);
+		sendErrorResponse(clientfd);
 		std::cout << "?????????????????" << "\n";
 		return;
 	}
@@ -168,11 +161,9 @@ void Response::respondGet(int clientfd, ServerInfo server)
 void Response::openFile(std::string filePath, ServerInfo server)
 {
 	this->_fsize = 0;
-	(void) filePath;
+	(void) filePath; // What to do with this??
+
 	this->_file.open("./" + server.getlocationinfo()[this->_url].root + "/" + server.getlocationinfo()[this->_url].index);
-		// std::cout << "./" + server.getlocationinfo()["/" + cutFromTo(this->_url, 1, "/")].root + this->_url << "\n";
-		// std::cout << "url: " << this->_url << "\n";
-		// std::cout << "root: " << server.getlocationinfo()["/" + cutFromTo(this->_url, 1, "/")].root << "\n";
 	if (this->_file.is_open() == false)
 	{
 		this->_file.open("./" + server.getlocationinfo()["/" + cutFromTo(this->_url, 1, "/")].root + this->_url);
@@ -204,7 +195,6 @@ void Response::openFile(std::string filePath, ServerInfo server)
 std::string Response::directorylist(std::string name, int rootsize)
 {
 	std::string	directory;
-	//std::fstream directory("dir.html", std::ios::out | std::ios::in | std::ios::trunc);
 	directory += "<!DOCTYPE html>\n <html lang=\"en\">\n <head>\n </head>\n <body bgColor=\"#76ad0e\">\n";
 	directory += " <h1>Directory listing<h1>\n <h1>[---------------------]</h1>\n <ol>\n";
 	for (const auto & entry : std::filesystem::directory_iterator(name))
@@ -362,43 +352,43 @@ void Response::sendNotFound(int clientfd)
 {
 	this->_file.open("./www/404.html");
 	this->_url = "/404.html";
-	this->_file.seekg(0, std::ios::end);
-	this->_fsize = this->_file.tellg();
-	this->_fileSize = std::to_string(this->_fsize);
-	this->_file.seekg(0, std::ios::beg);
+
+
+	std::string file;
+	for (std::string line; std::getline(this->_file, line);)
+		file += line;
+
 	
 	std::string response = getStatusMessage(404);
 	response += "Content-Type: text/html\r\n";
-	response += "Content-Length: " + this->_fileSize + "\r\n";
+	response += "Content-Length: " + std::to_string(file.length()) + "\r\n";
 	response += "Keep-Alive: timeout=5, max=100\r\n\r\n";
 	
-	send(clientfd, response.c_str(), response.length(), 0);
+	response += file;
 	
-	const std::size_t chunkSize = 8192;
-	char buffer[chunkSize];
-	while (this->_file.read(buffer, chunkSize) || this->_file.gcount() > 0)
-		send(clientfd, buffer, this->_file.gcount(), 0);
+	send(clientfd, response.c_str(), response.length(), 0);
 }
 
 void Response::sendCustomError(int clientfd)
 {
 	std::string response = getStatusMessage(this->_sanitizeStatus);
 
-	this->_responseBody = makeErrorContent(this->_sanitizeStatus, this->_errorMessage);
-	this->_fileSize = std::to_string(this->_responseBody.length());
+	this->_body = makeErrorContent(this->_sanitizeStatus, this->_errorMessage);
+	this->_fileSize = std::to_string(this->_body.length());
 
 	response += "Content-Type: text/html\r\n";
 	response += "Content-Length: " + this->_fileSize + "\r\n";
 	response += "Keep-Alive: timeout=5, max=100\r\n\r\n";
 
 	send(clientfd, response.c_str(), response.length(), 0);
-	send(clientfd, this->_responseBody.c_str(), this->_responseBody.length(), 0);
+	send(clientfd, this->_body.c_str(), this->_body.length(), 0);
 }
 
 void Response::sendErrorResponse( int clientfd )
 {
 	if (this->_sanitizeStatus == 404)
 	{
+		std::cout << "asd" << std::endl;
 		sendNotFound(clientfd);
 		return ;
 	}
