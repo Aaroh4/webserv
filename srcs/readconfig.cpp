@@ -8,6 +8,7 @@
 ServerInfo	config_server(std::string temp, ServerInfo &server);
 int brackets(std::string configfile, std::string type, ServerInfo &server);
 
+// Function to make a string lowercase
 std::string toLowerCase(const std::string str) 
 {
     std::string lowerStr = str;
@@ -16,11 +17,54 @@ std::string toLowerCase(const std::string str)
     return lowerStr;
 }
 
-inline std::string	cutFromTo(std::string input, int start, int end)
+// Location parsing
+void locations(std::string temp, ServerInfo &server)
 {
-	return (input.substr(start, end - start));
+	std::vector<std::string> location_configs = 
+	{"root:", "dir-listing:", "allowed-methods:", "upload:", "index:"};
+	std::unordered_set<std::string> all_methods = 
+	{"GET", "POST", "DELETE", "HEAD"};
+
+	location temploc;
+	
+	temploc.name = temp.substr(0, temp.find(" "));
+	for (size_t i = 0; i < location_configs.size(); i++) // Loop that checks out which configs are added
+	{
+		size_t pos = toLowerCase(temp).find(location_configs.at(i));
+		if (pos != std::string::npos)
+		{
+			std::string value;
+			value = cutFromTo(temp, pos + location_configs.at(i).size(), "\n");
+			value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
+			switch (i)
+			{
+				case 0:
+						temploc.root = value;
+						break;
+				case 1:
+						if (std::filesystem::is_directory(temploc.root) && value.find("true") != std::string::npos)														// THIS IS FOR TESTING REMEMBER TO SWITCH OUT
+							temploc.dirList = true;
+						else
+							temploc.dirList = false; 
+											break;
+				case 2:
+						for (std::string method : all_methods)
+							if (value.find(method) != std::string::npos)
+								temploc.methods.insert(method);
+						break;
+				case 3:
+						temploc.upload = value;
+						break;
+				case 4:
+						temploc.index = value;
+						break;
+			}
+		}
+	}
+	server.setnewlocation(temploc);
 }
 
+// Recursive function which parses for brackets
 int brackets(std::string configfile, std::string type, ServerInfo &server)
 {
 	std::string 		temp;
@@ -37,16 +81,7 @@ int brackets(std::string configfile, std::string type, ServerInfo &server)
 	}
 	if (type == "location")
 	{
-		location temploc;
-
-		temploc.name = temp.substr(0, temp.find(" "));
-		
-		if (std::filesystem::is_directory(temploc.name) && cutFromTo(temp, temp.find("dir-listing: "), temp.find("\n")).find("true") != std::string::npos)														// THIS IS FOR TESTING REMEMBER TO SWITCH OUT
-			temploc.dirList = true; 					// THIS IS FOR TESTING REMEMBER TO SWITCH OUT
-		else											// THIS IS FOR TESTING REMEMBER TO SWITCH OUT
-			temploc.dirList = false; 					// THIS IS FOR TESTING REMEMBER TO SWITCH OUT
-			
-		server.setnewlocation(temploc);
+		locations(temp, server);
 		config_server(temp.substr(temp.find("{"), temp.size()), server);
 	}
 	else if (type == "server")
@@ -54,41 +89,73 @@ int brackets(std::string configfile, std::string type, ServerInfo &server)
 	return (temp.size());
 }
 
+// Recursive function for parsing
 ServerInfo	config_server(std::string temp, ServerInfo &server)
 {
-	std::vector<std::string> string_to_case
+	std::vector<std::string> server_configs
 	{
-		{"host: "},
 		{"host:"},
-		{"port: "},
 		{"port:"},
 		{"location "},
+		{"timeout:"},
+		{"bodylimit:"}
+
 	};
 
 	server.setsocketfd(socket(AF_INET, SOCK_STREAM, 0));
-	for (size_t j = 0; j < string_to_case.size(); j++)
+	for (size_t j = 0; j < server_configs.size(); j++) // Loop that checks out which configs are added
 	{
-		size_t pos = toLowerCase(temp).find(string_to_case.at(j));
+		size_t pos = toLowerCase(temp).find(server_configs.at(j));
 		if (pos != std::string::npos)
 		{
 			std::string	value;
-			std::istringstream stream(temp.substr(pos + string_to_case.at(j).size(), std::string::npos));
-			std::getline(stream, value, '\n');
+			int intvalue;
+			value = cutFromTo(temp.substr(pos + server_configs.at(j).size()), 0, "\n");
+			if (j != 2)
+				value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
 			switch (j)
 			{
 				case 0:
-				case 1:
 					server.set_ip(value);
 					break;
-				case 2:
-				case 3:
-					server.setnew_port(std::stoi(value));
+				case 1:
+					try
+					{
+						if ((intvalue = std::stoi(value)) >= 0)
+							server.setnew_port(intvalue);
+					}
+					catch (std::exception &e)
+					{
+						std::cout << "Wrong argument for port!" << "\n";
+					}
 					break;
-				 case 4:
+				case 2:
 				 	if (value.find("{") != std::string::npos)
 				 		brackets(temp.substr(temp.find(value), std::string::npos), "location", server);
 					else
-						std::cout << "No opening bracket on the same line as location!" << std::endl;
+						std::cout << "No opening bracket on the same line as location!" << "\n";
+					break;
+				case 3:
+					try
+					{
+						if ((intvalue = std::stoi(value)) >= 0)
+							server.setTimeout(intvalue);
+					}
+					catch (std::exception &e)
+					{
+						std::cout << "Wrong argument for timeout!" << "\n";
+					}
+					break;
+				case 4:
+					try
+					{
+						if ((intvalue = std::stoi(value)) >= 0)
+							server.setBodylimit(intvalue);
+					}
+					catch (std::exception &e)
+					{
+						std::cout << "Wrong argument for bodylimit!" << "\n";
+					}
 					break;
 				default:
 					break;
@@ -98,6 +165,7 @@ ServerInfo	config_server(std::string temp, ServerInfo &server)
 	return (server);
 }
 
+// start of the config reading
 int	readconfig(std::string name, ServerManager &manager)
 {
 	std::ifstream	configfile(name);
@@ -116,9 +184,6 @@ int	readconfig(std::string name, ServerManager &manager)
 		ServerInfo server;
 		temp = temp.substr(brackets(temp, "server", server), std::string::npos);
 		manager.setnew_info(server);
-		//std::cout << server.getlocation() << std::endl;
 	}
-	//std::cout << manager.get_info()[0].getlocation() << std::endl;
-	//std::cout << manager.get_info()[0].get_ip() << std::endl;
 	return (0);
 }

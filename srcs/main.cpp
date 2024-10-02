@@ -11,7 +11,10 @@ int	main(int argc, char **argv)
 	ServerManager	manager;
 
 	if (argc != 2)
+	{
+		std::cout << "Usage: ./webserv <config file>" << "\n";
 		return (1);
+	}
 	readconfig(argv[1], manager);
-	manager.start_servers();
+	return (manager.start_servers());
 }
