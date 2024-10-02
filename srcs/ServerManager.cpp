@@ -94,7 +94,11 @@ int	ServerManager::start_servers()
 					}
 					else
 					{
+<<<<<<< HEAD
+						std::cout << buffer << std::endl;
+=======
 						//std::cout << buffer << "\n";
+>>>>>>> 988a8d7bff6dd603dbbc2a70652b51eaa71c5f56
 						Request request(buffer);
 						request.parse();
 						request.sanitize();
