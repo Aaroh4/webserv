@@ -150,7 +150,8 @@ void	Response::handleCgi(std::string path, int client_socket)
 void Response::directorylisting(int clientfd, ServerInfo server, std::string file)
 {
 	(void) server; // THIS NEEDS TO BE CHANGED SINCE BEFORE TRYING ACCESS SOMETHING FROM IT
-	std::string response = "HTTP/1.1 200 OK\r\n";
+	std::string response;
+
 	if (this->_type.empty())
 			this->_type = "text/html";
 	this->_fileSize = std::to_string(file.size());
@@ -236,33 +237,33 @@ std::string makeErrorContent(int statusCode, std::string message)
 
 void Response::sendNotFound(int clientfd)
 {
+	std::string response;
+	std::string file;
+
 	this->_file.open("./www/404.html");
 	this->_url = "/404.html";
 
-	std::string file;
 	for (std::string line; std::getline(this->_file, line);)
 		file += line;
 
 	this->_fileSize = std::to_string(file.length());
 	
-	std::string response = formatGetResponseMsg(0);
+	response = formatGetResponseMsg(0);
 	response += file;	
 	send(clientfd, response.c_str(), response.length(), 0);
 }
 
 void Response::sendCustomError(int clientfd)
 {
-	std::string response = getStatusMessage(this->_sanitizeStatus);
+	std::string response;
 
 	this->_body = makeErrorContent(this->_sanitizeStatus, this->_errorMessage);
 	this->_fileSize = std::to_string(this->_body.length());
 
-	response += "Content-Type: text/html\r\n";
-	response += "Content-Length: " + this->_fileSize + "\r\n";
-	response += "Keep-Alive: timeout=5, max=100\r\n\r\n";
+	response = formatGetResponseMsg(0);
+	response += this->_body;
 
 	send(clientfd, response.c_str(), response.length(), 0);
-	send(clientfd, this->_body.c_str(), this->_body.length(), 0);
 }
 
 void Response::sendErrorResponse( int clientfd )
