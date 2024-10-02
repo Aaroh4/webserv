@@ -21,7 +21,7 @@ class Request
 		virtual std::unordered_map<std::string, std::string>	getHeaders(void) const;
 	protected:
 		int	_sanitizeStatus;
-		bool _requestRead;
+		bool _requestReceived;
 		std::string	_type;
 		std::string _request;
 		std::string _method;
