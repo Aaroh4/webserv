@@ -56,6 +56,8 @@ class ServerInfo
 			int												_socketfd;
 			std::string 									_locations;
 			std::vector <struct pollfd>						_pollfds;
+
+			std::string										_response;
 };
 
 unsigned int convertip(std::string ip);

@@ -16,7 +16,7 @@ class Response: public Request
 			Response operator=(const Response &);
 
 			std::string 	getStatusMessage(int statusCode);
-			std::string 	formatGetResponseMsg( void );
+			std::string 	formatGetResponseMsg(int code);
 			void			sendErrorResponse( int clientfd );
 			void			openFile(std::string filePath, ServerInfo server);
 			void 			sendNotFound(int clientfd);
