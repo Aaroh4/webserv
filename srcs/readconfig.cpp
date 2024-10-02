@@ -136,15 +136,7 @@ ServerInfo	config_server(std::string temp, ServerInfo &server)
 						std::cout << "No opening bracket on the same line as location!" << "\n";
 					break;
 				case 3:
-					try
-					{
-						if ((intvalue = std::stoi(value)) >= 0)
-							server.setTimeout(intvalue);
-					}
-					catch (std::exception &e)
-					{
-						std::cout << "Wrong argument for timeout!" << "\n";
-					}
+						server.setTimeout(value);
 					break;
 				case 4:
 					try

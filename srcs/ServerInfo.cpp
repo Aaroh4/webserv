@@ -10,6 +10,8 @@ ServerInfo::ServerInfo(const ServerInfo &input)
 	this->_socketfd = input._socketfd;
 	this->_locations = input._locations;
 	this->_locationinfo = input._locationinfo;
+	this->_timeout = input._timeout;
+	this->_bodylimit = input._bodylimit;
 }
 
 ServerInfo ServerInfo::operator=(const ServerInfo &input)
@@ -21,6 +23,8 @@ ServerInfo ServerInfo::operator=(const ServerInfo &input)
 		this->_socketfd = input._socketfd;
 		this->_locations = input._locations;
 		this->_locationinfo = input._locationinfo;
+		this->_timeout = input._timeout;
+		this->_bodylimit = input._bodylimit;
 	}
 	return (input);
 }
@@ -69,12 +73,12 @@ std::unordered_map<std::string, location>	ServerInfo::getlocationinfo() const
 	return (this->_locationinfo);
 }
 
-void ServerInfo::setTimeout(unsigned int input)
+void ServerInfo::setTimeout(std::string input)
 {
 	this->_timeout = input;
 }
 
-unsigned int	ServerInfo::get_timeout() const
+std::string	ServerInfo::get_timeout() const
 {
 	return (this->_timeout);
 }

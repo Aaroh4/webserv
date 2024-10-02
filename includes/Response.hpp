@@ -38,7 +38,7 @@ class Response: public Request
 
 
 	private:
-
+			ServerInfo	_server;
 			std::string _fileSize;
 			std::string _contentType;
 			std::string _response;

@@ -42,13 +42,13 @@ class ServerInfo
 			void												setnewlocation(location input);
 			std::unordered_map<std::string, location>			getlocationinfo() const;
 
-			void												setTimeout(unsigned int input);
-			unsigned int										get_timeout() const;
+			void												setTimeout(std::string input);
+			std::string											get_timeout() const;
 
 			void												setBodylimit(unsigned int input);
 			unsigned int										getBodylimit() const;
 	private:
-			unsigned int									_timeout;
+			std::string										_timeout;
 			unsigned int									_bodylimit;
 			unsigned int									_ip;
 			std::vector<int>								_port;
@@ -56,8 +56,6 @@ class ServerInfo
 			int												_socketfd;
 			std::string 									_locations;
 			std::vector <struct pollfd>						_pollfds;
-
-			std::string										_response;
 };
 
 unsigned int convertip(std::string ip);

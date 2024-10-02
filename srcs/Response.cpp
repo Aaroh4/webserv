@@ -30,6 +30,8 @@ Response Response::operator=(const Response &input)
 
 void	Response::respond(int clientfd, ServerInfo server)
 {
+	this->_server = server;
+
 	if (this->_sanitizeStatus != 200)
 	{
 		sendErrorResponse( clientfd );
@@ -218,8 +220,11 @@ std::string Response::formatGetResponseMsg(int close)
 
 	response += "Content-Length: " + this->_fileSize + "\r\n";
 	
-	if (close == 1)
-		response += "Keep-Alive: timeout=5, max=100\r\n\r\n";
+	if (close == 0)
+	{
+		response += "Keep-Alive: timeout=" + this->_server.get_timeout() + ", max=100\r\n\r\n";
+		std::cout << "timeout: " << this->_server.get_timeout() << std::endl;
+	}
 	else
 		response += "Connection: close\r\n\r\n";
 	return (response);
