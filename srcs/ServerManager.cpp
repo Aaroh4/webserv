@@ -94,7 +94,7 @@ int	ServerManager::start_servers()
 					}
 					else
 					{
-						//std::cout << buffer << "\n";
+						std::cout << buffer << "\n";
 						Request request(buffer);
 						request.parse();
 						request.sanitize();
