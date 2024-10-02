@@ -42,7 +42,7 @@ class Response: public Request
 			std::string _fileSize;
 			std::string _contentType;
 			std::string _response;
-			std::string _body;
+			std::string _responseBody;
 			std::string _errorMessage;
 			std::fstream _file;
 			std::streampos _fsize;

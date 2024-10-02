@@ -384,15 +384,15 @@ void Response::sendCustomError(int clientfd)
 {
 	std::string response = getStatusMessage(this->_sanitizeStatus);
 
-	this->_body = makeErrorContent(this->_sanitizeStatus, this->_errorMessage);
-	this->_fileSize = std::to_string(this->_body.length());
+	this->_responseBody = makeErrorContent(this->_sanitizeStatus, this->_errorMessage);
+	this->_fileSize = std::to_string(this->_responseBody.length());
 
 	response += "Content-Type: text/html\r\n";
 	response += "Content-Length: " + this->_fileSize + "\r\n";
 	response += "Keep-Alive: timeout=5, max=100\r\n\r\n";
 
 	send(clientfd, response.c_str(), response.length(), 0);
-	send(clientfd, this->_body.c_str(), this->_body.length(), 0);
+	send(clientfd, this->_responseBody.c_str(), this->_responseBody.length(), 0);
 }
 
 void Response::sendErrorResponse( int clientfd )
