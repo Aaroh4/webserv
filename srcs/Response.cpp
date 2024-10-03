@@ -181,7 +181,7 @@ std::string Response::buildDirectorylist(std::string name, int rootsize)
 	directory += " <h1>Directory listing<h1>\n <h1>[---------------------]</h1>\n <ol>\n";
 	for (const auto & entry : std::filesystem::directory_iterator(name))
 	{
-   		directory += "<li><a href=" + this->_url + "/" + entry.path().string().erase(0, rootsize + 1) + ">" + entry.path().string().erase(0, rootsize + 1) + "</a> </li>" + "\n";
+   		directory += "<li><a href=" + entry.path().string() + ">" + entry.path().string().erase(0, rootsize + 1) + "</a> </li>" + "\n";
  	}
 	directory += "</ol>\n <h1>[---------------------]</h1>\n </body>\n </html>\n";
 	return (directory);
@@ -191,12 +191,15 @@ void Response::openFile(std::string filePath, ServerInfo server)
 {
 	this->_fsize = 0;
 	(void) filePath; // What to do with this??
-	//std::cout << "url: " << this->_url << std::endl;
-	std::string temp = this->_url.substr(0, this->_url.rfind("/"));;
+	std::cout << "url: " << this->_url << std::endl;
+	std::string temp = "/" + cutFromTo(this->_url, 1, "/");
 
-	while (server.getlocationinfo()[temp].root.empty() && temp.rfind("/") != std::string::npos)
-		temp = temp.substr(0, temp.rfind("/"));
-
+	while (server.getlocationinfo()[temp].root.empty() && temp.size() + 2 < this->_url.size() && !temp.empty())
+	{
+		temp += "/" + cutFromTo(this->_url, temp.size() + 1, "/");
+		std::cout << temp << std::endl;
+	}
+	std::cout << "temp: " << temp << std::endl;
 	if (!server.getlocationinfo()[temp].root.empty() && server.getlocationinfo()[this->_url].index.empty())
 	{
 		//std::cout << "1: " << "./" + server.getlocationinfo()[temp].root + this->_url.substr(temp.size(), std::string::npos) << std::endl;
