@@ -208,22 +208,21 @@ void Response::openFile(std::string filePath, ServerInfo server)
 		std::cout << "." + this->_url << std::endl;
 		this->_file.open("." + this->_url);
 	}
+
 	if (this->_file.is_open() == false)
 	{
-		if (errno == EIO || errno == ENOMEM)
+		switch errno
 		{
-			this->_sanitizeStatus = 500; //internal error when I/O problem or no memory
-			//throw ResponseException("Internal Server Error");
-		}
-		else if (errno == ENOENT)
-		{
-			this->_sanitizeStatus = 404;
-			throw ResponseException();
-		}
-		else if (errno == EACCES)
-		{
-			this->_sanitizeStatus = 403;
-			//throw ResponseException("Forbidden");
+			case EIO:
+			case ENOMEM:
+					this->_sanitizeStatus = 500; //internal error when I/O problem or no memory
+					//throw ResponseException("Internal Server Error");
+			case ENOENT:
+					this->_sanitizeStatus = 404;
+					throw ResponseException();
+			case EACCES:
+					this->_sanitizeStatus = 403;
+					//throw ResponseException("Forbidden");
 		}
 	}
 	this->_file.seekg(0, std::ios::end);
