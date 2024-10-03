@@ -22,7 +22,7 @@ class Response: public Request
 			void 			sendNotFound(int clientfd);
 			void			sendCustomError(int clientfd);
       std::string directorylist(std::string name, int rootsize);
-			void		directorylisting(int clientfd, ServerInfo server, std::string file);
+			void		directorylisting(int clientfd, std::string file);
 			void		handleCgi(std::string path, int client_socket);
 			void		respond(int clientfd, ServerInfo server);
 			void		respondGet(int clientfd, ServerInfo server);

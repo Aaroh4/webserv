@@ -37,7 +37,6 @@ void	Response::respond(int clientfd, ServerInfo server)
 		sendErrorResponse( clientfd );
 		return;
 	}
-	//std::cout << "method: "<< this->_method << "\n";
 	if (this->_method == "GET")
 		respondGet(clientfd, server);
 	else if (this->_method == "POST")
@@ -60,7 +59,7 @@ void Response::respondGet(int clientfd, ServerInfo server)
 	std::string filePath = "./www" + this->_url;
 	if (server.getlocationinfo()[this->_url].dirList != false)
 	{
-		this->directorylisting(clientfd, server, this->directorylist(server.getlocationinfo()[this->_url].root, server.getlocationinfo()[this->_url].root.size()));
+		this->directorylisting(clientfd, this->directorylist(server.getlocationinfo()[this->_url].root, server.getlocationinfo()[this->_url].root.size()));
 	}
 	try
 	{
@@ -83,7 +82,13 @@ void Response::respondGet(int clientfd, ServerInfo server)
 
 void	Response::respondPost(int clientfd, ServerInfo server)
 {
-	this->handleCgi("/home/ahamalai/Desktop/webservcgi" + server.getlocationinfo()["/" + cutFromTo(this->_url, 1, "/")].root + this->_url, clientfd);
+	char result[4096];
+	std::string location;
+
+	ssize_t count = readlink("/proc/self/exe", result, 4096);
+
+	location = std::string(result, (count > 0) ? count : 0);
+	this->handleCgi(location.substr(0, location.rfind("/")) + server.getlocationinfo()["/" + cutFromTo(this->_url, 1, "/")].root + this->_url, clientfd);
 }
 
 void	Response::respondDelete(int clientfd)
@@ -139,7 +144,7 @@ void	Response::handleCgi(std::string path, int client_socket)
 			
 			while ((nbytes = read(pipefd[0], buffer, sizeof(buffer))) > 0) 
 			{
-				std::cout.write(buffer, nbytes);
+				std::cout.write(buffer, nbytes).flush();
 				//send(client_socket, buffer, nbytes, 0);
 			}
 			close(pipefd[0]);
@@ -149,9 +154,8 @@ void	Response::handleCgi(std::string path, int client_socket)
 	}
 }
 
-void Response::directorylisting(int clientfd, ServerInfo server, std::string file)
+void Response::directorylisting(int clientfd, std::string file)
 {
-	(void) server; // THIS NEEDS TO BE CHANGED SINCE BEFORE TRYING ACCESS SOMETHING FROM IT
 	std::string response;
 
 	if (this->_type.empty())
@@ -221,10 +225,7 @@ std::string Response::formatGetResponseMsg(int close)
 	response += "Content-Length: " + this->_fileSize + "\r\n";
 	
 	if (close == 0)
-	{
 		response += "Keep-Alive: timeout=" + this->_server.get_timeout() + ", max=100\r\n\r\n";
-		std::cout << "timeout: " << this->_server.get_timeout() << std::endl;
-	}
 	else
 		response += "Connection: close\r\n\r\n";
 	return (response);
