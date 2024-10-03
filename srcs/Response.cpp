@@ -59,7 +59,7 @@ void Response::respondGet(int clientfd, ServerInfo server)
 	std::string filePath = "./www" + this->_url;
 	if (server.getlocationinfo()[this->_url].dirList != false)
 	{
-		this->directorylisting(clientfd, this->directorylist(server.getlocationinfo()[this->_url].root, server.getlocationinfo()[this->_url].root.size()));
+		this->directorylisting(clientfd, this->buildDirectorylist(server.getlocationinfo()[this->_url].root, server.getlocationinfo()[this->_url].root.size()));
 	}
 	try
 	{
@@ -174,14 +174,16 @@ void Response::directorylisting(int clientfd, std::string file)
 	send(clientfd, response.c_str(), response.length(), 0);
 }
 
-std::string Response::directorylist(std::string name, int rootsize)
+std::string Response::buildDirectorylist(std::string name, int rootsize)
 {
 	std::string	directory;
 	directory += "<!DOCTYPE html>\n <html lang=\"en\">\n <head>\n </head>\n <body bgColor=\"#76ad0e\">\n";
 	directory += " <h1>Directory listing<h1>\n <h1>[---------------------]</h1>\n <ol>\n";
 	for (const auto & entry : std::filesystem::directory_iterator(name))
 	{
-   		directory += "<li><a href=" + entry.path().string() + ">" + entry.path().string().erase(0, rootsize + 1) + "</a> </li>" + "\n";
+		std::cout << entry.path().string() << std::endl;
+		
+   		directory += "<li><a href=" + this->_url + "/" + entry.path().string().erase(0, rootsize + 1) + ">" + entry.path().string().erase(0, rootsize + 1) + "</a> </li>" + "\n";
  	}
 	directory += "</ol>\n <h1>[---------------------]</h1>\n </body>\n </html>\n";
 	return (directory);

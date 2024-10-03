@@ -21,13 +21,13 @@ class Response: public Request
 			void			openFile(std::string filePath, ServerInfo server);
 			void 			sendNotFound(int clientfd);
 			void			sendCustomError(int clientfd);
-      std::string directorylist(std::string name, int rootsize);
-			void		directorylisting(int clientfd, std::string file);
-			void		handleCgi(std::string path, int client_socket);
-			void		respond(int clientfd, ServerInfo server);
-			void		respondGet(int clientfd, ServerInfo server);
-			void		respondPost(int clientfd, ServerInfo server);
-			void		respondDelete(int clientfd);
+      std::string			buildDirectorylist(std::string name, int rootsize);
+			void			directorylisting(int clientfd, std::string file);
+			void			handleCgi(std::string path, int client_socket);
+			void			respond(int clientfd, ServerInfo server);
+			void			respondGet(int clientfd, ServerInfo server);
+			void			respondPost(int clientfd, ServerInfo server);
+			void			respondDelete(int clientfd);
 
 			// Response exception
 			class ResponseException: public std::exception
