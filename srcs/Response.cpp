@@ -81,14 +81,25 @@ void Response::respondGet(int clientfd, ServerInfo server)
 }
 
 void	Response::respondPost(int clientfd, ServerInfo server)
-{
-	char result[4096];
-	std::string location;
+{	
+	if (this->_type == "cgi/py" || this->_type == "cgi/php")
+	{
+		char result[4096];
+		std::string location;
 
-	ssize_t count = readlink("/proc/self/exe", result, 4096);
+		ssize_t count = readlink("/proc/self/exe", result, 4096);
 
-	location = std::string(result, (count > 0) ? count : 0);
-	this->handleCgi(location.substr(0, location.rfind("/")) + server.getlocationinfo()["/" + cutFromTo(this->_url, 1, "/")].root + this->_url, clientfd);
+		location = std::string(result, (count > 0) ? count : 0);
+		this->handleCgi(location.substr(0, location.rfind("/")) + server.getlocationinfo()["/" + cutFromTo(this->_url, 1, "/")].root + this->_url, clientfd);
+	}
+	else
+	{
+		std::string response;
+
+		this->_sanitizeStatus = 204;
+		response = formatGetResponseMsg(0);
+		send(clientfd, response.c_str(), response.length(), 0);
+	}
 }
 
 void	Response::respondDelete(int clientfd)
@@ -106,51 +117,48 @@ void	Response::handleCgi(std::string path, int client_socket)
 {
 	int	pipefd[2];
 
-	if (this->_type == "cgi/py" || this->_type == "cgi/php")
+	pipe(pipefd);
+	int	pid = fork();
+	if (pid == 0)
 	{
-		pipe(pipefd);
-		int	pid = fork();
-		if (pid == 0)
+		std::string request = "REQUEST_METHOD=" + this->_method;
+		std::string query = "QUERY_STRING=param=value";
+		std::string length = "CONTENT_LENGTH=" + this->_headers["Content-Length"];
+		char *envp[] = {
+			(char *) request.c_str(),
+			(char *) query.c_str(),
+			(char *) length.c_str(),
+			nullptr
+		};
+		close(pipefd[0]);
+		dup2(pipefd[1], STDOUT_FILENO);
+		close(pipefd[1]);
+		char *argv[] = { (char*)path.c_str(), nullptr };
+		execve(path.c_str(), argv, envp);
+		exit(0); // THIS NEEDS TO BE RemOVED BECAUSE ITS NOT ALLOWED EXCVE SHOULD BE USED INSTEAD
+		// IF EXCVE FAILS YOU CAN THROW AN EXCEPTION INSTEAD OF USING EXIT
+	}
+	else 
+	{
+		close(pipefd[1]);
+
+		std::string response = "HTTP/1.1 204 No Content\r\n";
+		response += "Content-Type: text/plain\r\n";
+		//response += "Content-Length: " + std::to_string(file.size()) + "\r\n";
+		response += "Keep-Alive: timeout=5, max=100\r\n\r\n";
+		send(client_socket, response.c_str(), response.length(), 0);
+
+		char buffer[1024];
+		ssize_t nbytes;
+		
+		while ((nbytes = read(pipefd[0], buffer, sizeof(buffer))) > 0) 
 		{
-			std::string request = "REQUEST_METHOD=" + this->_method;
-			std::string query = "QUERY_STRING=param=value";
-			std::string length = "CONTENT_LENGTH=" + this->_headers["Content-Length"];
-			char *envp[] = {
-				(char *) request.c_str(),
-				(char *) query.c_str(),
-				(char *) length.c_str(),
-				nullptr
-			};
-			close(pipefd[0]);
-			dup2(pipefd[1], STDOUT_FILENO);
-       		close(pipefd[1]);
-			char *argv[] = { (char*)path.c_str(), nullptr };
-			execve(path.c_str(), argv, envp);
-			exit(0); // THIS NEEDS TO BE RemOVED BECAUSE ITS NOT ALLOWED EXCVE SHOULD BE USED INSTEAD
-			// IF EXCVE FAILS YOU CAN THROW AN EXCEPTION INSTEAD OF USING EXIT
+			std::cout.write(buffer, nbytes).flush();
+			//send(client_socket, buffer, nbytes, 0);
 		}
-		else 
-		{
-			close(pipefd[1]);
-
-			std::string response = "HTTP/1.1 204 No Content\r\n";
-			response += "Content-Type: text/plain\r\n";
-			//response += "Content-Length: " + std::to_string(file.size()) + "\r\n";
-			response += "Keep-Alive: timeout=5, max=100\r\n\r\n";
-			send(client_socket, response.c_str(), response.length(), 0);
-
-			char buffer[1024];
-			ssize_t nbytes;
-			
-			while ((nbytes = read(pipefd[0], buffer, sizeof(buffer))) > 0) 
-			{
-				std::cout.write(buffer, nbytes).flush();
-				//send(client_socket, buffer, nbytes, 0);
-			}
-			close(pipefd[0]);
-			int	status;
-			waitpid(pid, &status, 0);
-    	}
+		close(pipefd[0]);
+		int	status;
+		waitpid(pid, &status, 0);
 	}
 }
 
@@ -183,11 +191,22 @@ void Response::openFile(std::string filePath, ServerInfo server)
 {
 	this->_fsize = 0;
 	(void) filePath; // What to do with this??
+	std::string temp = "/" + cutFromTo(this->_url, 1, "/");
 
-	this->_file.open("./" + server.getlocationinfo()[this->_url].root + "/" + server.getlocationinfo()[this->_url].index);
-	if (this->_file.is_open() == false)
+	if (!server.getlocationinfo()[temp].root.empty() && server.getlocationinfo()[this->_url].index.empty())
 	{
-		this->_file.open("./" + server.getlocationinfo()["/" + cutFromTo(this->_url, 1, "/")].root + this->_url);
+		std::cout << "./" + server.getlocationinfo()[temp].root + this->_url.substr(temp.size(), std::string::npos) << std::endl;
+		this->_file.open("./" + server.getlocationinfo()[temp].root + this->_url.substr(temp.size(), std::string::npos));
+	}
+	else if (!server.getlocationinfo()[temp].root.empty() && !server.getlocationinfo()[this->_url].index.empty())
+	{
+		std::cout << "./" + server.getlocationinfo()[this->_url].root + "/" + server.getlocationinfo()[this->_url].index << std::endl;
+		this->_file.open("./" + server.getlocationinfo()[this->_url].root + "/" + server.getlocationinfo()[this->_url].index);
+	}
+	else
+	{
+		std::cout << "." + this->_url << std::endl;
+		this->_file.open("." + this->_url);
 	}
 	if (this->_file.is_open() == false)
 	{
