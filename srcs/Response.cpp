@@ -61,23 +61,26 @@ void Response::respondGet(int clientfd, ServerInfo server)
 	{
 		this->directorylisting(clientfd, this->buildDirectorylist(server.getlocationinfo()[this->_url].root, server.getlocationinfo()[this->_url].root.size()));
 	}
-	try
+	else
 	{
-		openFile(filePath, server);
-  	}
-	catch(ResponseException &e)
-	{
-		this->_errorMessage = e.what();
-		sendErrorResponse(clientfd);
-		std::cout << "?????????????????" << "\n";
-		return;
+		try
+		{
+			openFile(filePath, server);
+		}
+		catch(ResponseException &e)
+		{
+			this->_errorMessage = e.what();
+			sendErrorResponse(clientfd);
+			std::cout << "?????????????????" << "\n";
+			return;
+		}
+		response = formatGetResponseMsg(0);
+		send(clientfd, response.c_str(), response.length(), 0);
+		const std::size_t chunkSize = 8192;
+		char buffer[chunkSize];
+		while (this->_file.read(buffer, chunkSize) || this->_file.gcount() > 0)
+			send(clientfd, buffer, this->_file.gcount(), 0);
 	}
-	response = formatGetResponseMsg(0);
-	send(clientfd, response.c_str(), response.length(), 0);
-	const std::size_t chunkSize = 8192;
-	char buffer[chunkSize];
-	while (this->_file.read(buffer, chunkSize) || this->_file.gcount() > 0)
-		send(clientfd, buffer, this->_file.gcount(), 0);
 }
 
 void	Response::respondPost(int clientfd, ServerInfo server)
@@ -192,27 +195,31 @@ void Response::openFile(std::string filePath, ServerInfo server)
 	this->_fsize = 0;
 	(void) filePath; // What to do with this??
 	std::cout << "url: " << this->_url << std::endl;
-	std::string temp = "/" + cutFromTo(this->_url, 1, "/");
+	std::string temp;
+	std::string	test = "/" + cutFromTo(this->_url, 1, "/");
 
-	while (server.getlocationinfo()[temp].root.empty() && temp.size() + 2 < this->_url.size() && !temp.empty())
+	while ((server.getlocationinfo()[temp].root.empty() || !server.getlocationinfo()[test].root.empty()) 
+	&& test.size() + 1 < this->_url.size())
 	{
-		temp += "/" + cutFromTo(this->_url, temp.size() + 1, "/");
-		std::cout << temp << std::endl;
+		std::cout << "test: " << test << std::endl;
+		temp = test;
+		test += "/" + cutFromTo(this->_url, test.size() + 1, "/");
+		std::cout << "test2: " << test << std::endl;
 	}
 	std::cout << "temp: " << temp << std::endl;
 	if (!server.getlocationinfo()[temp].root.empty() && server.getlocationinfo()[this->_url].index.empty())
 	{
-		//std::cout << "1: " << "./" + server.getlocationinfo()[temp].root + this->_url.substr(temp.size(), std::string::npos) << std::endl;
+		std::cout << "1: " << "./" + server.getlocationinfo()[temp].root + this->_url.substr(temp.size(), std::string::npos) << std::endl;
 		this->_file.open("./" + server.getlocationinfo()[temp].root + this->_url.substr(temp.size(), std::string::npos));
 	}
 	else if (!server.getlocationinfo()[temp].root.empty() && !server.getlocationinfo()[this->_url].index.empty())
 	{
-		//std::cout << "2: " << "./" + server.getlocationinfo()[this->_url].root + "/" + server.getlocationinfo()[this->_url].index << std::endl;
+		std::cout << "2: " << "./" + server.getlocationinfo()[this->_url].root + "/" + server.getlocationinfo()[this->_url].index << std::endl;
 		this->_file.open("./" + server.getlocationinfo()[this->_url].root + "/" + server.getlocationinfo()[this->_url].index);
 	}
 	else
 	{
-		//std::cout << "3: " << "." + this->_url << std::endl;
+		std::cout << "3: " << "." + this->_url << std::endl;
 		this->_file.open("." + this->_url);
 	}
 
