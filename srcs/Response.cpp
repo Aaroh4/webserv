@@ -75,6 +75,7 @@ void Response::respondGet(int clientfd, ServerInfo server)
 			return;
 		}
 		response = formatGetResponseMsg(0);
+		std::cout << response << std::endl;
 		send(clientfd, response.c_str(), response.length(), 0);
 		const std::size_t chunkSize = 8192;
 		char buffer[chunkSize];
@@ -199,18 +200,20 @@ void Response::openFile(std::string filePath, ServerInfo server)
 	std::string	test = "/" + cutFromTo(this->_url, 1, "/");
 
 	while ((server.getlocationinfo()[temp].root.empty() || !server.getlocationinfo()[test].root.empty()) 
-	&& test.size() + 1 < this->_url.size())
+	&& test.size() + 1 <= this->_url.size())
 	{
 		std::cout << "test: " << test << std::endl;
-		temp = test;
+		temp = test + "/";
 		test += "/" + cutFromTo(this->_url, test.size() + 1, "/");
+		if (!server.getlocationinfo()[test].root.empty())
+			temp = test;
 		std::cout << "test2: " << test << std::endl;
 	}
 	std::cout << "temp: " << temp << std::endl;
 	if (!server.getlocationinfo()[temp].root.empty() && server.getlocationinfo()[this->_url].index.empty())
 	{
-		std::cout << "1: " << "./" + server.getlocationinfo()[temp].root + this->_url.substr(temp.size(), std::string::npos) << std::endl;
-		this->_file.open("./" + server.getlocationinfo()[temp].root + this->_url.substr(temp.size(), std::string::npos));
+		std::cout << "1: " << "./" + server.getlocationinfo()[temp].root + this->_url.substr(temp.size() - 1, std::string::npos) << std::endl;
+		this->_file.open("./" + server.getlocationinfo()[temp].root + this->_url.substr(temp.size() - 1, std::string::npos));
 	}
 	else if (!server.getlocationinfo()[temp].root.empty() && !server.getlocationinfo()[this->_url].index.empty())
 	{
