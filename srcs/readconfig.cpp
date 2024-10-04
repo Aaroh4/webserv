@@ -183,7 +183,7 @@ int	readconfig(std::string name, ServerManager &manager)
 	{
 		ServerInfo server;
 		temp = temp.substr(brackets(temp, "server", server), std::string::npos);
-		manager.setnew_info(server);
+		manager.setNewInfo(server);
 	}
 	return (0);
 }

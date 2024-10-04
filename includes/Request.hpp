@@ -15,13 +15,8 @@ class Request
 
 		virtual void		parse(void);
 		virtual	void		sanitize(void);
-		virtual int			getContentLength(void);
-		virtual bool		isReceived(void) const;
-		virtual void		appendBody(std::string& chunk);
-		virtual std::unordered_map<std::string, std::string>	getHeaders(void) const;
 	protected:
 		int	_sanitizeStatus;
-		bool _requestReceived;
 		std::string	_type;
 		std::string _request;
 		std::string _method;
@@ -31,11 +26,12 @@ class Request
 		std::string _formInput;
 		std::unordered_map<std::string, std::string> _headers;
 		std::unordered_map<std::string, std::string> _data;
+	private:
 		void	_parseRequestLine(void);
 		void 	_parseHeaders(void);
 		void	_getContentType(void);
 		void	_verifyPath(void);
-		void	_parsePostInput(void);
+		void	_parseMultipartContent(void);
 		void	_parsePart(std::string& part);
 		void	_splitKeyValuePairs(void);
 		void	_decodeChunks(void);

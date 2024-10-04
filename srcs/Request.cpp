@@ -3,11 +3,11 @@
 #include <climits>
 #include <filesystem>
 
-Request::Request(void) : _sanitizeStatus(0), _requestReceived(false)
+Request::Request(void) : _sanitizeStatus(0)
 {
 }
 
-Request::Request(std::string request) :  _sanitizeStatus(0), _requestReceived(false), _request(request)
+Request::Request(std::string request) :  _sanitizeStatus(0), _request(request)
 {
 	return;
 }
@@ -28,7 +28,6 @@ Request::Request(Request const& src)
 	this->_headers = src._headers;
 	this->_sanitizeStatus = src._sanitizeStatus;
 	this->_formInput = src._formInput;
-	this->_requestReceived = src._requestReceived;
 }
 
 Request& Request::operator=(Request const& src)
@@ -43,7 +42,6 @@ Request& Request::operator=(Request const& src)
 		this->_url = src._url;
 		this->_sanitizeStatus = src._sanitizeStatus;
 		this->_formInput = src._formInput;
-		this->_requestReceived = src._requestReceived;
 		this->_headers.clear();
 		for (const auto& map_content : src._headers)
 		{
@@ -78,7 +76,7 @@ void	Request::_parsePart(std::string& part)
 	size_t	end = 0;
 	std::ofstream newFile;
 
-	if (part.find("filename") == std::string::npos)
+	if (part.find("filename") == std::string::npos) //If not a file build key - value pairs
 	{
 		if (this->_formInput.empty() == false)
 			this->_formInput += "&";
@@ -91,7 +89,7 @@ void	Request::_parsePart(std::string& part)
 		end = part.find_last_of("\n");
 		this->_formInput += part.substr(start, end - (start + 1));
 	}
-	else
+	else	//Create newfile	
 	{
 		end = part.find_first_of("\n");
 		std::string line = part.substr(0, end);
@@ -106,7 +104,7 @@ void	Request::_parsePart(std::string& part)
 	}
 }
 
-void	Request::_parsePostInput(void)
+void	Request::_parseMultipartContent(void)
 {
 	size_t		len = this->_headers["Content-Type"].length();
 	size_t		ind = this->_headers["Content-Type"].find_first_of("=");
@@ -269,14 +267,15 @@ void	Request::_splitKeyValuePairs(void)
 	if (!this->_formInput.empty())
 		data = this->_formInput;
 	else if (this->_headers["Content-Type"].find("application/x-www-form-urlencoded") != std::string::npos
-	&& getContentLength() > 0)
+	&& this->_body.length() > 0)
 		data = this->_body;
 	else
 		return;
-	data = this->_formInput;
 	while (1)
 	{
 		end = data.find_first_of("=", end);
+		if (end == std::string::npos)
+			break;
 		key = data.substr(start, end - start);
 		start = end + 1;
 		end = data.find_first_of("&", end);
@@ -293,20 +292,22 @@ void	Request::_splitKeyValuePairs(void)
 
 void	Request::_decodeChunks(void)
 {
-	int	size = 1;
+	int			chunkSize = 1;
 	std::string line;
 	std::string decodedBody;
-	size_t pos = 0;
+	size_t 		pos = 0;
+	int			totalSize = 0;
 
-	while (size != 0)
+	while (chunkSize != 0)
 	{
-		pos = this->_body.find_first_of("\r\n");
+		pos = this->_body.find("\r\n");
 		line = this->_body.substr(0, pos);
 		this->_body.erase(0, pos + 2);
 		try
 		{
-			size = std::stoi(line, nullptr, 16);
-			if (size == 0)
+			chunkSize = std::stoi(line, nullptr, 16);
+			totalSize += chunkSize;
+			if (chunkSize == 0)
 				break;
 		}
 		catch(const std::exception& e)
@@ -314,8 +315,8 @@ void	Request::_decodeChunks(void)
 			this->_sanitizeStatus = 6666666;
 			return;
 		}
-		decodedBody += this->_body.substr(0, size);
-		this->_body.erase(0, size + 2);
+		decodedBody += this->_body.substr(0, chunkSize);
+		this->_body.erase(0, chunkSize + 2);
 	}
 	this->_body = decodedBody;
 }
@@ -324,35 +325,12 @@ void	Request::parse(void)
 {
 	this->_parseRequestLine();
 	this->_parseHeaders();
-	if (!this->_headers["Content-Length"].empty())
-	{
-		try
-		{
-			size_t len = std::stoi(this->_headers["Content-Length"]);
-			if (this->_body.length() == len)
-				this->_requestReceived = true;
-		}
-		catch(const std::exception& e)
-		{
-			this->_sanitizeStatus = 2666;
-		}
-	}
-	else if (this->_headers["Transfer-Encoding"] == "chunked")
-	{
-		size_t	pos = this->_body.find_last_of("0\r\n");
-		if (pos != std::string::npos && this->_body.find_first_not_of("\r\n", pos + 1) == std::string::npos)
-		{
-			this->_requestReceived = true;
-			this->_decodeChunks();
-		}
-	}
-	if (this->_requestReceived == true)
-	{
-		if (this->_headers["Content-Type"].find("multipart/form-data") != std::string::npos)
-			this->_parsePostInput();
-		else 
-			this->_splitKeyValuePairs();
-	}
+	if (this->_headers["Transfer-Encoding"] == "chunked")
+		this->_decodeChunks();
+	if (this->_headers["Content-Type"].find("multipart/form-data") != std::string::npos)
+		this->_parseMultipartContent();
+	else 
+		this->_splitKeyValuePairs();
 }
 
 void	Request::sanitize(void)
@@ -386,47 +364,4 @@ void	Request::sanitize(void)
 			break;
 		}
 	}
-	if (this->_body.empty() == false)
-	{
-		try
-		{
-		 size_t len = std::stoi(this->_headers["Content-Length"]);
-			if (this->_body.length() != len)
-				this->_sanitizeStatus = 400; //Bad request
-		}
-		catch(const std::exception& e)
-		{
-			this->_sanitizeStatus = 400; //Bad request
-		}
-	}
-}
-
-void	Request::appendBody(std::string& chunk)
-{
-	this->_body += chunk;
-}
-
-bool	Request::isReceived(void) const
-{
-	return this->_requestReceived;
-}
-
-std::unordered_map<std::string, std::string> Request::getHeaders(void) const
-{
-	return this->_headers;
-}
-
-int	Request::getContentLength(void)
-{
-	int len = 0;
-	
-	try
-	{
-		len = std::stoi(this->_headers["Content-Length"]);
-	}
-	catch (std::exception& e)
-	{
-		this->_sanitizeStatus = 10666;
-	}
-	return len;
 }
