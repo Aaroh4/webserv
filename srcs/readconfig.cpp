@@ -6,7 +6,7 @@
 #include <filesystem>
 
 ServerInfo	config_server(std::string temp, ServerInfo &server);
-int brackets(std::string configfile, std::string type, ServerInfo &server);
+int bracketfinder(std::string configfile, std::string type, ServerInfo &server);
 
 // Function to make a string lowercase
 std::string toLowerCase(const std::string str) 
@@ -27,6 +27,8 @@ void locations(std::string temp, ServerInfo &server)
 
 	location temploc;
 	
+	//std::cout << temp << std::endl;
+
 	temploc.name = temp.substr(0, temp.find(" "));
 	for (size_t i = 0; i < location_configs.size(); i++) // Loop that checks out which configs are added
 	{
@@ -67,7 +69,7 @@ void locations(std::string temp, ServerInfo &server)
 }
 
 // Recursive function which parses for brackets
-int brackets(std::string configfile, std::string type, ServerInfo &server)
+int bracketfinder(std::string configfile, std::string type, ServerInfo &server)
 {
 	std::string 		temp;
 	int					brackets = 1;
@@ -81,10 +83,21 @@ int brackets(std::string configfile, std::string type, ServerInfo &server)
 		if (line.find("}") != std::string::npos && brackets > 0)
 			brackets--;
 	}
+	//std::cout << "\n\n temp: " << temp << "\n\n" << std::endl;
 	if (type == "location")
 	{
 		locations(temp, server);
-		config_server(temp.substr(temp.find("{"), temp.size()), server);
+		std::string value = configfile.substr(configfile.find(temp) + temp.size(), std::string::npos);
+		std::cout << "value: " << value << std::endl;
+
+		if (value.find("{") != std::string::npos)
+		{
+			std::cout << "test: " << value.substr(value.find("{") + 1, std::string::npos) << std::endl;
+			bracketfinder(value.substr(value.find("{") + 1, std::string::npos), "location", server);
+		}
+		//std::cout << "test: " << configfile.substr(configfile.find(temp) + temp.size(), std::string::npos) << std::endl;
+		//if (configfile.substr(configfile.find(temp) + temp.size(), std::string::npos).find("location ") != std::string::npos)
+		//	bracketfinder(configfile.substr(configfile.find(temp) + temp.size(), std::string::npos), "location", server);
 	}
 	else if (type == "server")
 		config_server(temp, server);
@@ -133,7 +146,7 @@ ServerInfo	config_server(std::string temp, ServerInfo &server)
 					break;
 				case 2:
 				 	if (value.find("{") != std::string::npos)
-				 		brackets(temp.substr(temp.find(value), std::string::npos), "location", server);
+				 		bracketfinder(temp.substr(temp.find(value) + value.size(), std::string::npos), "location", server);
 					else
 						std::cout << "No opening bracket on the same line as location!" << "\n";
 					break;
@@ -176,7 +189,7 @@ int	readconfig(std::string name, ServerManager &manager)
 	for (int info = 1; info <= i; info++)
 	{
 		ServerInfo server;
-		temp = temp.substr(brackets(temp, "server", server), std::string::npos);
+		temp = temp.substr(bracketfinder(temp, "server", server), std::string::npos);
 		manager.setnew_info(server);
 	}
 	return (0);

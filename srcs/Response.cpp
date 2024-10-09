@@ -57,8 +57,8 @@ void Response::respondGet(int clientfd, ServerInfo server)
 	std::string response;
 
 	std::string filePath = "./www" + this->_url;
-	//std::cout << "url: " << this->_url << std::endl;
-	if (server.getlocationinfo()[this->_url].dirList != false)
+	std::cout << "index: " << server.getlocationinfo()[this->_url].index << " Url< " << this->_url << std::endl;
+	if (server.getlocationinfo()[this->_url].dirList != false && server.getlocationinfo()[this->_url].index.empty())
 	{
 		std::cout << "directorylist: " << server.getlocationinfo()[this->_url].root + this->_url << std::endl;
 		this->directorylisting(clientfd, this->buildDirectorylist(server.getlocationinfo()[this->_url].root + this->_url, server.getlocationinfo()[this->_url].root.size()));
@@ -220,10 +220,11 @@ void Response::openFile(std::string filePath, ServerInfo server)
 		temp = "/";
 	std::cout << "temp & url: " << temp + this->_url << std::endl;
 
-	//if (!server.getlocationinfo()[temp].root.empty())
-	//{
-	this->_file.open(server.getlocationinfo()[temp].root + this->_url);
-	//}
+	if (!server.getlocationinfo()[this->_url].index.empty())
+		this->_file.open(server.getlocationinfo()[this->_url].root + server.getlocationinfo()[this->_url].index);
+	else
+		this->_file.open(server.getlocationinfo()[temp].root + this->_url);
+
 
 	if (this->_file.is_open() == false)
 	{
