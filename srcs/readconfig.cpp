@@ -26,10 +26,7 @@ void locations(std::string temp, ServerInfo &server)
 	{"GET", "POST", "DELETE", "HEAD"};
 
 	location temploc;
-	
-	//std::cout << temp << std::endl;
-
-	temploc.name = temp.substr(0, temp.find(" "));
+	temploc.name = temp.substr(0, temp.find("  "));
 	for (size_t i = 0; i < location_configs.size(); i++) // Loop that checks out which configs are added
 	{
 		size_t pos = toLowerCase(temp).find(location_configs.at(i));
@@ -65,6 +62,7 @@ void locations(std::string temp, ServerInfo &server)
 	}
 	if (std::filesystem::is_directory(temploc.root + temploc.name) && temploc.name.back() != '/')
 		temploc.name += "/";
+	std::cout << "name: " << temploc.name << std::endl;
 	server.setnewlocation(temploc);
 }
 
@@ -72,10 +70,19 @@ void locations(std::string temp, ServerInfo &server)
 int bracketfinder(std::string configfile, std::string type, ServerInfo &server)
 {
 	std::string 		temp;
-	int					brackets = 1;
+	int					brackets = 0;
 	std::istringstream	file(configfile);
 
-	for (std::string line; std::getline(file, line) && brackets != 0;)
+	for (std::string line; std::getline(file, line);)
+	{
+		if (line.find("{") != std::string::npos)
+		{
+			temp += line + "\n";
+			brackets++;
+			break;
+		}
+	}
+	for (std::string line; std::getline(file, line) && brackets > 0;)
 	{
 		temp += line + "\n";
 		if (line.find("{") != std::string::npos)
@@ -83,21 +90,15 @@ int bracketfinder(std::string configfile, std::string type, ServerInfo &server)
 		if (line.find("}") != std::string::npos && brackets > 0)
 			brackets--;
 	}
-	//std::cout << "\n\n temp: " << temp << "\n\n" << std::endl;
 	if (type == "location")
 	{
 		locations(temp, server);
-		std::string value = configfile.substr(configfile.find(temp) + temp.size(), std::string::npos);
-		std::cout << "value: " << value << std::endl;
-
-		if (value.find("{") != std::string::npos)
+		std::string newconfig = configfile.substr(configfile.find(temp) + temp.size(), std::string::npos);
+		if (newconfig.find("{") != std::string::npos)
 		{
-			std::cout << "test: " << value.substr(value.find("{") + 1, std::string::npos) << std::endl;
-			bracketfinder(value.substr(value.find("{") + 1, std::string::npos), "location", server);
+			newconfig = newconfig.substr(newconfig.find("location ") + 9, std::string::npos);
+			bracketfinder(newconfig, "location", server);
 		}
-		//std::cout << "test: " << configfile.substr(configfile.find(temp) + temp.size(), std::string::npos) << std::endl;
-		//if (configfile.substr(configfile.find(temp) + temp.size(), std::string::npos).find("location ") != std::string::npos)
-		//	bracketfinder(configfile.substr(configfile.find(temp) + temp.size(), std::string::npos), "location", server);
 	}
 	else if (type == "server")
 		config_server(temp, server);
@@ -146,7 +147,7 @@ ServerInfo	config_server(std::string temp, ServerInfo &server)
 					break;
 				case 2:
 				 	if (value.find("{") != std::string::npos)
-				 		bracketfinder(temp.substr(temp.find(value) + value.size(), std::string::npos), "location", server);
+				 		bracketfinder(temp.substr(temp.find(value), std::string::npos), "location", server);
 					else
 						std::cout << "No opening bracket on the same line as location!" << "\n";
 					break;
@@ -181,10 +182,10 @@ int	readconfig(std::string name, ServerManager &manager)
 
 	for (std::string line; std::getline(configfile, line);)
 	{
-		if (i > 0)
-			temp += line + "\n";
 		if (line.find("server") != std::string::npos && line.find("{") != std::string::npos)
 			i++;
+		if (i > 0)
+			temp += line + "\n";
 	}
 	for (int info = 1; info <= i; info++)
 	{
