@@ -4,6 +4,7 @@
 #include "libraries.hpp"
 #include <unordered_map>
 
+
 class Request
 {
 	public:
@@ -13,6 +14,7 @@ class Request
 		Request(Request const& src);
 		Request& operator=(Request const& src);
 
+		void printparsedreq();
 		virtual void	parse(void);
 		virtual	void	sanitize(void);
 		virtual std::string	getMethod(void) const;

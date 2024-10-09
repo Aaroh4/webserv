@@ -57,9 +57,11 @@ void Response::respondGet(int clientfd, ServerInfo server)
 	std::string response;
 
 	std::string filePath = "./www" + this->_url;
+	//std::cout << "url: " << this->_url << std::endl;
 	if (server.getlocationinfo()[this->_url].dirList != false)
 	{
-		this->directorylisting(clientfd, this->buildDirectorylist(server.getlocationinfo()[this->_url].root, server.getlocationinfo()[this->_url].root.size()));
+		std::cout << "directorylist: " << server.getlocationinfo()[this->_url].root + this->_url << std::endl;
+		this->directorylisting(clientfd, this->buildDirectorylist(server.getlocationinfo()[this->_url].root + this->_url, server.getlocationinfo()[this->_url].root.size()));
 	}
 	else
 	{
@@ -75,7 +77,7 @@ void Response::respondGet(int clientfd, ServerInfo server)
 			return;
 		}
 		response = formatGetResponseMsg(0);
-		std::cout << response << std::endl;
+		//std::cout << response << std::endl;
 		send(clientfd, response.c_str(), response.length(), 0);
 		const std::size_t chunkSize = 8192;
 		char buffer[chunkSize];
@@ -185,8 +187,11 @@ std::string Response::buildDirectorylist(std::string name, int rootsize)
 	directory += " <h1>Directory listing<h1>\n <h1>[---------------------]</h1>\n <ol>\n";
 	for (const auto & entry : std::filesystem::directory_iterator(name))
 	{
-   		directory += "<li><a href=" + entry.path().string() + ">" + entry.path().string().erase(0, rootsize + 1) + "</a> </li>" + "\n";
- 	}
+		if (entry.is_directory())
+			directory += "<li><a href=" + entry.path().string().erase(0, rootsize) + "/" + ">" + entry.path().string().erase(0, rootsize + this->_url.size()) + "/" + "</a> </li>" + "\n";
+		else
+			directory += "<li><a href=" + entry.path().string().erase(0, rootsize) + ">" + entry.path().string().erase(0, rootsize + this->_url.size()) + "</a> </li>" + "\n";
+	}
 	directory += "</ol>\n <h1>[---------------------]</h1>\n </body>\n </html>\n";
 	return (directory);
 }
@@ -195,46 +200,41 @@ void Response::openFile(std::string filePath, ServerInfo server)
 {
 	this->_fsize = 0;
 	(void) filePath; // What to do with this??
-	std::cout << "url: " << this->_url << std::endl;
+	(void) server;
 	std::string temp;
 	std::string	test = "/" + cutFromTo(this->_url, 1, "/");
+
+	std::cout << "url: " << this->_url << std::endl;
 
 	while ((server.getlocationinfo()[temp].root.empty() || !server.getlocationinfo()[test].root.empty()) 
 	&& test.size() + 1 <= this->_url.size())
 	{
-		std::cout << "test: " << test << std::endl;
-		temp = test + "/";
+		//std::cout << "test: " << test << std::endl;
+		temp = test;
 		test += "/" + cutFromTo(this->_url, test.size() + 1, "/");
 		if (!server.getlocationinfo()[test].root.empty())
 			temp = test;
-		std::cout << "test2: " << test << std::endl;
+		//std::cout << "test2: " << test << std::endl;
 	}
-	std::cout << "temp: " << temp << std::endl;
-	if (!server.getlocationinfo()[temp].root.empty() && server.getlocationinfo()[this->_url].index.empty())
-	{
-		std::cout << "1: " << "./" + server.getlocationinfo()[temp].root + this->_url.substr(temp.size() - 1, std::string::npos) << std::endl;
-		this->_file.open("./" + server.getlocationinfo()[temp].root + this->_url.substr(temp.size() - 1, std::string::npos));
-	}
-	else if (!server.getlocationinfo()[temp].root.empty() && !server.getlocationinfo()[this->_url].index.empty())
-	{
-		std::cout << "2: " << "./" + server.getlocationinfo()[this->_url].root + "/" + server.getlocationinfo()[this->_url].index << std::endl;
-		this->_file.open("./" + server.getlocationinfo()[this->_url].root + "/" + server.getlocationinfo()[this->_url].index);
-	}
-	else
-	{
-		std::cout << "3: " << "." + this->_url << std::endl;
-		this->_file.open("." + this->_url);
-	}
+	if (temp.empty())
+		temp = "/";
+	std::cout << "temp & url: " << temp + this->_url << std::endl;
+
+	//if (!server.getlocationinfo()[temp].root.empty())
+	//{
+	this->_file.open(server.getlocationinfo()[temp].root + this->_url);
+	//}
 
 	if (this->_file.is_open() == false)
 	{
-		//std::cout << errno << std::endl;
+		std::cout << errno << std::endl;
 		switch errno
 		{
 			case EIO:
 			case ENOMEM:
 					this->_sanitizeStatus = 500; //internal error when I/O problem or no memory
 					//throw ResponseException("Internal Server Error");
+			case 21:	// might need its own error handling
 			case ENOENT:
 					this->_sanitizeStatus = 404;
 					throw ResponseException();

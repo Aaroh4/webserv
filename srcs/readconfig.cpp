@@ -42,7 +42,7 @@ void locations(std::string temp, ServerInfo &server)
 						temploc.root = value;
 						break;
 				case 1:
-						if (std::filesystem::is_directory(temploc.root) && value.find("true") != std::string::npos)														// THIS IS FOR TESTING REMEMBER TO SWITCH OUT
+						if (std::filesystem::is_directory(temploc.root + temploc.name) && value.find("true") != std::string::npos)
 							temploc.dirList = true;
 						else
 							temploc.dirList = false; 
@@ -61,6 +61,8 @@ void locations(std::string temp, ServerInfo &server)
 			}
 		}
 	}
+	if (std::filesystem::is_directory(temploc.root + temploc.name) && temploc.name.back() != '/')
+		temploc.name += "/";
 	server.setnewlocation(temploc);
 }
 
