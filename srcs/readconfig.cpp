@@ -26,7 +26,7 @@ void locations(std::string temp, ServerInfo &server)
 	{"GET", "POST", "DELETE", "HEAD"};
 
 	location temploc;
-	temploc.name = temp.substr(0, temp.find("  "));
+	temploc.name = temp.substr(0, temp.find(" "));
 	for (size_t i = 0; i < location_configs.size(); i++) // Loop that checks out which configs are added
 	{
 		size_t pos = toLowerCase(temp).find(location_configs.at(i));
@@ -73,6 +73,7 @@ int bracketfinder(std::string configfile, std::string type, ServerInfo &server)
 	int					brackets = 0;
 	std::istringstream	file(configfile);
 
+	std::cout << "type" << type << std::endl;
 	for (std::string line; std::getline(file, line);)
 	{
 		if (line.find("{") != std::string::npos)
@@ -90,13 +91,16 @@ int bracketfinder(std::string configfile, std::string type, ServerInfo &server)
 		if (line.find("}") != std::string::npos && brackets > 0)
 			brackets--;
 	}
+	//std::cout << "\n\n temp: " << temp  << " type : " << type << "\n\n" << std::endl;
 	if (type == "location")
 	{
 		locations(temp, server);
 		std::string newconfig = configfile.substr(configfile.find(temp) + temp.size(), std::string::npos);
 		if (newconfig.find("{") != std::string::npos)
 		{
+			std::cout << "asd" << std::endl;
 			newconfig = newconfig.substr(newconfig.find("location ") + 9, std::string::npos);
+			std::cout << "asd2" << std::endl;
 			bracketfinder(newconfig, "location", server);
 		}
 	}
@@ -190,7 +194,10 @@ int	readconfig(std::string name, ServerManager &manager)
 	for (int info = 1; info <= i; info++)
 	{
 		ServerInfo server;
+		//std::cout << temp << std::endl;
 		temp = temp.substr(bracketfinder(temp, "server", server), std::string::npos);
+		//if (temp.find("{") != std::string::npos)
+		//	temp = temp.substr(temp.find("{"), std::string::npos);
 		manager.setnew_info(server);
 	}
 	return (0);
