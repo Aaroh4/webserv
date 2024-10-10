@@ -14,15 +14,8 @@ class Request
 		Request(Request const& src);
 		Request& operator=(Request const& src);
 
-		void printparsedreq();
-		virtual void	parse(void);
-		virtual	void	sanitize(void);
-		virtual std::string	getMethod(void) const;
-		virtual std::string	getUrl(void) const;
-		virtual std::string	getBody(void) const;
-		virtual std::string	getHttpVersion(void) const;
-		virtual int getContentLength(void);
-		virtual std::unordered_map<std::string, std::string>	getHeaders(void) const;
+		virtual void		parse(void);
+		virtual	void		sanitize(void);
 	protected:
 		int	_sanitizeStatus;
 		std::string	_type;
@@ -34,11 +27,12 @@ class Request
 		std::string _formInput;
 		std::unordered_map<std::string, std::string> _headers;
 		std::unordered_map<std::string, std::string> _data;
+	private:
 		void	_parseRequestLine(void);
 		void 	_parseHeaders(void);
 		void	_getContentType(void);
-		void	_runCgi(void);
-		void	_parsePostInput(void);
+		void	_verifyPath(void);
+		void	_parseMultipartContent(void);
 		void	_parsePart(std::string& part);
 		void	_splitKeyValuePairs(void);
 		std::string	_splitMultiFormParts(std::string& boundary);

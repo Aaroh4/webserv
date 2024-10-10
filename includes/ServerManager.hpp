@@ -14,11 +14,20 @@ class ServerManager
 			ServerManager operator=(const ServerManager &);
 			~ServerManager();
 
-			int		start_servers();
-			void	setnew_info(ServerInfo server);
+			int		startServers();
+			void	setNewInfo(ServerInfo server);
+			void	runServers();
+			void	addNewConnection(size_t i);
+			void	receiveRequest(size_t& i);
+			size_t	getRequestLength(std::string& request);
+			size_t	findLastChunk(std::string& request, size_t start_pos);
+			void	handleRequest(std::string& request, int clienSocket);
+			void	removeConnection(int clientSocket, size_t& i);
 			std::vector<ServerInfo> get_info();
 	private:
 			std::vector<ServerInfo> _info;
+			std::vector<struct pollfd> _poll_fds;
+			std::unordered_map<int, int> _connections;
 };
 
 #endif
