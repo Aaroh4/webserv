@@ -16,18 +16,18 @@ class Response: public Request
 			Response operator=(const Response &);
 
 			std::string 	getStatusMessage(int statusCode);
-			std::string 	formatGetResponseMsg( void );
+			std::string 	formatGetResponseMsg(int code);
 			void			sendErrorResponse( int clientfd );
 			void			openFile(std::string filePath, ServerInfo server);
 			void 			sendNotFound(int clientfd);
 			void			sendCustomError(int clientfd);
-      std::string directorylist(std::string name, int rootsize);
-			void		directorylisting(int clientfd, ServerInfo server, std::string file);
-			void		handleCgi(std::string path, int client_socket);
-			void		respond(int clientfd, ServerInfo server);
-			void		respondGet(int clientfd, ServerInfo server);
-			void		respondPost(int clientfd, ServerInfo server);
-			void		respondDelete(int clientfd);
+      std::string			buildDirectorylist(std::string name, int rootsize);
+			void			directorylisting(int clientfd, std::string file);
+			void			handleCgi(std::string path, int client_socket);
+			void			respond(int clientfd, ServerInfo server);
+			void			respondGet(int clientfd, ServerInfo server);
+			void			respondPost(int clientfd, ServerInfo server);
+			void			respondDelete(int clientfd);
 
 			// Response exception
 			class ResponseException: public std::exception
@@ -38,7 +38,7 @@ class Response: public Request
 
 
 	private:
-
+			ServerInfo	_server;
 			std::string _fileSize;
 			std::string _contentType;
 			std::string _response;

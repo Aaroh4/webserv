@@ -1,7 +1,7 @@
 #!/usr/bin/php
 
-?php
+<?php
 
-echo "Hello!\n";
+echo "Hello!";
 
 ?>

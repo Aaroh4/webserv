@@ -4,6 +4,7 @@
 #include "libraries.hpp"
 #include <unordered_map>
 
+
 class Request
 {
 	public:
@@ -34,7 +35,6 @@ class Request
 		void	_parseMultipartContent(void);
 		void	_parsePart(std::string& part);
 		void	_splitKeyValuePairs(void);
-		void	_decodeChunks(void);
 		std::string	_splitMultiFormParts(std::string& boundary);
 		std::string	_parseFileName(std::string& line);
 };

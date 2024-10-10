@@ -4,6 +4,7 @@
 #include "libraries.hpp"
 #include <unordered_map>
 #include <unordered_set>
+#include <filesystem>
 
 // Function for simplifying cutting string without having to mess around with substr
 inline std::string cutFromTo(std::string input, int start, std::string last)
@@ -42,13 +43,13 @@ class ServerInfo
 			void												setnewlocation(location input);
 			std::unordered_map<std::string, location>			getlocationinfo() const;
 
-			void												setTimeout(unsigned int input);
-			unsigned int										get_timeout() const;
+			void												setTimeout(std::string input);
+			std::string											get_timeout() const;
 
 			void												setBodylimit(unsigned int input);
 			unsigned int										getBodylimit() const;
 	private:
-			unsigned int									_timeout;
+			std::string										_timeout;
 			unsigned int									_bodylimit;
 			unsigned int									_ip;
 			std::vector<int>								_port;

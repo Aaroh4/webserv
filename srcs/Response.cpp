@@ -30,12 +30,13 @@ Response Response::operator=(const Response &input)
 
 void	Response::respond(int clientfd, ServerInfo server)
 {
+	this->_server = server;
+
 	if (this->_sanitizeStatus != 200)
 	{
 		sendErrorResponse( clientfd );
 		return;
 	}
-	//std::cout << "method: "<< this->_method << "\n";
 	if (this->_method == "GET")
 		respondGet(clientfd, server);
 	else if (this->_method == "POST")
@@ -46,8 +47,63 @@ void	Response::respond(int clientfd, ServerInfo server)
 	{
 		this->_sanitizeStatus = 405; //Method not allowed
 		std::string response = getStatusMessage(405);
-		response += "Content-Type: text/html\r\n";
-		response += "Connection: close\r\n\r\n";
+		response += formatGetResponseMsg(1);
+		send(clientfd, response.c_str(), response.length(), 0);
+	}
+}
+
+void Response::respondGet(int clientfd, ServerInfo server)
+{
+	std::string response;
+
+	std::string filePath = "./www" + this->_url;
+	//std::cout << "index: " << server.getlocationinfo()[this->_url].index << " Url< " << this->_url << std::endl;
+	if (server.getlocationinfo()[this->_url].dirList != false && server.getlocationinfo()[this->_url].index.empty())
+	{
+		std::cout << "directorylist: " << server.getlocationinfo()[this->_url].root + this->_url << std::endl;
+		this->directorylisting(clientfd, this->buildDirectorylist(server.getlocationinfo()[this->_url].root + this->_url, server.getlocationinfo()[this->_url].root.size()));
+	}
+	else
+	{
+		try
+		{
+			openFile(filePath, server);
+		}
+		catch(ResponseException &e)
+		{
+			this->_errorMessage = e.what();
+			sendErrorResponse(clientfd);
+			std::cout << "?????????????????" << "\n";
+			return;
+		}
+		response = formatGetResponseMsg(0);
+		//std::cout << response << std::endl;
+		send(clientfd, response.c_str(), response.length(), 0);
+		const std::size_t chunkSize = 8192;
+		char buffer[chunkSize];
+		while (this->_file.read(buffer, chunkSize) || this->_file.gcount() > 0)
+			send(clientfd, buffer, this->_file.gcount(), 0);
+	}
+}
+
+void	Response::respondPost(int clientfd, ServerInfo server)
+{	
+	if (this->_type == "cgi/py" || this->_type == "cgi/php")
+	{
+		char result[4096];
+		std::string location;
+
+		ssize_t count = readlink("/proc/self/exe", result, 4096);
+
+		location = std::string(result, (count > 0) ? count : 0);
+		this->handleCgi(location.substr(0, location.rfind("/")) + server.getlocationinfo()["/" + cutFromTo(this->_url, 1, "/")].root + this->_url, clientfd);
+	}
+	else
+	{
+		std::string response;
+
+		this->_sanitizeStatus = 204;
+		response = formatGetResponseMsg(0);
 		send(clientfd, response.c_str(), response.length(), 0);
 	}
 }
@@ -63,127 +119,126 @@ void	Response::respondDelete(int clientfd)
 	send (clientfd, response.c_str(), response.length(), 0);
 }
 
-void	Response::respondPost(int clientfd, ServerInfo server)
-{
-	(void) clientfd;
-	(void) server;
-	//this->handleCgi("/home/ahamalai/Desktop/webserv" + server.getlocationinfo()["/" + cutFromTo(this->_url, 1, "/")].root + this->_url, clientfd);
-}
-
 void	Response::handleCgi(std::string path, int client_socket)
 {
 	int	pipefd[2];
 
-	if (this->_type == "cgi/py" || this->_type == "cgi/php")
+	pipe(pipefd);
+	int	pid = fork();
+	if (pid == 0)
 	{
-		pipe(pipefd);
-		int	pid = fork();
-		if (pid == 0)
-		{
-			std::string request = "REQUEST_METHOD=" + this->_method;
-			std::string query = "QUERY_STRING=param=value";
-			std::string length = "CONTENT_LENGTH=" + this->_headers["Content-Length"];
-			std::cerr << path << "\n";
-			char *envp[] = {
-				(char *) request.c_str(),
-				(char *) query.c_str(),
-				(char *) length.c_str(),
-				nullptr
-			};
-			close(pipefd[0]);
-			dup2(pipefd[1], STDOUT_FILENO);
-       		close(pipefd[1]);
-			char *argv[] = { (char*)path.c_str(), nullptr };
-			//std::cerr << path << "\n";
-			execve(path.c_str(), argv, envp);
-			exit(0); // THIS NEEDS TO BE RemOVED BECAUSE ITS NOT ALLOWED EXCVE SHOULD BE USED INSTEAD
-			// IF EXCVE FAILS YOU CAN THROW AN EXCEPTION INSTEAD OF USING EXIT
-		}
-		else 
-		{  // Parent process
-			// Close the write end of the pipe in the parent process
-			close(pipefd[1]);
+		std::string request = "REQUEST_METHOD=" + this->_method;
+		std::string query = "QUERY_STRING=param=value";
+		std::string length = "CONTENT_LENGTH=" + this->_headers["Content-Length"];
+		char *envp[] = {
+			(char *) request.c_str(),
+			(char *) query.c_str(),
+			(char *) length.c_str(),
+			nullptr
+		};
+		close(pipefd[0]);
+		dup2(pipefd[1], STDOUT_FILENO);
+		close(pipefd[1]);
+		char *argv[] = { (char*)path.c_str(), nullptr };
+		execve(path.c_str(), argv, envp);
+		exit(0); // THIS NEEDS TO BE RemOVED BECAUSE ITS NOT ALLOWED EXCVE SHOULD BE USED INSTEAD
+		// IF EXCVE FAILS YOU CAN THROW AN EXCEPTION INSTEAD OF USING EXIT
+	}
+	else 
+	{
+		close(pipefd[1]);
 
-			// Read from the read end of the pipe (which contains the CGI output)
-			char buffer[1024];
-			ssize_t nbytes;
-			while ((nbytes = read(pipefd[0], buffer, sizeof(buffer))) > 0) {
-				send(client_socket, buffer, nbytes, 0);  // Send CGI output to client
-			}
-			close(pipefd[0]);
-			int	status;
-			waitpid(pid, &status, 0);
-    	}
+		std::string response = "HTTP/1.1 204 No Content\r\n";
+		response += "Content-Type: text/plain\r\n";
+		//response += "Content-Length: " + std::to_string(file.size()) + "\r\n";
+		response += "Keep-Alive: timeout=5, max=100\r\n\r\n";
+		send(client_socket, response.c_str(), response.length(), 0);
+
+		char buffer[1024];
+		ssize_t nbytes;
+		
+		while ((nbytes = read(pipefd[0], buffer, sizeof(buffer))) > 0) 
+		{
+			std::cout.write(buffer, nbytes).flush();
+			//send(client_socket, buffer, nbytes, 0);
+		}
+		close(pipefd[0]);
+		int	status;
+		waitpid(pid, &status, 0);
 	}
 }
 
-void Response::directorylisting(int clientfd, ServerInfo server, std::string file)
+void Response::directorylisting(int clientfd, std::string file)
 {
-	(void) server; // THIS NEEDS TO BE CHANGED SINCE BEFORE TRYING ACCESS SOMETHING FROM IT
-	std::string response = "HTTP/1.1 200 OK\r\n";
+	std::string response;
+
 	if (this->_type.empty())
 			this->_type = "text/html";
-	response += "Content-Type: " + this->_type + "\r\n";
-	response += "Content-Length: " + std::to_string(file.size()) + "\r\n";
-	response += "Keep-Alive: timeout=5, max=100\r\n\r\n";
+	this->_fileSize = std::to_string(file.size());
+	response = formatGetResponseMsg(0);
 	response += file;
 	send(clientfd, response.c_str(), response.length(), 0);
 }
 
-void Response::respondGet(int clientfd, ServerInfo server)
+std::string Response::buildDirectorylist(std::string name, int rootsize)
 {
-	std::string response;
-
-	std::string filePath = "./www" + this->_url;
-	if (server.getlocationinfo()[this->_url].dirList != false)
+	std::string	directory;
+	directory += "<!DOCTYPE html>\n <html lang=\"en\">\n <head>\n </head>\n <body bgColor=\"#76ad0e\">\n";
+	directory += " <h1>Directory listing<h1>\n <h1>[---------------------]</h1>\n <ol>\n";
+	for (const auto & entry : std::filesystem::directory_iterator(name))
 	{
-		this->directorylisting(clientfd, server, this->directorylist(server.getlocationinfo()[this->_url].root, server.getlocationinfo()[this->_url].root.size()));
+		if (entry.is_directory())
+			directory += "<li><a href=" + entry.path().string().erase(0, rootsize) + "/" + ">" + entry.path().string().erase(0, rootsize + this->_url.size()) + "/" + "</a> </li>" + "\n";
+		else
+			directory += "<li><a href=" + entry.path().string().erase(0, rootsize) + ">" + entry.path().string().erase(0, rootsize + this->_url.size()) + "</a> </li>" + "\n";
 	}
-	try
-	{
-		openFile(filePath, server);
-  	}
-	catch(ResponseException &e)
-	{
-		this->_errorMessage = e.what();
-		sendErrorResponse(clientfd);
-		std::cout << "?????????????????" << "\n";
-		return;
-	}
-	response = formatGetResponseMsg();
-	send(clientfd, response.c_str(), response.length(), 0);
-	const std::size_t chunkSize = 8192;
-	char buffer[chunkSize];
-	while (this->_file.read(buffer, chunkSize) || this->_file.gcount() > 0)
-		send(clientfd, buffer, this->_file.gcount(), 0);
+	directory += "</ol>\n <h1>[---------------------]</h1>\n </body>\n </html>\n";
+	return (directory);
 }
 
 void Response::openFile(std::string filePath, ServerInfo server)
 {
 	this->_fsize = 0;
 	(void) filePath; // What to do with this??
+	(void) server;
+	std::string temp;
+	std::string	test = "/" + cutFromTo(this->_url, 1, "/");
 
-	this->_file.open("./" + server.getlocationinfo()[this->_url].root + "/" + server.getlocationinfo()[this->_url].index);
-	if (this->_file.is_open() == false)
+
+	while ((server.getlocationinfo()[temp].root.empty() || !server.getlocationinfo()[test].root.empty()) 
+	&& test.size() + 1 <= this->_url.size())
 	{
-		this->_file.open("./" + server.getlocationinfo()["/" + cutFromTo(this->_url, 1, "/")].root + this->_url);
+		temp = test;
+		test += "/" + cutFromTo(this->_url, test.size() + 1, "/");
+		if (!server.getlocationinfo()[test].root.empty())
+			temp = test;
 	}
+	temp += "/";
+
+	if (!server.getlocationinfo()[this->_url].index.empty())
+		this->_file.open(server.getlocationinfo()[this->_url].root + "/" + server.getlocationinfo()[this->_url].index);
+	else if (!server.getlocationinfo()[this->_url].root.empty())
+		this->_file.open(server.getlocationinfo()[this->_url].root + this->_url);
+	else
+		this->_file.open(server.getlocationinfo()[temp].root + this->_url);
+
+
 	if (this->_file.is_open() == false)
 	{
-		if (errno == EIO || errno == ENOMEM)
+		std::cout << errno << std::endl;
+		switch errno
 		{
-			this->_sanitizeStatus = 500; //internal error when I/O problem or no memory
-			//throw ResponseException("Internal Server Error");
-		}
-		else if (errno == ENOENT)
-		{
-			this->_sanitizeStatus = 404;
-			throw ResponseException();
-		}
-		else if (errno == EACCES)
-		{
-			this->_sanitizeStatus = 403;
-			//throw ResponseException("Forbidden");
+			case EIO:
+			case ENOMEM:
+					this->_sanitizeStatus = 500; //internal error when I/O problem or no memory
+					//throw ResponseException("Internal Server Error");
+			case 21:	// might need its own error handling
+			case ENOENT:
+					this->_sanitizeStatus = 404;
+					throw ResponseException();
+			case EACCES:
+					this->_sanitizeStatus = 403;
+					//throw ResponseException("Forbidden");
 		}
 	}
 	this->_file.seekg(0, std::ios::end);
@@ -192,20 +247,7 @@ void Response::openFile(std::string filePath, ServerInfo server)
 	this->_file.seekg(0, std::ios::beg);
 }
 
-std::string Response::directorylist(std::string name, int rootsize)
-{
-	std::string	directory;
-	directory += "<!DOCTYPE html>\n <html lang=\"en\">\n <head>\n </head>\n <body bgColor=\"#76ad0e\">\n";
-	directory += " <h1>Directory listing<h1>\n <h1>[---------------------]</h1>\n <ol>\n";
-	for (const auto & entry : std::filesystem::directory_iterator(name))
-	{
-   		directory += "<li><a href=" + entry.path().string() + ">" + entry.path().string().erase(0, rootsize + 1) + "</a> </li>" + "\n";
- 	}
-	directory += "</ol>\n <h1>[---------------------]</h1>\n </body>\n </html>\n";
-	return (directory);
-}
-
-std::string Response::formatGetResponseMsg( void )
+std::string Response::formatGetResponseMsg(int close)
 {
 	std::string response;
 
@@ -213,11 +255,66 @@ std::string Response::formatGetResponseMsg( void )
 	if (this->_type.empty())
 		this->_type = "text/html";
 	response += "Content-Type: " + this->_type + "\r\n";
-	if (this->_type == "video/mp4" || this->_type == "image/png")
-		response += "Content-Disposition: attachment; filename=\"" + this->_url + "\r\n";
+
 	response += "Content-Length: " + this->_fileSize + "\r\n";
-	response += "Keep-Alive: timeout=5, max=100\r\n\r\n";
-	return response;
+	
+	if (close == 0)
+		response += "Keep-Alive: timeout=" + this->_server.get_timeout() + ", max=100\r\n\r\n";
+	else
+		response += "Connection: close\r\n\r\n";
+	return (response);
+}
+
+std::string makeErrorContent(int statusCode, std::string message)
+{
+	std::string content = "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<title>";
+	content += std::to_string(statusCode) + " " + message + "</title>\n<style>\n";
+	content += "body {background-color: powderblue;}\n";
+	content += "h1 {color: blue; font-style: italic; text-align: center;}\n</style>\n</head>\n<body>\n<h1>";
+	content += std::to_string(statusCode) + " " + message + "</h1>\n</body>\n</html>\n";
+	return content;
+}
+
+void Response::sendNotFound(int clientfd)
+{
+	std::string response;
+	std::string file;
+
+	this->_file.open("./www/404.html");
+	this->_url = "/404.html";
+
+	for (std::string line; std::getline(this->_file, line);)
+		file += line;
+
+	this->_fileSize = std::to_string(file.length());
+	
+	response = formatGetResponseMsg(0);
+	response += file;	
+	send(clientfd, response.c_str(), response.length(), 0);
+}
+
+void Response::sendCustomError(int clientfd)
+{
+	std::string response;
+
+	this->_body = makeErrorContent(this->_sanitizeStatus, this->_errorMessage);
+	this->_fileSize = std::to_string(this->_body.length());
+
+	response = formatGetResponseMsg(0);
+	response += this->_body;
+
+	send(clientfd, response.c_str(), response.length(), 0);
+}
+
+void Response::sendErrorResponse( int clientfd )
+{
+	if (this->_sanitizeStatus == 404)
+	{
+		sendNotFound(clientfd);
+		return ;
+	}
+	else
+		sendCustomError(clientfd);
 }
 
 std::string Response::getStatusMessage(int statusCode)
@@ -336,64 +433,6 @@ std::string Response::getStatusMessage(int statusCode)
 	statusMessage += "\r\n";
 	this->_errorMessage = message;
 	return statusMessage;
-}
-
-std::string makeErrorContent(int statusCode, std::string message)
-{
-	std::string content = "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<title>";
-	content += std::to_string(statusCode) + " " + message + "</title>\n<style>\n";
-	content += "body {background-color: powderblue;}\n";
-	content += "h1 {color: blue; font-style: italic; text-align: center;}\n</style>\n</head>\n<body>\n<h1>";
-	content += std::to_string(statusCode) + " " + message + "</h1>\n</body>\n</html>\n";
-	return content;
-}
-
-void Response::sendNotFound(int clientfd)
-{
-	this->_file.open("./www/404.html");
-	this->_url = "/404.html";
-
-
-	std::string file;
-	for (std::string line; std::getline(this->_file, line);)
-		file += line;
-
-	
-	std::string response = getStatusMessage(404);
-	response += "Content-Type: text/html\r\n";
-	response += "Content-Length: " + std::to_string(file.length()) + "\r\n";
-	response += "Keep-Alive: timeout=5, max=100\r\n\r\n";
-	
-	response += file;
-	
-	send(clientfd, response.c_str(), response.length(), 0);
-}
-
-void Response::sendCustomError(int clientfd)
-{
-	std::string response = getStatusMessage(this->_sanitizeStatus);
-
-	this->_body = makeErrorContent(this->_sanitizeStatus, this->_errorMessage);
-	this->_fileSize = std::to_string(this->_body.length());
-
-	response += "Content-Type: text/html\r\n";
-	response += "Content-Length: " + this->_fileSize + "\r\n";
-	response += "Keep-Alive: timeout=5, max=100\r\n\r\n";
-
-	send(clientfd, response.c_str(), response.length(), 0);
-	send(clientfd, this->_body.c_str(), this->_body.length(), 0);
-}
-
-void Response::sendErrorResponse( int clientfd )
-{
-	if (this->_sanitizeStatus == 404)
-	{
-		std::cout << "asd" << std::endl;
-		sendNotFound(clientfd);
-		return ;
-	}
-	else
-		sendCustomError(clientfd);
 }
 
 const char* Response::ResponseException::what() const noexcept
