@@ -204,29 +204,24 @@ void Response::openFile(std::string filePath, ServerInfo server)
 	std::string temp;
 	std::string	test = "/" + cutFromTo(this->_url, 1, "/");
 
-	//std::cout << "url: " << this->_url << std::endl;
 
 	while ((server.getlocationinfo()[temp].root.empty() || !server.getlocationinfo()[test].root.empty()) 
 	&& test.size() + 1 <= this->_url.size())
 	{
-		//std::cout << "test: " << test << std::endl;
 		temp = test;
 		test += "/" + cutFromTo(this->_url, test.size() + 1, "/");
 		if (!server.getlocationinfo()[test].root.empty())
 			temp = test;
-		//std::cout << "test2: " << test << std::endl;
 	}
 	temp += "/";
 
 	if (!server.getlocationinfo()[this->_url].index.empty())
-		this->_file.open(server.getlocationinfo()[this->_url].root + server.getlocationinfo()[this->_url].index);
+		this->_file.open(server.getlocationinfo()[this->_url].root + "/" + server.getlocationinfo()[this->_url].index);
 	else if (!server.getlocationinfo()[this->_url].root.empty())
 		this->_file.open(server.getlocationinfo()[this->_url].root + this->_url);
 	else
 		this->_file.open(server.getlocationinfo()[temp].root + this->_url);
 
-	std::cout << "\n temp: " << temp << std::endl;
-	std::cout << server.getlocationinfo()[temp].root + this->_url << std::endl;
 
 	if (this->_file.is_open() == false)
 	{
