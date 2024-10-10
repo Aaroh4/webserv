@@ -4,6 +4,7 @@
 #include "libraries.hpp"
 #include <unordered_map>
 #include <unordered_set>
+#include <filesystem>
 
 // Function for simplifying cutting string without having to mess around with substr
 inline std::string cutFromTo(std::string input, int start, std::string last)

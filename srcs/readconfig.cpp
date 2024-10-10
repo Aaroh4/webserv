@@ -62,7 +62,7 @@ void locations(std::string temp, ServerInfo &server)
 	}
 	if (std::filesystem::is_directory(temploc.root + temploc.name) && temploc.name.back() != '/')
 		temploc.name += "/";
-	std::cout << "name: " << temploc.name << std::endl;
+	//std::cout << "name: " << temploc.name << std::endl;
 	server.setnewlocation(temploc);
 }
 
@@ -73,7 +73,7 @@ int bracketfinder(std::string configfile, std::string type, ServerInfo &server)
 	int					brackets = 0;
 	std::istringstream	file(configfile);
 
-	std::cout << "type" << type << std::endl;
+	//std::cout << "type" << type << std::endl;
 	for (std::string line; std::getline(file, line);)
 	{
 		if (line.find("{") != std::string::npos)
@@ -98,9 +98,9 @@ int bracketfinder(std::string configfile, std::string type, ServerInfo &server)
 		std::string newconfig = configfile.substr(configfile.find(temp) + temp.size(), std::string::npos);
 		if (newconfig.find("{") != std::string::npos)
 		{
-			std::cout << "asd" << std::endl;
+			//std::cout << "asd" << std::endl;
 			newconfig = newconfig.substr(newconfig.find("location ") + 9, std::string::npos);
-			std::cout << "asd2" << std::endl;
+			//std::cout << "asd2" << std::endl;
 			bracketfinder(newconfig, "location", server);
 		}
 	}

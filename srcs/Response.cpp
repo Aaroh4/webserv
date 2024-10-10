@@ -57,7 +57,7 @@ void Response::respondGet(int clientfd, ServerInfo server)
 	std::string response;
 
 	std::string filePath = "./www" + this->_url;
-	std::cout << "index: " << server.getlocationinfo()[this->_url].index << " Url< " << this->_url << std::endl;
+	//std::cout << "index: " << server.getlocationinfo()[this->_url].index << " Url< " << this->_url << std::endl;
 	if (server.getlocationinfo()[this->_url].dirList != false && server.getlocationinfo()[this->_url].index.empty())
 	{
 		std::cout << "directorylist: " << server.getlocationinfo()[this->_url].root + this->_url << std::endl;
@@ -204,7 +204,7 @@ void Response::openFile(std::string filePath, ServerInfo server)
 	std::string temp;
 	std::string	test = "/" + cutFromTo(this->_url, 1, "/");
 
-	std::cout << "url: " << this->_url << std::endl;
+	//std::cout << "url: " << this->_url << std::endl;
 
 	while ((server.getlocationinfo()[temp].root.empty() || !server.getlocationinfo()[test].root.empty()) 
 	&& test.size() + 1 <= this->_url.size())
@@ -216,15 +216,17 @@ void Response::openFile(std::string filePath, ServerInfo server)
 			temp = test;
 		//std::cout << "test2: " << test << std::endl;
 	}
-	if (temp.empty())
-		temp = "/";
-	std::cout << "temp & url: " << temp + this->_url << std::endl;
+	temp += "/";
 
 	if (!server.getlocationinfo()[this->_url].index.empty())
 		this->_file.open(server.getlocationinfo()[this->_url].root + server.getlocationinfo()[this->_url].index);
+	else if (!server.getlocationinfo()[this->_url].root.empty())
+		this->_file.open(server.getlocationinfo()[this->_url].root + this->_url);
 	else
 		this->_file.open(server.getlocationinfo()[temp].root + this->_url);
 
+	std::cout << "\n temp: " << temp << std::endl;
+	std::cout << server.getlocationinfo()[temp].root + this->_url << std::endl;
 
 	if (this->_file.is_open() == false)
 	{
