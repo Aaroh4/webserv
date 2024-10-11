@@ -28,15 +28,8 @@ Response Response::operator=(const Response &input)
 	return (*this);
 }
 
-void	Response::respond(int clientfd, ServerInfo server)
+void Response::crudSort(int clientfd, ServerInfo server)
 {
-	this->_server = server;
-
-	if (this->_sanitizeStatus != 200)
-	{
-		sendErrorResponse( clientfd );
-		return;
-	}
 	if (this->_method == "GET")
 		respondGet(clientfd, server);
 	else if (this->_method == "POST")
@@ -44,11 +37,29 @@ void	Response::respond(int clientfd, ServerInfo server)
 	else if (this->_method == "DELETE")
 		respondDelete(clientfd);
 	else
-	{
-		this->_sanitizeStatus = 405; //Method not allowed
-		std::string response = getStatusMessage(405);
-		response += formatGetResponseMsg(1);
-		send(clientfd, response.c_str(), response.length(), 0);
+		throw ResponseException405();
+}
+
+void	Response::respond(int clientfd, ServerInfo server)
+{
+	this->_server = server;
+
+	try{
+		if (this->_sanitizeStatus == 404)
+			throw ResponseException404();
+		else if (this->_sanitizeStatus == 400)
+			throw ResponseException400();
+		else if (this->_sanitizeStatus != 200)
+			throw ResponseException();
+	} catch(const ResponseException& e) {
+		sendErrorResponse(e.what(), clientfd);
+		return ;
+	}
+	try{
+		crudSort(clientfd, server);
+	} catch(const ResponseException& e){
+		sendErrorResponse(e.what(), clientfd);
+		return ;
 	}
 }
 
@@ -56,7 +67,6 @@ void Response::respondGet(int clientfd, ServerInfo server)
 {
 	std::string response;
 
-	std::string filePath = "./www" + this->_url;
 	//std::cout << "index: " << server.getlocationinfo()[this->_url].index << " Url< " << this->_url << std::endl;
 	if (server.getlocationinfo()[this->_url].dirList != false && server.getlocationinfo()[this->_url].index.empty())
 	{
@@ -67,12 +77,12 @@ void Response::respondGet(int clientfd, ServerInfo server)
 	{
 		try
 		{
-			openFile(filePath, server);
+			openFile(server);
 		}
 		catch(ResponseException &e)
 		{
 			this->_errorMessage = e.what();
-			sendErrorResponse(clientfd);
+			sendErrorResponse(e.what(), clientfd);
 			std::cout << "?????????????????" << "\n";
 			return;
 		}
@@ -87,7 +97,7 @@ void Response::respondGet(int clientfd, ServerInfo server)
 }
 
 void	Response::respondPost(int clientfd, ServerInfo server)
-{	
+{
 	if (this->_type == "cgi/py" || this->_type == "cgi/php")
 	{
 		char result[4096];
@@ -144,7 +154,7 @@ void	Response::handleCgi(std::string path, int client_socket)
 		exit(0); // THIS NEEDS TO BE RemOVED BECAUSE ITS NOT ALLOWED EXCVE SHOULD BE USED INSTEAD
 		// IF EXCVE FAILS YOU CAN THROW AN EXCEPTION INSTEAD OF USING EXIT
 	}
-	else 
+	else
 	{
 		close(pipefd[1]);
 
@@ -156,8 +166,8 @@ void	Response::handleCgi(std::string path, int client_socket)
 
 		char buffer[1024];
 		ssize_t nbytes;
-		
-		while ((nbytes = read(pipefd[0], buffer, sizeof(buffer))) > 0) 
+
+		while ((nbytes = read(pipefd[0], buffer, sizeof(buffer))) > 0)
 		{
 			std::cout.write(buffer, nbytes).flush();
 			//send(client_socket, buffer, nbytes, 0);
@@ -196,16 +206,14 @@ std::string Response::buildDirectorylist(std::string name, int rootsize)
 	return (directory);
 }
 
-void Response::openFile(std::string filePath, ServerInfo server)
+void Response::openFile(ServerInfo server)
 {
 	this->_fsize = 0;
-	(void) filePath; // What to do with this??
-	(void) server;
 	std::string temp;
 	std::string	test = "/" + cutFromTo(this->_url, 1, "/");
 
 
-	while ((server.getlocationinfo()[temp].root.empty() || !server.getlocationinfo()[test].root.empty()) 
+	while ((server.getlocationinfo()[temp].root.empty() || !server.getlocationinfo()[test].root.empty())
 	&& test.size() + 1 <= this->_url.size())
 	{
 		temp = test;
@@ -230,8 +238,8 @@ void Response::openFile(std::string filePath, ServerInfo server)
 		{
 			case EIO:
 			case ENOMEM:
-					this->_sanitizeStatus = 500; //internal error when I/O problem or no memory
-					//throw ResponseException("Internal Server Error");
+					this->_sanitizeStatus = 500;
+					throw ResponseException(); //internal error when I/O problem or no memory might need some logging
 			case 21:	// might need its own error handling
 			case ENOENT:
 					this->_sanitizeStatus = 404;
@@ -257,12 +265,50 @@ std::string Response::formatGetResponseMsg(int close)
 	response += "Content-Type: " + this->_type + "\r\n";
 
 	response += "Content-Length: " + this->_fileSize + "\r\n";
-	
+
 	if (close == 0)
 		response += "Keep-Alive: timeout=" + this->_server.get_timeout() + ", max=100\r\n\r\n";
 	else
 		response += "Connection: close\r\n\r\n";
 	return (response);
+}
+
+void Response::sendStandardErrorPage(int sanitizeStatus, int clientfd)
+{
+	std::string response;
+	std::string file;
+
+	switch (sanitizeStatus)
+	{
+		case 400:
+			this->_file.open("./www/400.html");
+			this->_url = "/400.html";
+			break ;
+		case 403:
+			this->_file.open("./www/403.html");
+			this->_url = "/403.html";
+			break ;
+		case 405:
+			this->_file.open("./www/405.html");
+			this->_url = "/405.html";
+			break ;
+		case 404:
+			this->_file.open("./www/404.html");
+			this->_url = "/404.html";
+			break ;
+		default:
+			this->_file.open("./www/500.html");
+			this->_url = "/500.html";
+			break ;
+	}
+	for (std::string line; std::getline(this->_file, line);)
+		file += line;
+
+	this->_fileSize = std::to_string(file.length());
+
+	response = formatGetResponseMsg(0);
+	response += file;
+	send(clientfd, response.c_str(), response.length(), 0);
 }
 
 std::string makeErrorContent(int statusCode, std::string message)
@@ -275,25 +321,7 @@ std::string makeErrorContent(int statusCode, std::string message)
 	return content;
 }
 
-void Response::sendNotFound(int clientfd)
-{
-	std::string response;
-	std::string file;
-
-	this->_file.open("./www/404.html");
-	this->_url = "/404.html";
-
-	for (std::string line; std::getline(this->_file, line);)
-		file += line;
-
-	this->_fileSize = std::to_string(file.length());
-	
-	response = formatGetResponseMsg(0);
-	response += file;	
-	send(clientfd, response.c_str(), response.length(), 0);
-}
-
-void Response::sendCustomError(int clientfd)
+void Response::sendCustomErrorPage(int clientfd)
 {
 	std::string response;
 
@@ -306,7 +334,7 @@ void Response::sendCustomError(int clientfd)
 	send(clientfd, response.c_str(), response.length(), 0);
 }
 
-void Response::sendErrorResponse( int clientfd )
+void Response::sendErrorResponse(std::string errorMessage, int clientfd, int status)
 {
 	if (this->_sanitizeStatus == 404)
 	{
@@ -435,7 +463,44 @@ std::string Response::getStatusMessage(int statusCode)
 	return statusMessage;
 }
 
-const char* Response::ResponseException::what() const noexcept
-{
-	return "File not found\n";
+const char* Response::ResponseException::what() const noexcept{
+	return "500 Internal Server Error\r\n";
 }
+
+int Response::ResponseException::responseCode() const{
+	return (500);
+}
+
+const char* Response::ResponseException400::what() const noexcept{
+	return "400 Bad Request\r\n";
+}
+
+int Response::ResponseException400::responseCode () const{
+	return (400);
+}
+
+const char* Response::ResponseException403::what() const noexcept{
+	return "403 Forbidden\r\n";
+}
+
+int Response::ResponseException403::responseCode () const{
+	return (403);
+}
+
+const char* Response::ResponseException404::what() const noexcept{
+	return "404 Not Found\r\n";
+}
+
+int Response::ResponseException404::responseCode () const{
+	return (404);
+}
+
+const char* Response::ResponseException405::what() const noexcept{
+	return "405 Method Not Allowed\r\n";
+}
+
+int Response::ResponseException405::responseCode () const{
+	return (405);
+}
+
+
