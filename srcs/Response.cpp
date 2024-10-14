@@ -202,7 +202,7 @@ void Response::openFile(std::string filePath, ServerInfo server)
 	std::string temp;
 	std::string	test = "/" + cutFromTo(this->_url, 1, "/");
 
-
+	std::cout << this->_url << std::endl;
 	while ((server.getlocationinfo()[temp].root.empty() 
 		|| !server.getlocationinfo()[test].root.empty()) && test.size() + 1 <= this->_url.size())
 	{
@@ -219,8 +219,8 @@ void Response::openFile(std::string filePath, ServerInfo server)
 	else if (!server.getlocationinfo()[temp].root.empty())
 		this->_file.open(server.getlocationinfo()[temp].root + "/" + this->_url.substr(temp.size(), std::string::npos));
 	
-	if (this->_file.is_open() == false)
-		this->_file.open(server.getlocationinfo()["/"].root + "/" + this->_url);
+	//if (this->_file.is_open() == false)
+	//	this->_file.open(server.getlocationinfo()["/"].root + "/" + this->_url);
 
 	if (this->_file.is_open() == false)
 	{
@@ -231,12 +231,14 @@ void Response::openFile(std::string filePath, ServerInfo server)
 			case ENOMEM:
 					this->_sanitizeStatus = 500; //internal error when I/O problem or no memory
 					//throw ResponseException("Internal Server Error");
+					break ;
 			case 21:	// might need its own error handling
 			case ENOENT:
 					this->_sanitizeStatus = 404;
 					throw ResponseException();
 			case EACCES:
 					this->_sanitizeStatus = 403;
+					break ;
 					//throw ResponseException("Forbidden");
 		}
 	}
