@@ -91,6 +91,7 @@ void Response::respondGet(int clientfd, ServerInfo server)
 		while (this->_file.read(buffer, chunkSize) || this->_file.gcount() > 0)
 			send(clientfd, buffer, this->_file.gcount(), 0);
 	}
+	std::cout << response << std::endl;
 }
 
 void	Response::respondPost(int clientfd, ServerInfo server)
