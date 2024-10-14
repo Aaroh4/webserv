@@ -1,5 +1,6 @@
 #include "../includes/ServerInfo.hpp"
 #include "../includes/ServerManager.hpp"
+#include "../includes/configExceptions.hpp"
 #include <fstream>
 #include <unordered_map>
 #include <sstream>
@@ -146,7 +147,7 @@ ServerInfo	config_server(std::string temp, ServerInfo &server)
 					}
 					catch (std::exception &e)
 					{
-						std::cout << "Wrong argument for port!" << "\n";
+						throw(wrongPort());
 					}
 					break;
 				case 2:
@@ -166,7 +167,7 @@ ServerInfo	config_server(std::string temp, ServerInfo &server)
 					}
 					catch (std::exception &e)
 					{
-						std::cout << "Wrong argument for bodylimit!" << "\n";
+						throw(wrongBodyLimit());
 					}
 					break;
 				default:

@@ -218,7 +218,9 @@ void Response::openFile(std::string filePath, ServerInfo server)
 		this->_file.open(server.getlocationinfo()[this->_url].root + server.getlocationinfo()[this->_url].index);
 	else if (!server.getlocationinfo()[temp].root.empty())
 		this->_file.open(server.getlocationinfo()[temp].root + "/" + this->_url.substr(temp.size(), std::string::npos));
-	
+	else
+		this->_file.open(server.getlocationinfo()["/"].root + "/" + this->_url);
+
 	//if (this->_file.is_open() == false)
 	//	this->_file.open(server.getlocationinfo()["/"].root + "/" + this->_url);
 

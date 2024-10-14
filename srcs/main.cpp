@@ -15,6 +15,15 @@ int	main(int argc, char **argv)
 		std::cout << "Usage: ./webserv <config file>" << "\n";
 		return (1);
 	}
-	readconfig(argv[1], manager);
+	try 
+	{
+		readconfig(argv[1], manager);
+	}
+	catch (std::exception &e)
+	{
+		std::cout << e.what() << std::endl;
+		std::cout << "Wrong arguments in the config!" << "\n";
+		return (-1);
+	}
 	return (manager.startServers());
 }
