@@ -28,7 +28,7 @@ Response Response::operator=(const Response &input)
 	return (*this);
 }
 
-void Response::crudSort(int clientfd, ServerInfo server)
+void Response::handleCRUD(int clientfd, ServerInfo server)
 {
 	if (this->_method == "GET")
 		respondGet(clientfd, server);
@@ -56,7 +56,7 @@ void	Response::respond(int clientfd, ServerInfo server)
 		return ;
 	}
 	try{
-		crudSort(clientfd, server);
+		handleCRUD(clientfd, server);
 	} catch(const ResponseException& e){
 		sendErrorResponse(e.what(), clientfd, e.responseCode());
 		return ;
@@ -111,6 +111,7 @@ void	Response::respondPost(int clientfd, ServerInfo server)
 		std::string response;
 
 		this->_sanitizeStatus = 204;
+		this->_errorMessage = "No Content";
 		response = formatGetResponseMsg(0);
 		send(clientfd, response.c_str(), response.length(), 0);
 	}
@@ -120,8 +121,13 @@ void	Response::respondDelete(int clientfd)
 {
 
 	std::string fileToDelete = "./www" + this->_url;
-	if (remove(fileToDelete.c_str()) < 0)
-		std::cout << "error\n";
+	try {
+		if (remove(fileToDelete.c_str()) == -1)
+			throw ResponseException();
+	} catch (const ResponseException& e){
+		sendErrorResponse(e.what(), clientfd, e.responseCode());
+		return ;
+	}
 	std::string response = "HTTP/1.1 200 OK\r\n";
 
 	send (clientfd, response.c_str(), response.length(), 0);
@@ -261,7 +267,10 @@ std::string Response::formatGetResponseMsg(int close)
 {
 	std::string response;
 
-	response = this->_httpVersion + " 200 OK\r\n";
+	if (this->_sanitizeStatus == 200)
+		response = this->_httpVersion + " 200 OK\r\n";
+	else
+		response = this->_httpVersion + " " + std::to_string(this->_sanitizeStatus) +  this->_errorMessage +"\r\n";
 	if (this->_type.empty())
 		this->_type = "text/html";
 	response += "Content-Type: " + this->_type + "\r\n";

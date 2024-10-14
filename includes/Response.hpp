@@ -27,7 +27,7 @@ class Response: public Request
 			void			respondGet(int clientfd, ServerInfo server);
 			void			respondPost(int clientfd, ServerInfo server);
 			void			respondDelete(int clientfd);
-			void			crudSort(int clientfd, ServerInfo server);
+			void			handleCRUD(int clientfd, ServerInfo server);
 			void 			sendStandardErrorPage(int sanitizeStatus, int clientfd);
 
 			// RESPONSE EXCEPTIONS
