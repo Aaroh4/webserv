@@ -17,7 +17,7 @@ class Response: public Request
 
 			std::string 	getStatusMessage(int statusCode);
 			std::string 	formatGetResponseMsg(int code);
-			void			sendErrorResponse(std::string errorMessage, int clientfd);
+			void			sendErrorResponse(std::string errorMessage, int clientfd, int errorCode);
 			void			openFile(ServerInfo server);
 			void			sendCustomErrorPage(int clientfd);
       		std::string		buildDirectorylist(std::string name, int rootsize);

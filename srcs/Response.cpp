@@ -52,13 +52,13 @@ void	Response::respond(int clientfd, ServerInfo server)
 		else if (this->_sanitizeStatus != 200)
 			throw ResponseException();
 	} catch(const ResponseException& e) {
-		sendErrorResponse(e.what(), clientfd);
+		sendErrorResponse(e.what(), clientfd, e.responseCode());
 		return ;
 	}
 	try{
 		crudSort(clientfd, server);
 	} catch(const ResponseException& e){
-		sendErrorResponse(e.what(), clientfd);
+		sendErrorResponse(e.what(), clientfd, e.responseCode());
 		return ;
 	}
 }
@@ -81,13 +81,10 @@ void Response::respondGet(int clientfd, ServerInfo server)
 		}
 		catch(ResponseException &e)
 		{
-			this->_errorMessage = e.what();
-			sendErrorResponse(e.what(), clientfd);
-			std::cout << "?????????????????" << "\n";
+			sendErrorResponse(e.what(), clientfd, e.responseCode());
 			return;
 		}
 		response = formatGetResponseMsg(0);
-		//std::cout << response << std::endl;
 		send(clientfd, response.c_str(), response.length(), 0);
 		const std::size_t chunkSize = 8192;
 		char buffer[chunkSize];
@@ -237,16 +234,20 @@ void Response::openFile(ServerInfo server)
 		switch errno
 		{
 			case EIO:
+					this->_sanitizeStatus = 500;
+					throw ResponseException();
 			case ENOMEM:
 					this->_sanitizeStatus = 500;
-					throw ResponseException(); //internal error when I/O problem or no memory might need some logging
-			case 21:	// might need its own error handling
+					throw ResponseException(); //internal error when I/O problem or no memory might need some logging;
 			case ENOENT:
 					this->_sanitizeStatus = 404;
-					throw ResponseException();
+					throw ResponseException404();
 			case EACCES:
 					this->_sanitizeStatus = 403;
-					//throw ResponseException("Forbidden");
+					throw ResponseException403();
+			default:
+					this->_sanitizeStatus = 500;
+					throw ResponseException();
 		}
 	}
 	this->_file.seekg(0, std::ios::end);
@@ -259,7 +260,7 @@ std::string Response::formatGetResponseMsg(int close)
 {
 	std::string response;
 
-	response = getStatusMessage(this->_sanitizeStatus);
+	response = this->_httpVersion + " 200 OK\r\n";
 	if (this->_type.empty())
 		this->_type = "text/html";
 	response += "Content-Type: " + this->_type + "\r\n";
@@ -334,137 +335,25 @@ void Response::sendCustomErrorPage(int clientfd)
 	send(clientfd, response.c_str(), response.length(), 0);
 }
 
-void Response::sendErrorResponse(std::string errorMessage, int clientfd, int status)
+void Response::sendErrorResponse(std::string errorMessage, int clientfd, int errorCode)
 {
-	if (this->_sanitizeStatus == 404)
+	this->_errorMessage = errorMessage;
+	this->_sanitizeStatus = errorCode;
+	if (this->_sanitizeStatus == 400 ||
+		this->_sanitizeStatus == 405 ||
+		this->_sanitizeStatus == 403 ||
+		this->_sanitizeStatus == 500 ||
+		this->_sanitizeStatus == 404)
 	{
-		sendNotFound(clientfd);
+		sendStandardErrorPage(this->_sanitizeStatus, clientfd);
 		return ;
 	}
 	else
-		sendCustomError(clientfd);
-}
-
-std::string Response::getStatusMessage(int statusCode)
-{
-	std::string statusMessage;
-	std::string message;
-
-	statusMessage = this->_httpVersion + " ";
-	statusMessage += std::to_string(this->_sanitizeStatus);
-	statusMessage += " ";
-	switch(statusCode)
-	{
-		// 2XX Success responses
-
-		case 200:
-			message += "OK";
-			break;
-		case 201:
-			message += "Created";
-			break;
-		case 202:
-			message += "Accepted";
-			break;
-		case 203:
-			message += "Non-Authoritative Information";
-			break;
-		case 204:
-			message += "No Content";
-			break;
-
-		// 3XX Redirection responses
-
-		case 301:
-			message += "Moved Permanently";
-			break;
-		case 302:
-			message += "Found";
-			break;
-		case 303:
-			message += "See Other";
-			break;
-		case 304:
-			message += "Not Modified";
-			break;
-		case 307:
-			message += "Temporary Redirect";
-			break;
-		case 308:
-			message += "Permanent Redirect";
-			break;
-
-		// 4XX Client error responses
-
-		case 400:
-			message += "Bad Request";
-			break;
-		case 401:
-			message += "Unauthorized";
-			break;
-		case 403:
-			message += "Forbidden";
-			break;
-		case 404:
-			message += "Not Found";
-			break;
-		case 405:
-			message += "Method Not Allowed";
-			break;
-		case 406:
-			message += "Not Acceptable";
-			break;
-		case 408:
-			message += "Request Timeout";
-			break;
-		case 413:
-			message += "Payload Too Large";
-			break;
-		case 414:
-			statusMessage += "URI Too Long";
-			break;
-		case 415:
-			message += "Unsupported Media Type";
-			break;
-		case 418:
-			message += "I'm a teapot";
-			break;
-		case 429:
-			message += "Too Many Requests";
-			break;
-		case 431:
-			message += "Request Header Fields Too Large";
-			break;
-
-		// 5XX Server error responses
-
-		case 500:
-			message += "Internal Server Error";
-			break;
-		case 501:
-			message += "Not Implemented";
-			break;
-		case 502:
-			message += "Bad Gateway";
-			break;
-		case 503:
-			message += "Service Unavailable";
-			break;
-		case 505:
-			message += "HTTP Version Not Supported";
-			break;
-		default:
-			message += "Unknown Status Code";
-			break;
-	}
-	statusMessage += message;
-	statusMessage += "\r\n";
-	this->_errorMessage = message;
-	return statusMessage;
+		sendCustomErrorPage(clientfd);
 }
 
 const char* Response::ResponseException::what() const noexcept{
-	return "500 Internal Server Error\r\n";
+	return "Internal Server Error\r\n";
 }
 
 int Response::ResponseException::responseCode() const{
@@ -472,7 +361,7 @@ int Response::ResponseException::responseCode() const{
 }
 
 const char* Response::ResponseException400::what() const noexcept{
-	return "400 Bad Request\r\n";
+	return "Bad Request\r\n";
 }
 
 int Response::ResponseException400::responseCode () const{
@@ -480,7 +369,7 @@ int Response::ResponseException400::responseCode () const{
 }
 
 const char* Response::ResponseException403::what() const noexcept{
-	return "403 Forbidden\r\n";
+	return "Forbidden\r\n";
 }
 
 int Response::ResponseException403::responseCode () const{
@@ -488,7 +377,7 @@ int Response::ResponseException403::responseCode () const{
 }
 
 const char* Response::ResponseException404::what() const noexcept{
-	return "404 Not Found\r\n";
+	return "Not Found\r\n";
 }
 
 int Response::ResponseException404::responseCode () const{
@@ -496,7 +385,7 @@ int Response::ResponseException404::responseCode () const{
 }
 
 const char* Response::ResponseException405::what() const noexcept{
-	return "405 Method Not Allowed\r\n";
+	return "Method Not Allowed\r\n";
 }
 
 int Response::ResponseException405::responseCode () const{
