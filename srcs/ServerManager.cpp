@@ -36,7 +36,7 @@ ServerManager::~ServerManager()
 void	ServerManager::addNewConnection(size_t i)
 {
 	int clientSocket = accept(this->_poll_fds[i].fd, nullptr, nullptr);
-	if (clientSocket < 0) 
+	if (clientSocket < 0)
 		perror("Accept failed");
 	fcntl(clientSocket, F_SETFL, O_NONBLOCK, FD_CLOEXEC);
 	struct pollfd client_pollfd;
@@ -55,7 +55,7 @@ size_t	ServerManager::findLastChunk(std::string& request, size_t start_pos)
 	while (chunk_size != 0)
 	{
 		pos = request.find("\r\n", start_pos);
-	
+
 		try
 		{
 			chunk_size = std::stoi(request.substr(start_pos, pos - start_pos), nullptr, 16);
@@ -66,7 +66,7 @@ size_t	ServerManager::findLastChunk(std::string& request, size_t start_pos)
 		{
 			return 0;
 		}
-		start_pos += chunk_size + 4; // \r\n before and after chunk 
+		start_pos += chunk_size + 4; // \r\n before and after chunk
 	}
 	return pos + 4;
 }
@@ -81,7 +81,7 @@ size_t	ServerManager::getRequestLength(std::string& request)
 	size_t	content_length = 0;
 	size_t	total_length = 0;
 	size_t	start = request.find("Content-Length: ");
-	
+
 	try
 	{
 		if (request.substr(0, 4) == "GET ")
@@ -102,7 +102,7 @@ size_t	ServerManager::getRequestLength(std::string& request)
 	{
 		std::cerr << e.what() << '\n';
 	}
-	
+
 	return total_length;
 }
 
@@ -111,12 +111,12 @@ void	ServerManager::handleRequest(std::string& http_request, int clientSocket)
 	Request request(http_request);
 	request.parse();
 	request.sanitize();
-	
+
 	Response respond(request);
 	respond.respond(clientSocket, this->_info[this->_connections.at(clientSocket)]);
 }
 
-void ServerManager::removeConnection(int clientSocket, size_t& i) 
+void ServerManager::removeConnection(int clientSocket, size_t& i)
 {
 	close(clientSocket);
 	this->_poll_fds.erase(this->_poll_fds.begin() + i);
@@ -133,39 +133,43 @@ void	ServerManager::receiveRequest(size_t& i)
 	size_t		total_length = 0;
 
 	// Receive data until complete request is sent
-	try 
+	try
 	{
 		while (total_length == 0 || http_request.length() < total_length)
 		{
-		bytes_received = recv(clientSocket, buffer, sizeof(buffer), 0);
-		if (bytes_received > 0)
-		{
-			http_request.append(buffer, bytes_received);
-			if (total_length == 0)
-				total_length = getRequestLength(http_request);
-			if (bytes_received < 1024 && total_length == 0)
-				std::cout << "bad Request\n";
-		}
-		else if (bytes_received == 0)
-		{
-			std::cout << "Client disconnected" << "\n";
-			break;
-		}
-		else
-		{
-			std::cout << "bytes received: " << bytes_received << "\n";
-			perror("Recv error");
-			break;
-		}
-	}
-	}
-	catch (std::exception& e)
-	{
+			bytes_received = recv(clientSocket, buffer, sizeof(buffer), 0);
+			if (bytes_received > 0)
+			{
+				http_request.append(buffer, bytes_received);
+				if (total_length == 0)
+					total_length = getRequestLength(http_request);
+				if (bytes_received < 1024 && total_length == 0)
+					throw Response::ResponseException400();
 
+			}
+			else if (bytes_received == 0)
+			{
+				std::cout << "Client disconnected" << "\n";
+				break;
+			}
+			else
+			{
+				std::cout << "recv failed" << "\n";
+				throw Response::ResponseException();
+				break;
+			}
+		}
 	}
+	catch (const Response::ResponseException & e){
+		Response obj;
+		obj.sendErrorResponse(e.what(), clientSocket, e.responseCode());
+	}
+	try {
 		if (total_length != http_request.length())
-	{
-		std::cout << "bad request\n";
+			throw Response::ResponseException400();
+	} catch (const Response::ResponseException & e){
+		Response obj;
+		obj.sendErrorResponse(e.what(), clientSocket, e.responseCode());
 		removeConnection(clientSocket, i);
 	}
 	handleRequest(http_request, clientSocket);
@@ -179,10 +183,13 @@ void	ServerManager::runServers()
 		int pollcount = poll(this->_poll_fds.data(), this->_poll_fds.size(), 100);
 
 		if (pollcount < 0)
+		{
+			std::cerr << "poll failed" << std::endl;
 			break ;
+		}
 		for (size_t i = 0; i < this->_poll_fds.size(); i++)
 		{
-			if (this->_poll_fds[i].revents & POLLIN) 
+			if (this->_poll_fds[i].revents & POLLIN) //must check read and write at the same time!
 			{
 				if (i < this->get_info().size())
 					addNewConnection(i);

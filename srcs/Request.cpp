@@ -89,7 +89,7 @@ void	Request::_parsePart(std::string& part)
 		end = part.find_last_of("\n");
 		this->_formInput += part.substr(start, end - (start + 1));
 	}
-	else	//Create newfile	
+	else	//Create newfile
 	{
 		end = part.find_first_of("\n");
 		std::string line = part.substr(0, end);
@@ -166,12 +166,12 @@ void	Request::_getContentType(void)
 		else if (type == "mpeg" || type == "avi" || type == "mp4")
 			this->_type = "video/" + type;
 		else if(type == "py" || type == "php")
-    {
-      this->_verifyPath();
-			this->_type = "cgi/" + type;
-    }
-    else if (this->_url != "/")
-		  this->_sanitizeStatus = 415; // Error: Unsupported Media Type
+		{
+		this->_verifyPath();
+				this->_type = "cgi/" + type;
+		}
+		else if (this->_url != "/")
+			this->_sanitizeStatus = 415; // Error: Unsupported Media Type
 	}
 }
 
@@ -329,7 +329,7 @@ void	Request::parse(void)
 		this->_decodeChunks();
 	if (this->_headers["Content-Type"].find("multipart/form-data") != std::string::npos)
 		this->_parseMultipartContent();
-	else 
+	else
 		this->_splitKeyValuePairs();
 }
 
