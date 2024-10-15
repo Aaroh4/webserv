@@ -1,4 +1,5 @@
 #include "../includes/ServerInfo.hpp"
+#include "../includes/configExceptions.hpp"
 
 ServerInfo::ServerInfo()
 {}
@@ -44,13 +45,15 @@ unsigned int		ServerInfo::get_ip() const
 
 void	ServerInfo::setnew_port(int port)
 {
-	this->_port.push_back(port);
+	if (port > 65535)
+		throw(wrongPort());
+	this->_port = port;
 }
 			
 			
-int		ServerInfo::get_port(int num) const
+int		ServerInfo::get_port() const
 {
-	return(this->_port[num]);
+	return(this->_port);
 }
 
 void	ServerInfo::setsocketfd(int fd)

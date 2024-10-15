@@ -3,8 +3,9 @@
 
 #include "ServerInfo.hpp"
 #include "libraries.hpp"
-#include <algorithm> 
+#include <algorithm>
 #include <unordered_map>
+#define DEFAULT "test1.cfg"
 
 class ServerManager
 {

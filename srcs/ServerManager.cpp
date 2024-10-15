@@ -36,7 +36,7 @@ ServerManager::~ServerManager()
 void	ServerManager::addNewConnection(size_t i)
 {
 	int clientSocket = accept(this->_poll_fds[i].fd, nullptr, nullptr);
-	if (clientSocket < 0) 
+	if (clientSocket < 0)
 		perror("Accept failed");
 	fcntl(clientSocket, F_SETFL, O_NONBLOCK, FD_CLOEXEC);
 	struct pollfd client_pollfd;
@@ -55,7 +55,7 @@ size_t	ServerManager::findLastChunk(std::string& request, size_t start_pos)
 	while (chunk_size != 0)
 	{
 		pos = request.find("\r\n", start_pos);
-	
+
 		try
 		{
 			chunk_size = std::stoi(request.substr(start_pos, pos - start_pos), nullptr, 16);
@@ -66,7 +66,7 @@ size_t	ServerManager::findLastChunk(std::string& request, size_t start_pos)
 		{
 			return 0;
 		}
-		start_pos += chunk_size + 4; // \r\n before and after chunk 
+		start_pos += chunk_size + 4; // \r\n before and after chunk
 	}
 	return pos + 4;
 }
@@ -81,7 +81,7 @@ size_t	ServerManager::getRequestLength(std::string& request)
 	size_t	content_length = 0;
 	size_t	total_length = 0;
 	size_t	start = request.find("Content-Length: ");
-	
+
 	try
 	{
 		if (request.substr(0, 4) == "GET ")
@@ -102,7 +102,7 @@ size_t	ServerManager::getRequestLength(std::string& request)
 	{
 		std::cerr << e.what() << '\n';
 	}
-	
+
 	return total_length;
 }
 
@@ -111,13 +111,11 @@ void	ServerManager::handleRequest(std::string& http_request, int clientSocket)
 	Request request(http_request);
 	request.parse();
 	request.sanitize();
-	
-	std::cout << "HOST: " << request.getHost() << std::endl;
 	Response respond(request);
 	respond.respond(clientSocket, this->_info[this->_connections.at(clientSocket)]);
 }
 
-void ServerManager::removeConnection(int clientSocket, size_t& i) 
+void ServerManager::removeConnection(int clientSocket, size_t& i)
 {
 	close(clientSocket);
 	this->_poll_fds.erase(this->_poll_fds.begin() + i);
@@ -134,7 +132,7 @@ void	ServerManager::receiveRequest(size_t& i)
 	size_t		total_length = 0;
 
 	// Receive data until complete request is sent
-	try 
+	try
 	{
 		while (total_length == 0 || http_request.length() < total_length)
 		{
@@ -145,7 +143,8 @@ void	ServerManager::receiveRequest(size_t& i)
 				if (total_length == 0)
 					total_length = getRequestLength(http_request);
 				if (bytes_received < 1024 && total_length == 0)
-					std::cout << "bad Request\n";
+					throw Response::ResponseException400();
+
 			}
 			else if (bytes_received == 0)
 			{
@@ -154,24 +153,24 @@ void	ServerManager::receiveRequest(size_t& i)
 			}
 			else
 			{
-				std::cout << "bytes received: " << bytes_received << "\n";
-				perror("Recv error");
+				std::cout << "recv failed" << "\n";
+				throw Response::ResponseException();
 				break;
 			}
 		}
 	}
-	catch (std::exception& e)
-	{
-
+	catch (const Response::ResponseException & e){
+		Response obj;
+		obj.sendErrorResponse(e.what(), clientSocket, e.responseCode());
 	}
-	
-	if (total_length != http_request.length())
-	{
-		std::cout << "bad request\n";
+	try {
+		if (total_length != http_request.length())
+			throw Response::ResponseException400();
+	} catch (const Response::ResponseException & e){
+		Response obj;
+		obj.sendErrorResponse(e.what(), clientSocket, e.responseCode());
 		removeConnection(clientSocket, i);
 	}
-	std::cout << "length: " << total_length << std::endl;
-	std::cout << "Request:\n" << http_request << std::endl;
 	handleRequest(http_request, clientSocket);
 	removeConnection(clientSocket, i);
 }
@@ -183,7 +182,10 @@ void	ServerManager::runServers()
 		int pollcount = poll(this->_poll_fds.data(), this->_poll_fds.size(), 100);
 
 		if (pollcount < 0)
+		{
+			std::cerr << "poll failed" << std::endl;
 			break ;
+		}
 		for (size_t i = 0; i < this->_poll_fds.size(); i++)
 		{
 			if (this->_poll_fds[i].revents & POLLIN || this->_poll_fds[i].revents & POLLOUT) 
@@ -205,7 +207,7 @@ int	ServerManager::startServers()
 		int			opt = 1;
 
 		serverAddress.sin_family = AF_INET;
-		serverAddress.sin_port = htons(this->get_info()[i].get_port(0));
+		serverAddress.sin_port = htons(this->get_info()[i].get_port());
 		serverAddress.sin_addr.s_addr = htonl(this->get_info()[i].get_ip());
 
 		setsockopt(this->get_info()[i].getsocketfd(), SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
