@@ -30,14 +30,18 @@ Response Response::operator=(const Response &input)
 
 void Response::handleCRUD(int clientfd, ServerInfo server)
 {
-	if (this->_method == "GET")
-		respondGet(clientfd, server);
-	else if (this->_method == "POST")
-		respondPost(clientfd, server);
-	else if (this->_method == "DELETE")
-		respondDelete(clientfd);
-	else
-		throw ResponseException405();
+	try{
+		if (this->_method == "GET")
+			respondGet(clientfd, server);
+		else if (this->_method == "POST")
+			respondPost(clientfd, server);
+		else if (this->_method == "DELETE")
+				respondDelete(clientfd);
+		else
+			throw ResponseException405();
+	} catch (const ResponseException &e){
+			sendErrorResponse(e.what(), clientfd, e.responseCode());
+	}
 }
 
 void	Response::respond(int clientfd, ServerInfo server)
@@ -126,13 +130,8 @@ void	Response::respondDelete(int clientfd)
 {
 
 	std::string fileToDelete = "./www" + this->_url;
-	try {
-		if (remove(fileToDelete.c_str()) == false)
-			throw ResponseException();
-	} catch (const ResponseException& e){
-		sendErrorResponse(e.what(), clientfd, e.responseCode());
-		return ;
-	}
+	if (remove(fileToDelete.c_str()) == false)
+		throw ResponseException();
 	std::string response = "HTTP/1.1 200 OK\r\n";
 
 	send (clientfd, response.c_str(), response.length(), 0);
@@ -226,7 +225,7 @@ void Response::openFile(ServerInfo server)
 	std::string	test = "/" + cutFromTo(this->_url, 1, "/");
 
 	std::cout << this->_url << std::endl;
-	while ((server.getlocationinfo()[temp].root.empty() 
+	while ((server.getlocationinfo()[temp].root.empty()
 		|| !server.getlocationinfo()[test].root.empty()) && test.size() + 1 <= this->_url.size())
 	{
 		temp = test + "/";
@@ -236,7 +235,7 @@ void Response::openFile(ServerInfo server)
 	}
 	//std::cout << "url:" << this->_url << std::endl;
 	//std::cout << server.getlocationinfo()[temp].root + "/" + this->_url.substr(temp.size(), std::string::npos) << std::endl;
-	
+
 	if (!server.getlocationinfo()[this->_url].index.empty())
 		this->_file.open(server.getlocationinfo()[this->_url].root + server.getlocationinfo()[this->_url].index);
 	else if (!server.getlocationinfo()[temp].root.empty())
