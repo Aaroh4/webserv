@@ -35,7 +35,7 @@ class ServerInfo
 			unsigned int										get_ip() const;
 
 			void												setnew_port(int port);
-			int													get_port(int num) const;
+			int													get_port() const;
 
 			void												setsocketfd(int fd);
 			int													getsocketfd();
@@ -52,7 +52,7 @@ class ServerInfo
 			std::string										_timeout;
 			unsigned int									_bodylimit;
 			unsigned int									_ip;
-			std::vector<int>								_port;
+			unsigned int									_port;
 			std::unordered_map<std::string, location>		_locationinfo;
 			int												_socketfd;
 			std::string 									_locations;

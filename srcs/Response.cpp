@@ -70,8 +70,7 @@ void Response::respondGet(int clientfd, ServerInfo server)
 	//std::cout << "index: " << server.getlocationinfo()[this->_url].index << " Url< " << this->_url << std::endl;
 	if (server.getlocationinfo()[this->_url].dirList != false && server.getlocationinfo()[this->_url].index.empty())
 	{
-		std::cout << "directorylist: " << server.getlocationinfo()[this->_url].root + this->_url << std::endl;
-		this->directorylisting(clientfd, this->buildDirectorylist(server.getlocationinfo()[this->_url].root + this->_url, server.getlocationinfo()[this->_url].root.size()));
+		this->directorylisting(clientfd, this->buildDirectorylist(server.getlocationinfo()[this->_url].root, server.getlocationinfo()[this->_url].root.size() + 1));
 	}
 	else
 	{
@@ -212,9 +211,9 @@ std::string Response::buildDirectorylist(std::string name, int rootsize)
 	for (const auto & entry : std::filesystem::directory_iterator(name))
 	{
 		if (entry.is_directory())
-			directory += "<li><a href=" + entry.path().string().erase(0, rootsize) + "/" + ">" + entry.path().string().erase(0, rootsize + this->_url.size()) + "/" + "</a> </li>" + "\n";
+			directory += "<li><a href=" + this->_url + entry.path().string().erase(0, rootsize) + "/>" + entry.path().string().erase(0, rootsize) + "/" + "</a> </li>" + "\n";
 		else
-			directory += "<li><a href=" + entry.path().string().erase(0, rootsize) + ">" + entry.path().string().erase(0, rootsize + this->_url.size()) + "</a> </li>" + "\n";
+			directory += "<li><a href=" + this->_url + entry.path().string().erase(0, rootsize) + ">" + entry.path().string().erase(0, rootsize) + "</a> </li>" + "\n";
 	}
 	directory += "</ol>\n <h1>[---------------------]</h1>\n </body>\n </html>\n";
 	return (directory);
@@ -226,24 +225,27 @@ void Response::openFile(ServerInfo server)
 	std::string temp;
 	std::string	test = "/" + cutFromTo(this->_url, 1, "/");
 
-
-	while ((server.getlocationinfo()[temp].root.empty() || !server.getlocationinfo()[test].root.empty())
-	&& test.size() + 1 <= this->_url.size())
+	std::cout << this->_url << std::endl;
+	while ((server.getlocationinfo()[temp].root.empty() 
+		|| !server.getlocationinfo()[test].root.empty()) && test.size() + 1 <= this->_url.size())
 	{
-		temp = test;
+		temp = test + "/";
 		test += "/" + cutFromTo(this->_url, test.size() + 1, "/");
 		if (!server.getlocationinfo()[test].root.empty())
 			temp = test;
 	}
-	temp += "/";
-
+	//std::cout << "url:" << this->_url << std::endl;
+	//std::cout << server.getlocationinfo()[temp].root + "/" + this->_url.substr(temp.size(), std::string::npos) << std::endl;
+	
 	if (!server.getlocationinfo()[this->_url].index.empty())
-		this->_file.open(server.getlocationinfo()[this->_url].root + "/" + server.getlocationinfo()[this->_url].index);
-	else if (!server.getlocationinfo()[this->_url].root.empty())
-		this->_file.open(server.getlocationinfo()[this->_url].root + this->_url);
+		this->_file.open(server.getlocationinfo()[this->_url].root + server.getlocationinfo()[this->_url].index);
+	else if (!server.getlocationinfo()[temp].root.empty())
+		this->_file.open(server.getlocationinfo()[temp].root + "/" + this->_url.substr(temp.size(), std::string::npos));
 	else
-		this->_file.open(server.getlocationinfo()[temp].root + this->_url);
+		this->_file.open(server.getlocationinfo()["/"].root + "/" + this->_url);
 
+	//if (this->_file.is_open() == false)
+	//	this->_file.open(server.getlocationinfo()["/"].root + "/" + this->_url);
 
 	if (this->_file.is_open() == false)
 	{
@@ -264,8 +266,7 @@ void Response::openFile(ServerInfo server)
 					throw ResponseException403();
 			default:
 					this->_sanitizeStatus = 500;
-					throw ResponseException();
-		}
+					throw ResponseException();		}
 	}
 	this->_file.seekg(0, std::ios::end);
 	this->_fsize = this->_file.tellg();

@@ -1,4 +1,5 @@
 #include "../includes/ServerInfo.hpp"
+#include "../includes/configExceptions.hpp"
 
 unsigned int convertip(std::string ip)
 {
@@ -7,7 +8,14 @@ unsigned int convertip(std::string ip)
 	int i = 0;
 	while (i < 4)
 	{	
-		returnip[i] = stoi(ip.substr(0, ip.find('.')));
+		try
+		{
+			returnip[i] = stoi(ip.substr(0, ip.find('.')));
+		}
+	catch (std::exception &e)
+	{
+		throw(wrongIP());
+	}
 		ip.erase(0, ip.find('.') + 1);
 		i++;
 	}
