@@ -102,7 +102,9 @@ size_t	ServerManager::getRequestLength(std::string& request)
 	{
 		std::cerr << e.what() << '\n';
 	}
-
+	std::cout << "Content length: " << total_length - headers_length << std::endl;
+	std::cout << "Headers length: " << headers_length << std::endl;
+	std::cout << "Total length: " << total_length << std::endl;
 	return total_length;
 }
 
@@ -111,8 +113,11 @@ void	ServerManager::handleRequest(std::string& http_request, int clientSocket)
 	Request request(http_request);
 	request.parse();
 	request.sanitize();
-	Response respond(request);
-	respond.respond(clientSocket, this->_info[this->_connections.at(clientSocket)]);
+	if (request.getHost() == this->_info[this->_connections.at(clientSocket)].getServerName())
+	{
+		Response respond(request);
+		respond.respond(clientSocket, this->_info[this->_connections.at(clientSocket)]);
+	}	
 }
 
 void ServerManager::removeConnection(int clientSocket, size_t& i)
@@ -139,7 +144,9 @@ void	ServerManager::receiveRequest(size_t& i)
 			bytes_received = recv(clientSocket, buffer, sizeof(buffer), 0);
 			if (bytes_received > 0)
 			{
+				std::cout << "buffer: " << buffer << std::endl;
 				http_request.append(buffer, bytes_received);
+				std::cout << http_request << std::endl;
 				if (total_length == 0)
 					total_length = getRequestLength(http_request);
 				if (bytes_received < 1024 && total_length == 0)
@@ -171,6 +178,8 @@ void	ServerManager::receiveRequest(size_t& i)
 		obj.sendErrorResponse(e.what(), clientSocket, e.responseCode());
 		removeConnection(clientSocket, i);
 	}
+	std::cout << "Total length: " << total_length << std::endl;
+ 	std::cout << "Request length: " << http_request.length() << std::endl;
 	handleRequest(http_request, clientSocket);
 	removeConnection(clientSocket, i);
 }
@@ -188,7 +197,7 @@ void	ServerManager::runServers()
 		}
 		for (size_t i = 0; i < this->_poll_fds.size(); i++)
 		{
-			if (this->_poll_fds[i].revents & POLLIN || this->_poll_fds[i].revents & POLLOUT) 
+			if (this->_poll_fds[i].revents & POLLIN) 
 			{
 				if (i < this->get_info().size())
 					addNewConnection(i);
