@@ -167,17 +167,10 @@ void	Request::_getContentType(void)
 			this->_type = "video/" + type;
 		else if(type == "py" || type == "php")
 		{
-<<<<<<< HEAD
 			this->_verifyPath();
 			this->_type = "cgi/" + type;
 		}
     	else if (this->_url != "/")
-=======
-		this->_verifyPath();
-				this->_type = "cgi/" + type;
-		}
-		else if (this->_url != "/")
->>>>>>> ed5939d8cdc4755b633ae18965730f849e2d227c
 			this->_sanitizeStatus = 415; // Error: Unsupported Media Type
 	}
 }
