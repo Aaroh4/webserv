@@ -130,92 +130,26 @@ void	Request::_parseMultipartContent(void)
 	}
 }
 
-//void	Request::_runCgi(void)
-//{
-//	if (this->_headers["Content-Type"].find("multipart/form-data") != std::string::npos)
-//		this->_parsePostInput();
-//	else
-//		this->_formInput = this->_body;
-//	std::filesystem::path file = "./www" + this->_url;
-//	if (!std::filesystem::exists(file))
-//	{
-//		this->_sanitizeStatus = 404; //Not Found
-//		return;
-//	}
-//	else if (!std::filesystem::is_regular_file(file))
-//	{
-//		this->_sanitizeStatus = 403; //Forbidden
-//		return;
-//	}
-//	int permissions = access(file.c_str(), X_OK);
-//	if (permissions != 0)
-//	{
-//		this->_sanitizeStatus = 403; //Forbidden
-//		return;
-//	}
-//	//pid_t	pid = fork();
-
-//	//if (pid == 0)
-//	//{
-//	//	char* envp[100000];
-//	//	std::string url = "./www" + this->_url;
-//	//	std::string envVar0 = "REQUEST_METHOD=" + this->_method;
-//	//	std::string envVar1 = "CONTENT_LENGTH=" + this->_headers["Content-Length"];
-//	//	std::string envVar2 = "CONTENT_TYPE=" + this->_headers["Content-Type"];
-//	//	std::string envVar3 = "QUERY_STRING=" + this->_queryString;
-//	//	std::string envVar4 = "SCRIPT_FILENAME=" + url;
-//	//	std::string envVar5 = "GATEWAY_INTERFACE=CGI/1.1";
-//	//	std::string envVar6 = "SERVER_PROTOCOL=" + this->_httpVersion;
-//	//	std::string envVar7 = "SERVER_NAME=" + this->_headers["Host"];
-//	//	std::string envVar8 = "SERVER_PORT=8080";
-//	//	std::string envVar9 = "REMOTE_ADDR=192.168.0.1";
-
-//	//	if (this->_method == "GET")
-//	//	{
-//	//		envp = {
-//	//		envVar0.c_str(),
-//	//		envVar3.c_str(),
-//	//		envVar4.c_str(),
-//	//		envVar5.c_str(),
-//	//		envVar6.c_str(),
-//	//		envVar7.c_str(),
-//	//		envVar8.c_str(),
-//	//		envVar9.c_str(),
-//	//		nullptr
-//	//		};
-//	//	}
-//	//	else
-//	//	{
-//	//		envp = {
-//	//		envVar0.c_str(),
-//	//		envVar1.c_str(),
-//	//		envVar2.c_str(),
-//	//		envVar3.c_str(),
-//	//		envVar4.c_str(),
-//	//		envVar5.c_str(),
-//	//		envVar6.c_str(),
-//	//		envVar7.c_str(),
-//	//		envVar8.c_str(),
-//	//		envVar9.c_str(),
-//	//		nullptr
-//	//		};
-//	//	}
-//	//	char *args[2] = {url.c_str(), nullptr};
-//	//	if (execve(args[0], args, envp) < 0)
-//	//	{
-//	//		this->_sanitizeStatus = 666;
-//	//		return;
-//	//	}
-//	//}
-//	//else if (pid > 0)
-//	//	if (waitpid(pid, 0, 0) == -1)
-//	//	{
-//	//		this->_sanitizeStatus = 666;
-//	//		return;
-//	//	}
-//	//else
-//	//	this->_sanitizeStatus = 666;
-//}
+void	Request::_verifyPath(void)
+{
+	std::filesystem::path file = "./www" + this->_url;
+	if (!std::filesystem::exists(file))
+	{
+		this->_sanitizeStatus = 404; //Not Found
+		return;
+	}
+	else if (!std::filesystem::is_regular_file(file))
+	{
+		this->_sanitizeStatus = 403; //Forbidden
+		return;
+	}
+	int permissions = access(file.c_str(), X_OK);
+	if (permissions != 0)
+	{
+		this->_sanitizeStatus = 403; //Forbidden
+		return;
+	}
+}
 
 void	Request::_getContentType(void)
 {
@@ -232,7 +166,10 @@ void	Request::_getContentType(void)
 		else if (type == "mpeg" || type == "avi" || type == "mp4")
 			this->_type = "video/" + type;
 		else if(type == "py" || type == "php")
+    {
+      this->_verifyPath();
 			this->_type = "cgi/" + type;
+    }
     else if (this->_url != "/")
 		  this->_sanitizeStatus = 415; // Error: Unsupported Media Type
 	}
@@ -298,7 +235,6 @@ void	Request::_parseHeaders(void)
 	size_t	lineEnd = 0;
 	size_t	i = 0;
 
-	//std::cout << "request before " << this->_request << "\n"; 
 	while (line != "\r\n\r\n")
 	{
 		lineEnd = this->_request.find_first_of("\n");
@@ -318,7 +254,6 @@ void	Request::_parseHeaders(void)
 		this->_headers[line.substr(0, i)] = line.substr(i + 2, lineEnd - (i + 3));
 		this->_request.erase(0, lineEnd + 1);
 	}
-	//std::cout << "request after " << this->_request << "\n"; 
 	this->_body = this->_request;
 }
 
@@ -355,43 +290,43 @@ void	Request::_splitKeyValuePairs(void)
 	}
 }
 
-//void	Request::_decodeChunks(void)
-//{
-//	int			chunkSize = 1;
-//	std::string line;
-//	std::string decodedBody;
-//	size_t 		pos = 0;
-//	int			totalSize = 0;
+void	Request::_decodeChunks(void)
+{
+	int			chunkSize = 1;
+	std::string line;
+	std::string decodedBody;
+	size_t 		pos = 0;
+	int			totalSize = 0;
 
-//	while (chunkSize != 0)
-//	{
-//		pos = this->_body.find("\r\n");
-//		line = this->_body.substr(0, pos);
-//		this->_body.erase(0, pos + 2);
-//		try
-//		{
-//			chunkSize = std::stoi(line, nullptr, 16);
-//			totalSize += chunkSize;
-//			if (chunkSize == 0)
-//				break;
-//		}
-//		catch(const std::exception& e)
-//		{
-//			this->_sanitizeStatus = 6666666;
-//			return;
-//		}
-//		decodedBody += this->_body.substr(0, chunkSize);
-//		this->_body.erase(0, chunkSize + 2);
-//	}
-//	this->_body = decodedBody;
-//}
+	while (chunkSize != 0)
+	{
+		pos = this->_body.find("\r\n");
+		line = this->_body.substr(0, pos);
+		this->_body.erase(0, pos + 2);
+		try
+		{
+			chunkSize = std::stoi(line, nullptr, 16);
+			totalSize += chunkSize;
+			if (chunkSize == 0)
+				break;
+		}
+		catch(const std::exception& e)
+		{
+			this->_sanitizeStatus = 6666666;
+			return;
+		}
+		decodedBody += this->_body.substr(0, chunkSize);
+		this->_body.erase(0, chunkSize + 2);
+	}
+	this->_body = decodedBody;
+}
 
 void	Request::parse(void)
 {
 	this->_parseRequestLine();
 	this->_parseHeaders();
-	//if (this->_headers["Transfer-Encoding"] == "chunked")
-	//	this->_decodeChunks();
+	if (this->_headers["Transfer-Encoding"] == "chunked")
+		this->_decodeChunks();
 	if (this->_headers["Content-Type"].find("multipart/form-data") != std::string::npos)
 		this->_parseMultipartContent();
 	else 
