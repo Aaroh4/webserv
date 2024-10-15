@@ -183,10 +183,13 @@ void	ServerManager::runServers()
 		int pollcount = poll(this->_poll_fds.data(), this->_poll_fds.size(), 100);
 
 		if (pollcount < 0)
+		{
+			std::cerr << "poll failed" << std::endl;
 			break ;
+		}
 		for (size_t i = 0; i < this->_poll_fds.size(); i++)
 		{
-			if (this->_poll_fds[i].revents & POLLIN)
+			if (this->_poll_fds[i].revents & POLLIN) //must check read and write at the same time!
 			{
 				if (i < this->get_info().size())
 					addNewConnection(i);
