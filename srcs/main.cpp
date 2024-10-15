@@ -21,8 +21,7 @@ int	main(int argc, char **argv)
 	}
 	catch (std::exception &e)
 	{
-		std::cout << e.what() << std::endl;
-		std::cout << "Wrong arguments in the config!" << "\n";
+		std::cout << "Wrong arguments in the config! reason: " << e.what() << "\n";
 		return (-1);
 	}
 	return (manager.startServers());

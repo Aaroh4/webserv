@@ -152,6 +152,7 @@ void	ServerManager::receiveRequest(size_t& i)
 			break;
 		}
 	}
+	std::cout << http_request << std::endl;
 	if (total_length != http_request.length())
 	{
 		std::cout << "bad request\n";
@@ -190,7 +191,7 @@ int	ServerManager::startServers()
 		int			opt = 1;
 
 		serverAddress.sin_family = AF_INET;
-		serverAddress.sin_port = htons(this->get_info()[i].get_port(0));
+		serverAddress.sin_port = htons(this->get_info()[i].get_port());
 		serverAddress.sin_addr.s_addr = htonl(this->get_info()[i].get_ip());
 
 		setsockopt(this->get_info()[i].getsocketfd(), SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
