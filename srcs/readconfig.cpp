@@ -172,6 +172,7 @@ ServerInfo	config_server(std::string temp, ServerInfo &server)
 						}
 						break;
 				case 5:
+						std::cout << value << std::endl;
 						server.setServerName(value);
 						break;
 				default:

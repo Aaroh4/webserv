@@ -13,6 +13,7 @@ ServerInfo::ServerInfo(const ServerInfo &input)
 	this->_locationinfo = input._locationinfo;
 	this->_timeout = input._timeout;
 	this->_bodylimit = input._bodylimit;
+	this->_serverName = input._serverName;
 }
 
 ServerInfo ServerInfo::operator=(const ServerInfo &input)
@@ -26,6 +27,7 @@ ServerInfo ServerInfo::operator=(const ServerInfo &input)
 		this->_locationinfo = input._locationinfo;
 		this->_timeout = input._timeout;
 		this->_bodylimit = input._bodylimit;
+		this->_serverName = input._serverName;
 	}
 	return (input);
 }
