@@ -35,20 +35,15 @@ ServerManager::~ServerManager()
 
 void	ServerManager::addNewConnection(size_t i)
 {
-	int clientSocket
-	 = accept(this->_poll_fds[i].fd, nullptr, nullptr);
-	if (clientSocket
-	 < 0) 
+	int clientSocket = accept(this->_poll_fds[i].fd, nullptr, nullptr);
+	if (clientSocket < 0) 
 		perror("Accept failed");
-	fcntl(clientSocket
-	, F_SETFL, O_NONBLOCK, FD_CLOEXEC);
+	fcntl(clientSocket, F_SETFL, O_NONBLOCK, FD_CLOEXEC);
 	struct pollfd client_pollfd;
-	client_pollfd.fd = clientSocket
-	;
+	client_pollfd.fd = clientSocket;
 	client_pollfd.events = POLLIN;
 	this->_poll_fds.push_back(client_pollfd);
-	this->_connections[clientSocket
-	] = i;
+	this->_connections[clientSocket] = i;
 	std::cout << "New client connected on server " << i << "\n";
 }
 
