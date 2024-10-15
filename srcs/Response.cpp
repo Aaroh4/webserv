@@ -100,8 +100,14 @@ void	Response::respondPost(int clientfd, ServerInfo server)
 	{
 		char result[4096];
 		std::string location;
-
 		ssize_t count = readlink("/proc/self/exe", result, 4096);
+		try {
+			if (count == -1)
+				throw ResponseException();
+		} catch (const ResponseException &e){
+			sendErrorResponse(e.what(), clientfd, e.responseCode());
+			return ;
+		}
 
 		location = std::string(result, (count > 0) ? count : 0);
 		this->handleCgi(location.substr(0, location.rfind("/")) + server.getlocationinfo()["/" + cutFromTo(this->_url, 1, "/")].root + this->_url, clientfd);
@@ -122,7 +128,7 @@ void	Response::respondDelete(int clientfd)
 
 	std::string fileToDelete = "./www" + this->_url;
 	try {
-		if (remove(fileToDelete.c_str()) == -1)
+		if (remove(fileToDelete.c_str()) == false)
 			throw ResponseException();
 	} catch (const ResponseException& e){
 		sendErrorResponse(e.what(), clientfd, e.responseCode());
@@ -154,9 +160,13 @@ void	Response::handleCgi(std::string path, int client_socket)
 		dup2(pipefd[1], STDOUT_FILENO);
 		close(pipefd[1]);
 		char *argv[] = { (char*)path.c_str(), nullptr };
-		execve(path.c_str(), argv, envp);
-		exit(0); // THIS NEEDS TO BE RemOVED BECAUSE ITS NOT ALLOWED EXCVE SHOULD BE USED INSTEAD
-		// IF EXCVE FAILS YOU CAN THROW AN EXCEPTION INSTEAD OF USING EXIT
+		try {
+			execve(path.c_str(), argv, envp);
+			throw ResponseException();
+		}
+		catch (const ResponseException &e){
+			sendErrorResponse(e.what(), client_socket, e.responseCode());
+		}
 	}
 	else
 	{
