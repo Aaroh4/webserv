@@ -10,7 +10,7 @@ ServerInfo	config_server(std::string temp, ServerInfo &server);
 int bracketfinder(std::string configfile, std::string type, ServerInfo &server);
 
 // Function to make a string lowercase
-std::string toLowerCase(const std::string str) 
+std::string toLowerCase(const std::string str)
 {
     std::string lowerStr = str;
     std::transform(lowerStr.begin(), lowerStr.end(), lowerStr.begin(),
@@ -21,9 +21,9 @@ std::string toLowerCase(const std::string str)
 // Location parsing
 void locations(std::string temp, ServerInfo &server)
 {
-	std::vector<std::string> location_configs = 
+	std::vector<std::string> location_configs =
 	{"root:", "dir-listing:", "allowed-methods:", "upload:", "index:"};
-	std::unordered_set<std::string> all_methods = 
+	std::unordered_set<std::string> all_methods =
 	{"GET", "POST", "DELETE", "HEAD"};
 
 	location temploc;
@@ -45,7 +45,7 @@ void locations(std::string temp, ServerInfo &server)
 						if (std::filesystem::is_directory(temploc.root + temploc.name) && value.find("true") != std::string::npos)
 							temploc.dirList = true;
 						else
-							temploc.dirList = false; 
+							temploc.dirList = false;
 											break;
 				case 2:
 						for (std::string method : all_methods)
@@ -182,6 +182,10 @@ ServerInfo	config_server(std::string temp, ServerInfo &server)
 int	readconfig(std::string name, ServerManager &manager)
 {
 	std::ifstream	configfile(name);
+	if (!configfile.is_open())
+	{
+		throw (noPermissions());
+	}
 	std::string		temp;
 	int				i = 0;
 
