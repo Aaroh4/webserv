@@ -113,9 +113,9 @@ void	Request::_parseMultipartContent(void)
 	std::string end = boundary + "--";
 	std::string	value;
 	std::string part;
-	//std::string	line;
-	//std::stringstream body(this->_body);
 
+	std::cout << "Boundary is: " << boundary << std::endl;
+	std::cout << "Body: " << this->_body << std::endl;
 	this->_body.replace(0, boundary.length(), "");
 	ind = 0;
 	for (int i = 0; ind != std::string::npos; i++)
@@ -166,12 +166,12 @@ void	Request::_getContentType(void)
 		else if (type == "mpeg" || type == "avi" || type == "mp4")
 			this->_type = "video/" + type;
 		else if(type == "py" || type == "php")
-    {
-      this->_verifyPath();
+		{
+			this->_verifyPath();
 			this->_type = "cgi/" + type;
-    }
-    else if (this->_url != "/")
-		  this->_sanitizeStatus = 415; // Error: Unsupported Media Type
+		}
+    	else if (this->_url != "/")
+			this->_sanitizeStatus = 415; // Error: Unsupported Media Type
 	}
 }
 
@@ -364,4 +364,9 @@ void	Request::sanitize(void)
 			break;
 		}
 	}
+}
+
+std::string	Request::getHost(void)
+{
+	return (this->_headers["Host"]);
 }

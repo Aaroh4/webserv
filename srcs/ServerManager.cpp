@@ -112,6 +112,7 @@ void	ServerManager::handleRequest(std::string& http_request, int clientSocket)
 	request.parse();
 	request.sanitize();
 	
+	std::cout << "HOST: " << request.getHost() << std::endl;
 	Response respond(request);
 	respond.respond(clientSocket, this->_info[this->_connections.at(clientSocket)]);
 }
@@ -137,27 +138,27 @@ void	ServerManager::receiveRequest(size_t& i)
 	{
 		while (total_length == 0 || http_request.length() < total_length)
 		{
-		bytes_received = recv(clientSocket, buffer, sizeof(buffer), 0);
-		if (bytes_received > 0)
-		{
-			http_request.append(buffer, bytes_received);
-			if (total_length == 0)
-				total_length = getRequestLength(http_request);
-			if (bytes_received < 1024 && total_length == 0)
-				std::cout << "bad Request\n";
+			bytes_received = recv(clientSocket, buffer, sizeof(buffer), 0);
+			if (bytes_received > 0)
+			{
+				http_request.append(buffer, bytes_received);
+				if (total_length == 0)
+					total_length = getRequestLength(http_request);
+				if (bytes_received < 1024 && total_length == 0)
+					std::cout << "bad Request\n";
+			}
+			else if (bytes_received == 0)
+			{
+				std::cout << "Client disconnected" << "\n";
+				break;
+			}
+			else
+			{
+				std::cout << "bytes received: " << bytes_received << "\n";
+				perror("Recv error");
+				break;
+			}
 		}
-		else if (bytes_received == 0)
-		{
-			std::cout << "Client disconnected" << "\n";
-			break;
-		}
-		else
-		{
-			std::cout << "bytes received: " << bytes_received << "\n";
-			perror("Recv error");
-			break;
-		}
-	}
 	}
 	catch (std::exception& e)
 	{
@@ -169,6 +170,8 @@ void	ServerManager::receiveRequest(size_t& i)
 		std::cout << "bad request\n";
 		removeConnection(clientSocket, i);
 	}
+	std::cout << "length: " << total_length << std::endl;
+	std::cout << "Request:\n" << http_request << std::endl;
 	handleRequest(http_request, clientSocket);
 	removeConnection(clientSocket, i);
 }
@@ -183,7 +186,7 @@ void	ServerManager::runServers()
 			break ;
 		for (size_t i = 0; i < this->_poll_fds.size(); i++)
 		{
-			if (this->_poll_fds[i].revents & POLLIN) 
+			if (this->_poll_fds[i].revents & POLLIN || this->_poll_fds[i].revents & POLLOUT) 
 			{
 				if (i < this->get_info().size())
 					addNewConnection(i);
@@ -216,7 +219,7 @@ int	ServerManager::startServers()
 
 		struct pollfd temp_s_pollfd;
 		temp_s_pollfd.fd = this->get_info()[i].getsocketfd();
-		temp_s_pollfd.events = POLLIN;
+		temp_s_pollfd.events = POLLIN | POLLOUT;
 		this->_poll_fds.push_back(temp_s_pollfd);
 	}
 	runServers();
