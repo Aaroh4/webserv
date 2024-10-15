@@ -23,6 +23,14 @@ int	main(int argc, char **argv)
 		std::cout << "invalid path" << std::endl;
 		return (1);
 	}
-	readconfig(path, manager);
+	try 
+	{
+		readconfig(argv[1], manager);
+	}
+	catch (std::exception &e)
+	{
+		std::cout << "Wrong arguments in the config! reason: " << e.what() << "\n";
+		return (-1);
+	}
 	return (manager.startServers());
 }
