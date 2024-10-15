@@ -28,15 +28,8 @@ Response Response::operator=(const Response &input)
 	return (*this);
 }
 
-void	Response::respond(int clientfd, ServerInfo server)
+void Response::handleCRUD(int clientfd, ServerInfo server)
 {
-	this->_server = server;
-
-	if (this->_sanitizeStatus != 200)
-	{
-		sendErrorResponse( clientfd );
-		return;
-	}
 	if (this->_method == "GET")
 		respondGet(clientfd, server);
 	else if (this->_method == "POST")
@@ -44,11 +37,29 @@ void	Response::respond(int clientfd, ServerInfo server)
 	else if (this->_method == "DELETE")
 		respondDelete(clientfd);
 	else
-	{
-		this->_sanitizeStatus = 405; //Method not allowed
-		std::string response = getStatusMessage(405);
-		response += formatGetResponseMsg(1);
-		send(clientfd, response.c_str(), response.length(), 0);
+		throw ResponseException405();
+}
+
+void	Response::respond(int clientfd, ServerInfo server)
+{
+	this->_server = server;
+
+	try{
+		if (this->_sanitizeStatus == 404)
+			throw ResponseException404();
+		else if (this->_sanitizeStatus == 400)
+			throw ResponseException400();
+		else if (this->_sanitizeStatus != 200)
+			throw ResponseException();
+	} catch(const ResponseException& e) {
+		sendErrorResponse(e.what(), clientfd, e.responseCode());
+		return ;
+	}
+	try{
+		handleCRUD(clientfd, server);
+	} catch(const ResponseException& e){
+		sendErrorResponse(e.what(), clientfd, e.responseCode());
+		return ;
 	}
 }
 
@@ -56,7 +67,6 @@ void Response::respondGet(int clientfd, ServerInfo server)
 {
 	std::string response;
 
-	std::string filePath = "./www" + this->_url;
 	//std::cout << "index: " << server.getlocationinfo()[this->_url].index << " Url< " << this->_url << std::endl;
 	if (server.getlocationinfo()[this->_url].dirList != false && server.getlocationinfo()[this->_url].index.empty())
 	{
@@ -67,33 +77,37 @@ void Response::respondGet(int clientfd, ServerInfo server)
 	{
 		try
 		{
-			openFile(filePath, server);
+			openFile(server);
 		}
 		catch(ResponseException &e)
 		{
-			this->_errorMessage = e.what();
-			sendErrorResponse(clientfd);
-			std::cout << "?????????????????" << "\n";
+			sendErrorResponse(e.what(), clientfd, e.responseCode());
 			return;
 		}
 		response = formatGetResponseMsg(0);
-		//std::cout << response << std::endl;
 		send(clientfd, response.c_str(), response.length(), 0);
 		const std::size_t chunkSize = 8192;
 		char buffer[chunkSize];
 		while (this->_file.read(buffer, chunkSize) || this->_file.gcount() > 0)
 			send(clientfd, buffer, this->_file.gcount(), 0);
 	}
+	std::cout << response << std::endl;
 }
 
 void	Response::respondPost(int clientfd, ServerInfo server)
-{	
+{
 	if (this->_type == "cgi/py" || this->_type == "cgi/php")
 	{
 		char result[4096];
 		std::string location;
-
 		ssize_t count = readlink("/proc/self/exe", result, 4096);
+		try {
+			if (count == -1)
+				throw ResponseException();
+		} catch (const ResponseException &e){
+			sendErrorResponse(e.what(), clientfd, e.responseCode());
+			return ;
+		}
 
 		location = std::string(result, (count > 0) ? count : 0);
 		this->handleCgi(location.substr(0, location.rfind("/")) + server.getlocationinfo()["/" + cutFromTo(this->_url, 1, "/")].root + this->_url, clientfd);
@@ -103,6 +117,7 @@ void	Response::respondPost(int clientfd, ServerInfo server)
 		std::string response;
 
 		this->_sanitizeStatus = 204;
+		this->_errorMessage = "No Content";
 		response = formatGetResponseMsg(0);
 		send(clientfd, response.c_str(), response.length(), 0);
 	}
@@ -112,8 +127,13 @@ void	Response::respondDelete(int clientfd)
 {
 
 	std::string fileToDelete = "./www" + this->_url;
-	if (remove(fileToDelete.c_str()) < 0)
-		std::cout << "error\n";
+	try {
+		if (remove(fileToDelete.c_str()) == false)
+			throw ResponseException();
+	} catch (const ResponseException& e){
+		sendErrorResponse(e.what(), clientfd, e.responseCode());
+		return ;
+	}
 	std::string response = "HTTP/1.1 200 OK\r\n";
 
 	send (clientfd, response.c_str(), response.length(), 0);
@@ -140,11 +160,15 @@ void	Response::handleCgi(std::string path, int client_socket)
 		dup2(pipefd[1], STDOUT_FILENO);
 		close(pipefd[1]);
 		char *argv[] = { (char*)path.c_str(), nullptr };
-		execve(path.c_str(), argv, envp);
-		exit(0); // THIS NEEDS TO BE RemOVED BECAUSE ITS NOT ALLOWED EXCVE SHOULD BE USED INSTEAD
-		// IF EXCVE FAILS YOU CAN THROW AN EXCEPTION INSTEAD OF USING EXIT
+		try {
+			execve(path.c_str(), argv, envp);
+			throw ResponseException();
+		}
+		catch (const ResponseException &e){
+			sendErrorResponse(e.what(), client_socket, e.responseCode());
+		}
 	}
-	else 
+	else
 	{
 		close(pipefd[1]);
 
@@ -156,8 +180,8 @@ void	Response::handleCgi(std::string path, int client_socket)
 
 		char buffer[1024];
 		ssize_t nbytes;
-		
-		while ((nbytes = read(pipefd[0], buffer, sizeof(buffer))) > 0) 
+
+		while ((nbytes = read(pipefd[0], buffer, sizeof(buffer))) > 0)
 		{
 			std::cout.write(buffer, nbytes).flush();
 			//send(client_socket, buffer, nbytes, 0);
@@ -196,16 +220,14 @@ std::string Response::buildDirectorylist(std::string name, int rootsize)
 	return (directory);
 }
 
-void Response::openFile(std::string filePath, ServerInfo server)
+void Response::openFile(ServerInfo server)
 {
 	this->_fsize = 0;
-	(void) filePath; // What to do with this??
-	(void) server;
 	std::string temp;
 	std::string	test = "/" + cutFromTo(this->_url, 1, "/");
 
 
-	while ((server.getlocationinfo()[temp].root.empty() || !server.getlocationinfo()[test].root.empty()) 
+	while ((server.getlocationinfo()[temp].root.empty() || !server.getlocationinfo()[test].root.empty())
 	&& test.size() + 1 <= this->_url.size())
 	{
 		temp = test;
@@ -229,16 +251,20 @@ void Response::openFile(std::string filePath, ServerInfo server)
 		switch errno
 		{
 			case EIO:
+					this->_sanitizeStatus = 500;
+					throw ResponseException();
 			case ENOMEM:
-					this->_sanitizeStatus = 500; //internal error when I/O problem or no memory
-					//throw ResponseException("Internal Server Error");
-			case 21:	// might need its own error handling
+					this->_sanitizeStatus = 500;
+					throw ResponseException(); //internal error when I/O problem or no memory might need some logging;
 			case ENOENT:
 					this->_sanitizeStatus = 404;
-					throw ResponseException();
+					throw ResponseException404();
 			case EACCES:
 					this->_sanitizeStatus = 403;
-					//throw ResponseException("Forbidden");
+					throw ResponseException403();
+			default:
+					this->_sanitizeStatus = 500;
+					throw ResponseException();
 		}
 	}
 	this->_file.seekg(0, std::ios::end);
@@ -251,18 +277,59 @@ std::string Response::formatGetResponseMsg(int close)
 {
 	std::string response;
 
-	response = getStatusMessage(this->_sanitizeStatus);
+	if (this->_sanitizeStatus == 200)
+		response = this->_httpVersion + " 200 OK\r\n";
+	else
+		response = this->_httpVersion + " " + std::to_string(this->_sanitizeStatus) +  this->_errorMessage +"\r\n";
 	if (this->_type.empty())
 		this->_type = "text/html";
 	response += "Content-Type: " + this->_type + "\r\n";
 
 	response += "Content-Length: " + this->_fileSize + "\r\n";
-	
+
 	if (close == 0)
 		response += "Keep-Alive: timeout=" + this->_server.get_timeout() + ", max=100\r\n\r\n";
 	else
 		response += "Connection: close\r\n\r\n";
 	return (response);
+}
+
+void Response::sendStandardErrorPage(int sanitizeStatus, int clientfd)
+{
+	std::string response;
+	std::string file;
+
+	switch (sanitizeStatus)
+	{
+		case 400:
+			this->_file.open("./www/400.html");
+			this->_url = "/400.html";
+			break ;
+		case 403:
+			this->_file.open("./www/403.html");
+			this->_url = "/403.html";
+			break ;
+		case 405:
+			this->_file.open("./www/405.html");
+			this->_url = "/405.html";
+			break ;
+		case 404:
+			this->_file.open("./www/404.html");
+			this->_url = "/404.html";
+			break ;
+		default:
+			this->_file.open("./www/500.html");
+			this->_url = "/500.html";
+			break ;
+	}
+	for (std::string line; std::getline(this->_file, line);)
+		file += line;
+
+	this->_fileSize = std::to_string(file.length());
+
+	response = formatGetResponseMsg(0);
+	response += file;
+	send(clientfd, response.c_str(), response.length(), 0);
 }
 
 std::string makeErrorContent(int statusCode, std::string message)
@@ -275,25 +342,7 @@ std::string makeErrorContent(int statusCode, std::string message)
 	return content;
 }
 
-void Response::sendNotFound(int clientfd)
-{
-	std::string response;
-	std::string file;
-
-	this->_file.open("./www/404.html");
-	this->_url = "/404.html";
-
-	for (std::string line; std::getline(this->_file, line);)
-		file += line;
-
-	this->_fileSize = std::to_string(file.length());
-	
-	response = formatGetResponseMsg(0);
-	response += file;	
-	send(clientfd, response.c_str(), response.length(), 0);
-}
-
-void Response::sendCustomError(int clientfd)
+void Response::sendCustomErrorPage(int clientfd)
 {
 	std::string response;
 
@@ -306,136 +355,61 @@ void Response::sendCustomError(int clientfd)
 	send(clientfd, response.c_str(), response.length(), 0);
 }
 
-void Response::sendErrorResponse( int clientfd )
+void Response::sendErrorResponse(std::string errorMessage, int clientfd, int errorCode)
 {
-	if (this->_sanitizeStatus == 404)
+	this->_errorMessage = errorMessage;
+	this->_sanitizeStatus = errorCode;
+	if (this->_sanitizeStatus == 400 ||
+		this->_sanitizeStatus == 405 ||
+		this->_sanitizeStatus == 403 ||
+		this->_sanitizeStatus == 500 ||
+		this->_sanitizeStatus == 404)
 	{
-		sendNotFound(clientfd);
+		sendStandardErrorPage(this->_sanitizeStatus, clientfd);
 		return ;
 	}
 	else
-		sendCustomError(clientfd);
+		sendCustomErrorPage(clientfd);
 }
 
-std::string Response::getStatusMessage(int statusCode)
-{
-	std::string statusMessage;
-	std::string message;
-
-	statusMessage = this->_httpVersion + " ";
-	statusMessage += std::to_string(this->_sanitizeStatus);
-	statusMessage += " ";
-	switch(statusCode)
-	{
-		// 2XX Success responses
-
-		case 200:
-			message += "OK";
-			break;
-		case 201:
-			message += "Created";
-			break;
-		case 202:
-			message += "Accepted";
-			break;
-		case 203:
-			message += "Non-Authoritative Information";
-			break;
-		case 204:
-			message += "No Content";
-			break;
-
-		// 3XX Redirection responses
-
-		case 301:
-			message += "Moved Permanently";
-			break;
-		case 302:
-			message += "Found";
-			break;
-		case 303:
-			message += "See Other";
-			break;
-		case 304:
-			message += "Not Modified";
-			break;
-		case 307:
-			message += "Temporary Redirect";
-			break;
-		case 308:
-			message += "Permanent Redirect";
-			break;
-
-		// 4XX Client error responses
-
-		case 400:
-			message += "Bad Request";
-			break;
-		case 401:
-			message += "Unauthorized";
-			break;
-		case 403:
-			message += "Forbidden";
-			break;
-		case 404:
-			message += "Not Found";
-			break;
-		case 405:
-			message += "Method Not Allowed";
-			break;
-		case 406:
-			message += "Not Acceptable";
-			break;
-		case 408:
-			message += "Request Timeout";
-			break;
-		case 413:
-			message += "Payload Too Large";
-			break;
-		case 414:
-			statusMessage += "URI Too Long";
-			break;
-		case 415:
-			message += "Unsupported Media Type";
-			break;
-		case 418:
-			message += "I'm a teapot";
-			break;
-		case 429:
-			message += "Too Many Requests";
-			break;
-		case 431:
-			message += "Request Header Fields Too Large";
-			break;
-
-		// 5XX Server error responses
-
-		case 500:
-			message += "Internal Server Error";
-			break;
-		case 501:
-			message += "Not Implemented";
-			break;
-		case 502:
-			message += "Bad Gateway";
-			break;
-		case 503:
-			message += "Service Unavailable";
-			break;
-		case 505:
-			message += "HTTP Version Not Supported";
-			break;
-		default:
-			message += "Unknown Status Code";
-			break;
-	}
-	statusMessage += message;
-	statusMessage += "\r\n";
-	this->_errorMessage = message;
-	return statusMessage;
+const char* Response::ResponseException::what() const noexcept{
+	return "Internal Server Error\r\n";
 }
 
-const char* Response::ResponseException::what() const noexcept
-{
-	return "File not found\n";
+int Response::ResponseException::responseCode() const{
+	return (500);
 }
+
+const char* Response::ResponseException400::what() const noexcept{
+	return "Bad Request\r\n";
+}
+
+int Response::ResponseException400::responseCode () const{
+	return (400);
+}
+
+const char* Response::ResponseException403::what() const noexcept{
+	return "Forbidden\r\n";
+}
+
+int Response::ResponseException403::responseCode () const{
+	return (403);
+}
+
+const char* Response::ResponseException404::what() const noexcept{
+	return "Not Found\r\n";
+}
+
+int Response::ResponseException404::responseCode () const{
+	return (404);
+}
+
+const char* Response::ResponseException405::what() const noexcept{
+	return "Method Not Allowed\r\n";
+}
+
+int Response::ResponseException405::responseCode () const{
+	return (405);
+}
+
+
