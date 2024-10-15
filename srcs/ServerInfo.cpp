@@ -95,3 +95,13 @@ unsigned int	ServerInfo::getBodylimit() const
 {
 	return (this->_bodylimit);
 }
+
+void ServerInfo::setServerName(std::string name)
+{
+	this->_serverName = name;
+}
+
+std::string	ServerInfo::getServerName() const
+{
+	return (this->_serverName);
+}

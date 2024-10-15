@@ -119,7 +119,8 @@ ServerInfo	config_server(std::string temp, ServerInfo &server)
 		{"port:"},
 		{"location "},
 		{"timeout:"},
-		{"bodylimit:"}
+		{"bodylimit:"},
+		{"name:"}
 
 	};
 
@@ -137,41 +138,44 @@ ServerInfo	config_server(std::string temp, ServerInfo &server)
 			switch (j)
 			{
 				case 0:
-					server.set_ip(value);
-					break;
+						server.set_ip(value);
+						break;
 				case 1:
-					try
-					{
-						if ((intvalue = std::stoi(value)) >= 0)
-							server.setnew_port(intvalue);
-					}
-					catch (std::exception &e)
-					{
-						throw(wrongPort());
-					}
-					break;
+						try
+						{
+							if ((intvalue = std::stoi(value)) >= 0)
+								server.setnew_port(intvalue);
+						}
+						catch (std::exception &e)
+						{
+							throw(wrongPort());
+						}
+						break;
 				case 2:
-				 	if (value.find("{") != std::string::npos)
-				 		bracketfinder(temp.substr(temp.find(value), std::string::npos), "location", server);
-					else
-						std::cout << "No opening bracket on the same line as location!" << "\n";
-					break;
+						if (value.find("{") != std::string::npos)
+							bracketfinder(temp.substr(temp.find(value), std::string::npos), "location", server);
+						else
+							std::cout << "No opening bracket on the same line as location!" << "\n";
+						break;
 				case 3:
 						server.setTimeout(value);
-					break;
+						break;
 				case 4:
-					try
-					{
-						if ((intvalue = std::stoi(value)) >= 0)
-							server.setBodylimit(intvalue);
-					}
-					catch (std::exception &e)
-					{
-						throw(wrongBodyLimit());
-					}
-					break;
+						try
+						{
+							if ((intvalue = std::stoi(value)) >= 0)
+								server.setBodylimit(intvalue);
+						}
+						catch (std::exception &e)
+						{
+							throw(wrongBodyLimit());
+						}
+						break;
+				case 5:
+						server.setServerName(value);
+						break;
 				default:
-					break;
+						break;
 			}
 		}
 	}

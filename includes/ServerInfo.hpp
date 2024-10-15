@@ -48,7 +48,11 @@ class ServerInfo
 
 			void												setBodylimit(unsigned int input);
 			unsigned int										getBodylimit() const;
+
+			void												setServerName(std::string name);
+			std::string											getServerName() const;
 	private:
+			std::string										_serverName;
 			std::string										_timeout;
 			unsigned int									_bodylimit;
 			unsigned int									_ip;
