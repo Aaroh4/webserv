@@ -139,6 +139,8 @@ void	ServerManager::receiveRequest(size_t& i)
 			http_request.append(buffer, bytes_received);
 			if (total_length == 0)
 				total_length = getRequestLength(http_request);
+			if (bytes_received < 1024 && total_length == 0)
+				std::cout << "bad Request\n";
 		}
 		else if (bytes_received == 0)
 		{
