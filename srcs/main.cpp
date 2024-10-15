@@ -23,9 +23,9 @@ int	main(int argc, char **argv)
 		std::cout << "invalid path" << std::endl;
 		return (1);
 	}
-	try 
+	try
 	{
-		readconfig(argv[1], manager);
+		readconfig(path, manager);
 	}
 	catch (std::exception &e)
 	{
