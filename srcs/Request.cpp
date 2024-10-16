@@ -116,7 +116,7 @@ void	Request::_parseMultipartContent(void)
 
 	std::cout << "Boundary is: " << boundary << std::endl;
 	std::cout << "Body: " << this->_body << std::endl;
-	this->_body.replace(0, boundary.length(), "");
+	this->_body.erase(0, boundary.length() + 2);
 	ind = 0;
 	for (int i = 0; ind != std::string::npos; i++)
 	{
@@ -237,7 +237,6 @@ void	Request::_parseRequestLine(void)
 void	Request::_parseHeaders(void)
 {
 	//Parses headers line by line and adds the header(before :) and value (after :) to map container attribute _headers
-
 	std::string line;
 
 	size_t	lineEnd = 0;
@@ -249,8 +248,8 @@ void	Request::_parseHeaders(void)
 		line = this->_request.substr(0, lineEnd + 1);
 		if (line == "\r\n")
 		{
-			i = this->_request.find_last_of("\n");
-			this->_request.erase(0, i + 1);
+			//i = this->_request.find_last_of("\n");
+			this->_request.erase(0, 2);
 			break;
 		}
 		i = line.find_first_of(":");
@@ -328,6 +327,8 @@ void	Request::_decodeChunks(void)
 		decodedBody += this->_body.substr(0, chunkSize);
 		this->_body.erase(0, chunkSize + 2);
 	}
+	if (totalSize != static_cast<int>(decodedBody.length()))
+		std::cout << "paha\n";
 	this->_body = decodedBody;
 }
 
