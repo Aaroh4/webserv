@@ -38,13 +38,15 @@ void	ServerManager::addNewConnection(size_t i)
 	int clientSocket = accept(this->_poll_fds[i].fd, nullptr, nullptr);
 	if (clientSocket < 0)
 		perror("Accept failed");
-	fcntl(clientSocket, F_SETFL, O_NONBLOCK, FD_CLOEXEC);
+	if (fcntl(clientSocket, F_SETFL, O_NONBLOCK | FD_CLOEXEC) == -1)
+		perror("fcntl(F_SETFL) failed");
 	struct pollfd client_pollfd;
 	client_pollfd.fd = clientSocket;
 	client_pollfd.events = POLLIN;
 	this->_poll_fds.push_back(client_pollfd);
 	this->_connections[clientSocket] = i;
 	std::cout << "New client connected on server " << i << "\n";
+	std::cout << "Client got clientSocket " << clientSocket << std::endl;
 }
 
 size_t	ServerManager::findLastChunk(std::string& request, size_t start_pos)
@@ -118,6 +120,7 @@ void	ServerManager::handleRequest(std::string& http_request, int clientSocket)
 void ServerManager::removeConnection(int clientSocket, size_t& i)
 {
 	close(clientSocket);
+	std::cout << "ClientSocket " << clientSocket << " closed\n\n" << std::endl;
 	this->_poll_fds.erase(this->_poll_fds.begin() + i);
 	this->_connections.erase(clientSocket);
 	i--;
@@ -142,8 +145,8 @@ void	ServerManager::receiveRequest(size_t& i)
 				http_request.append(buffer, bytes_received);
 				if (total_length == 0)
 					total_length = getRequestLength(http_request);
-				if (bytes_received < 1024 && total_length == 0)
-					throw Response::ResponseException400();
+				// if (bytes_received < 1024 && total_length == 0)
+				// 	throw Response::ResponseException400();
 
 			}
 			else if (bytes_received == 0)
@@ -170,6 +173,7 @@ void	ServerManager::receiveRequest(size_t& i)
 		Response obj;
 		obj.sendErrorResponse(e.what(), clientSocket, e.responseCode());
 		removeConnection(clientSocket, i);
+		return ;
 	}
 	handleRequest(http_request, clientSocket);
 	removeConnection(clientSocket, i);
@@ -188,7 +192,7 @@ void	ServerManager::runServers()
 		}
 		for (size_t i = 0; i < this->_poll_fds.size(); i++)
 		{
-			if (this->_poll_fds[i].revents & POLLIN || this->_poll_fds[i].revents & POLLOUT) 
+			if (this->_poll_fds[i].revents & POLLIN || this->_poll_fds[i].revents & POLLOUT)
 			{
 				if (i < this->get_info().size())
 					addNewConnection(i);

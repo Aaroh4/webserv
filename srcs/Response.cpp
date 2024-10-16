@@ -47,14 +47,23 @@ void Response::handleCRUD(int clientfd, ServerInfo server)
 void	Response::respond(int clientfd, ServerInfo server)
 {
 	this->_server = server;
-
 	try{
-		if (this->_sanitizeStatus == 404)
-			throw ResponseException404();
-		else if (this->_sanitizeStatus == 400)
-			throw ResponseException400();
-		else if (this->_sanitizeStatus != 200)
-			throw ResponseException();
+		switch (this->_sanitizeStatus){
+			case 404:
+				throw ResponseException404();
+			case 400:
+				throw ResponseException400();
+			case 403:
+				throw ResponseException403();
+			case 501:
+				throw ResponseException501();
+			case 505:
+				throw ResponseException505();
+			case 515:
+				throw ResponseException515();
+			case 500:
+				throw ResponseException();
+		}
 	} catch(const ResponseException& e) {
 		sendErrorResponse(e.what(), clientfd, e.responseCode());
 		return ;
@@ -128,8 +137,9 @@ void	Response::respondPost(int clientfd, ServerInfo server)
 
 void	Response::respondDelete(int clientfd)
 {
-
+	//const char* supportedPaths[1] = {"./www/uploads/"};
 	std::string fileToDelete = "./www" + this->_url;
+	//Add comparison to supported paths
 	if (remove(fileToDelete.c_str()) == false)
 		throw ResponseException();
 	std::string response = "HTTP/1.1 200 OK\r\n";
@@ -277,10 +287,13 @@ std::string Response::formatGetResponseMsg(int close)
 {
 	std::string response;
 
+	if (this->_httpVersion.empty())
+		this->_httpVersion = "HTTP/1.1";
+
 	if (this->_sanitizeStatus == 200)
 		response = this->_httpVersion + " 200 OK\r\n";
 	else
-		response = this->_httpVersion + " " + std::to_string(this->_sanitizeStatus) +  this->_errorMessage +"\r\n";
+		response = this->_httpVersion + " " + std::to_string(this->_sanitizeStatus) + " " + this->_errorMessage +"\r\n";
 	if (this->_type.empty())
 		this->_type = "text/html";
 	response += "Content-Type: " + this->_type + "\r\n";
@@ -316,6 +329,18 @@ void Response::sendStandardErrorPage(int sanitizeStatus, int clientfd)
 		case 404:
 			this->_file.open("./www/404.html");
 			this->_url = "/404.html";
+			break ;
+		case 501:
+			this->_file.open("./www/501.html");
+			this->_url = "/501.html";
+			break ;
+		case 505:
+			this->_file.open("./www/505.html");
+			this->_url = "/505.html";
+			break ;
+		case 515:
+			this->_file.open("./www/515.html");
+			this->_url = "/515.html";
 			break ;
 		default:
 			this->_file.open("./www/500.html");
@@ -363,7 +388,10 @@ void Response::sendErrorResponse(std::string errorMessage, int clientfd, int err
 		this->_sanitizeStatus == 405 ||
 		this->_sanitizeStatus == 403 ||
 		this->_sanitizeStatus == 500 ||
-		this->_sanitizeStatus == 404)
+		this->_sanitizeStatus == 404 ||
+		this->_sanitizeStatus == 505 ||
+		this->_sanitizeStatus == 501 ||
+		this->_sanitizeStatus == 515)
 	{
 		sendStandardErrorPage(this->_sanitizeStatus, clientfd);
 		return ;
@@ -373,7 +401,7 @@ void Response::sendErrorResponse(std::string errorMessage, int clientfd, int err
 }
 
 const char* Response::ResponseException::what() const noexcept{
-	return "Internal Server Error\r\n";
+	return "Internal Server Error";
 }
 
 int Response::ResponseException::responseCode() const{
@@ -381,7 +409,7 @@ int Response::ResponseException::responseCode() const{
 }
 
 const char* Response::ResponseException400::what() const noexcept{
-	return "Bad Request\r\n";
+	return "Bad Request";
 }
 
 int Response::ResponseException400::responseCode () const{
@@ -389,7 +417,7 @@ int Response::ResponseException400::responseCode () const{
 }
 
 const char* Response::ResponseException403::what() const noexcept{
-	return "Forbidden\r\n";
+	return "Forbidden";
 }
 
 int Response::ResponseException403::responseCode () const{
@@ -397,7 +425,7 @@ int Response::ResponseException403::responseCode () const{
 }
 
 const char* Response::ResponseException404::what() const noexcept{
-	return "Not Found\r\n";
+	return "Not Found";
 }
 
 int Response::ResponseException404::responseCode () const{
@@ -405,11 +433,33 @@ int Response::ResponseException404::responseCode () const{
 }
 
 const char* Response::ResponseException405::what() const noexcept{
-	return "Method Not Allowed\r\n";
+	return "Method Not Allowed";
 }
 
 int Response::ResponseException405::responseCode () const{
 	return (405);
 }
 
+const char* Response::ResponseException501::what() const noexcept{
+	return "Unsupported method";
+}
 
+int Response::ResponseException501::responseCode () const{
+	return (501);
+}
+
+const char* Response::ResponseException505::what() const noexcept{
+	return "Unsupported HTTP";
+}
+
+int Response::ResponseException505::responseCode () const{
+	return (505);
+}
+
+const char* Response::ResponseException515::what() const noexcept{
+	return "Unsupported Media Type";
+}
+
+int Response::ResponseException515::responseCode () const{
+	return (515);
+}
