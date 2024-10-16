@@ -118,7 +118,7 @@ void	Response::respondPost(int clientfd, ServerInfo server)
 		this->_sanitizeStatus = 204;
 		this->_errorMessage = "No Content";
 		response = formatGetResponseMsg(0);
-		send(clientfd, response.c_str(), response.length(), 0);
+		send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL);
 	}
 }
 
@@ -200,7 +200,7 @@ void Response::directorylisting(int clientfd, std::string file)
 	this->_fileSize = std::to_string(file.size());
 	response = formatGetResponseMsg(0);
 	response += file;
-	send(clientfd, response.c_str(), response.length(), 0);
+	send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL);
 }
 
 std::string Response::buildDirectorylist(std::string name, int rootsize)
@@ -330,7 +330,7 @@ void Response::sendStandardErrorPage(int sanitizeStatus, int clientfd)
 
 	response = formatGetResponseMsg(0);
 	response += file;
-	send(clientfd, response.c_str(), response.length(), 0);
+	send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL);
 }
 
 std::string makeErrorContent(int statusCode, std::string message)
@@ -353,7 +353,7 @@ void Response::sendCustomErrorPage(int clientfd)
 	response = formatGetResponseMsg(0);
 	response += this->_body;
 
-	send(clientfd, response.c_str(), response.length(), 0);
+	send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL);
 }
 
 void Response::sendErrorResponse(std::string errorMessage, int clientfd, int errorCode)
