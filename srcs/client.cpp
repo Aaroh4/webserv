@@ -29,7 +29,7 @@ int main()
 	std::cout << "len?? " << len << "\n";
 	std::string request = "POST / HTTP/1.1\r\n"
 						 "Content-Length: 6360209\r\n"
-						 "\r\n\r\n";
+						 "\r\n";
 	std::cout << "Headers length: " << request.length() << "\n";
 	request += temp;
 	std::cout << "request len?? " << request.length() << "\n";
@@ -37,8 +37,18 @@ int main()
 
 	//std::cout << "bytes sent: " << bytes_sent << "\n";
 	size_t total_sent = 0;
-	while (total_sent < request.length()) {
-    int bytes_sent = send(clientSocket, request.c_str() + total_sent, std::min(1024, static_cast<int>(request.length() - total_sent)), MSG_NOSIGNAL);
+	std::string requesti = "POST / HTTP/1.1\r\n"
+	"Transfer-Encoding: chunked\r\n"
+	"\r\n"
+	"4\r\n"
+	"Wiki\r\n"
+	"7\r\n"
+	"pedia i\r\n"
+	"B\r\n"
+	"n \r\nchunks.\r\n"
+	"0\r\n\r\n";
+	while (total_sent < requesti.length()) {
+    int bytes_sent = send(clientSocket, requesti.c_str() + total_sent, std::min(1024, static_cast<int>(requesti.length() - total_sent)), MSG_NOSIGNAL);
     if (bytes_sent <= 0) {
         std::cerr << "Send error or connection closed by server" << std::endl;
         break;

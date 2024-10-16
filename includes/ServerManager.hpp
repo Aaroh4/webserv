@@ -29,6 +29,7 @@ class ServerManager
 			std::vector<ServerInfo> _info;
 			std::vector<struct pollfd> _poll_fds;
 			std::unordered_map<int, int> _connections;
+			std::unordered_map<int, std::string> _clients;
 };
 
 #endif
