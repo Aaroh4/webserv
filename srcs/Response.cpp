@@ -137,10 +137,25 @@ void	Response::respondPost(int clientfd, ServerInfo server)
 
 void	Response::respondDelete(int clientfd)
 {
-	//const char* supportedPaths[1] = {"./www/uploads/"};
+	std::vector<std::string> supportedPaths = {
+		"./www/uploads/"
+		};
 	std::string fileToDelete = "./www" + this->_url;
-	//Add comparison to supported paths
-	if (remove(fileToDelete.c_str()) == false)
+	bool canBeDeleted = false;
+	for (const std::string &path : supportedPaths){
+		if (fileToDelete.rfind(path,0) == 0){
+			canBeDeleted = true;
+			break ;
+		}
+	}
+	if (!canBeDeleted)
+		throw ResponseException403();
+	std::filesystem::path file = fileToDelete;
+	if (!std::filesystem::exists(file))
+		throw ResponseException404();
+	if (!std::filesystem::is_regular_file(file))
+		throw ResponseException403();
+	if (remove(fileToDelete.c_str()) != 0)
 		throw ResponseException();
 	std::string response = "HTTP/1.1 200 OK\r\n";
 
