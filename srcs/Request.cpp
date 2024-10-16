@@ -114,8 +114,8 @@ void	Request::_parseMultipartContent(void)
 	std::string	value;
 	std::string part;
 
-	std::cout << "Boundary is: " << boundary << std::endl;
-	std::cout << "Body: " << this->_body << std::endl;
+	//std::cout << "Boundary is: " << boundary << std::endl;
+	//std::cout << "Body: " << this->_body << std::endl;
 	this->_body.replace(0, boundary.length(), "");
 	ind = 0;
 	for (int i = 0; ind != std::string::npos; i++)

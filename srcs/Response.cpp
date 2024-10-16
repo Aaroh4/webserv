@@ -88,9 +88,9 @@ void Response::respondGet(int clientfd, ServerInfo server)
 		const std::size_t chunkSize = 8192;
 		char buffer[chunkSize];
 		while (this->_file.read(buffer, chunkSize) || this->_file.gcount() > 0)
-			send(clientfd, buffer, this->_file.gcount(), 0);
+			send(clientfd, buffer, this->_file.gcount(), MSG_NOSIGNAL);
 	}
-	std::cout << response << std::endl;
+	//std::cout << response << std::endl;
 }
 
 void	Response::respondPost(int clientfd, ServerInfo server)
@@ -225,7 +225,7 @@ void Response::openFile(ServerInfo server)
 	std::string temp;
 	std::string	test = "/" + cutFromTo(this->_url, 1, "/");
 
-	std::cout << this->_url << std::endl;
+	//std::cout << this->_url << std::endl;
 	while ((server.getlocationinfo()[temp].root.empty() 
 		|| !server.getlocationinfo()[test].root.empty()) && test.size() + 1 <= this->_url.size())
 	{
@@ -249,7 +249,7 @@ void Response::openFile(ServerInfo server)
 
 	if (this->_file.is_open() == false)
 	{
-		std::cout << errno << std::endl;
+		//std::cout << errno << std::endl;
 		switch errno
 		{
 			case EIO:

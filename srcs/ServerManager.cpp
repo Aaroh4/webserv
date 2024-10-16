@@ -103,9 +103,9 @@ size_t	ServerManager::getRequestLength(std::string& request)
 	{
 		std::cerr << e.what() << '\n';
 	}
-	std::cout << "Content length: " << total_length - headers_length << std::endl;
-	std::cout << "Headers length: " << headers_length << std::endl;
-	std::cout << "Total length: " << total_length << std::endl;
+	//std::cout << "Content length: " << total_length - headers_length << std::endl;
+	//std::cout << "Headers length: " << headers_length << std::endl;
+	//std::cout << "Total length: " << total_length << std::endl;
 	return total_length;
 }
 
@@ -145,9 +145,9 @@ void	ServerManager::receiveRequest(size_t& i)
 			bytes_received = recv(clientSocket, buffer, sizeof(buffer), 0);
 			if (bytes_received > 0)
 			{
-				std::cout << "buffer: " << buffer << std::endl;
+				//std::cout << "buffer: " << buffer << std::endl;
 				http_request.append(buffer, bytes_received);
-				std::cout << http_request << std::endl;
+				//std::cout << http_request << std::endl;
 				if (total_length == 0)
 					total_length = getRequestLength(http_request);
 				if (bytes_received < 1024 && total_length == 0)
@@ -179,8 +179,8 @@ void	ServerManager::receiveRequest(size_t& i)
 		obj.sendErrorResponse(e.what(), clientSocket, e.responseCode());
 		removeConnection(clientSocket, i);
 	}
-	std::cout << "Total length: " << total_length << std::endl;
- 	std::cout << "Request length: " << http_request.length() << std::endl;
+	//std::cout << "Total length: " << total_length << std::endl;
+ 	//std::cout << "Request length: " << http_request.length() << std::endl;
 	handleRequest(http_request, clientSocket);
 	removeConnection(clientSocket, i);
 }
