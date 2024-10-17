@@ -40,4 +40,24 @@ class noPermissions : public std::exception
 
 };
 
+class noServers : public std::exception
+{
+    public:
+    const char* what() const noexcept override
+    {
+        return "No servers!";
+    }
+
+};
+
+class serverNotFilled : public std::exception
+{
+    public:
+    const char* what() const noexcept override
+    {
+        return "Necessary confs not set!";
+    }
+
+};
+
 #endif

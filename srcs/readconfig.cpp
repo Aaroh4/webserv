@@ -215,6 +215,8 @@ ServerInfo	config_server(std::string temp, ServerInfo &server)
 			}
 		}
 	}
+	if (server.get_ip() == 0 || server.get_port() == 0 || server.getlocationinfo().empty())
+		throw(serverNotFilled());
 	return (server);
 }
 

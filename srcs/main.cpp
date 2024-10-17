@@ -1,5 +1,6 @@
 #include "../includes/ServerInfo.hpp"
 #include "../includes/ServerManager.hpp"
+#include "../includes/configExceptions.hpp"
 #include <iostream>
 #include <sys/socket.h>
 #include <unistd.h>
@@ -32,12 +33,14 @@ int	main(int argc, char **argv)
 	try
 	{
 		readconfig(path, manager);
+		if (manager.get_info().empty())
+			throw(noServers());
 	}
 	catch (std::exception &e)
 	{
 		std::cout << "Wrong arguments in the config! reason: " << e.what() << "\n";
 		return (-1);
-	}
+	}		
 	signal(SIGINT, sigint_handler);
 	manager.startServers();
 	return (0);
