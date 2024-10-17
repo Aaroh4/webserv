@@ -1,6 +1,6 @@
 # Webserv - Custom HTTP Server
 
-This project involves creating an HTTP server in C++98, supporting GET, POST, and DELETE methods, serving static websites, handling file uploads, and executing CGI scripts. The server uses non-blocking I/O and can handle multiple clients. Configuration is similar to NGINX, allowing customization of ports, routes, error pages, and more.
+This project involves creating an HTTP server in C++, supporting GET, POST, and DELETE methods, serving static websites, handling file uploads, and executing CGI scripts. The server uses non-blocking I/O and can handle multiple clients. Configuration is similar to NGINX, allowing customization of ports, routes, error pages, and more.
 
 
 Key Features:
