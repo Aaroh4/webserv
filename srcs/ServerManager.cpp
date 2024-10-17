@@ -90,7 +90,7 @@ size_t	ServerManager::getRequestLength(std::string& request)
 
 	try
 	{
-		if (request.substr(0, 4) == "GET ")
+		if (request.substr(0, 4) == "GET " || request.substr(0, 7) == "DELETE " )
 			return headers_length;
 		else if (start != std::string::npos)
 		{
@@ -133,7 +133,7 @@ void	ServerManager::sendResponse(size_t& i)
 void ServerManager::removeConnection(int clientSocket, size_t& i)
 {
 	close(clientSocket);
-	std::cout << "ClientSocket " << clientSocket << " closed\n\n" << std::endl;
+	// std::cout << "removeConneciton: ClientSocket " << clientSocket << " closed\n\n" << std::endl;
 	this->_poll_fds.erase(this->_poll_fds.begin() + i);
 	this->_connections.erase(clientSocket);
 	this->_clients.erase(clientSocket);
@@ -159,7 +159,12 @@ void	ServerManager::receiveRequest(size_t& i)
 				if (total_length == 0)
 					total_length = getRequestLength(this->_clients[clientSocket]);
 				if (bytes_received < 1024 && total_length == 0)
+				{
+					// std::cout << "req \n"<< this->_clients[clientSocket] << std::endl;
+					// std::cout << "buffer \n" << buffer << std::endl;
+					// std::cout << "\n\n in receiveRequest() set up status 400\n\n" << std::endl;
 					throw Response::ResponseException400();
+				}
 			}
 			else if (bytes_received == 0)
 			{
@@ -177,6 +182,7 @@ void	ServerManager::receiveRequest(size_t& i)
 		Response obj;
 		obj.sendErrorResponse(e.what(), clientSocket, e.responseCode());
 		removeConnection(clientSocket, i);
+		return ;
 	}
 /*	try {
 		if (total_length != http_request.length())
@@ -205,7 +211,7 @@ void	ServerManager::runServers()
 		}
 		for (size_t i = 0; i < this->_poll_fds.size(); i++)
 		{
-			if (this->_poll_fds[i].revents & POLLIN) 
+			if (this->_poll_fds[i].revents & POLLIN)
 			{
 				if (i < this->get_info().size())
 					addNewConnection(i);

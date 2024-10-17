@@ -107,3 +107,13 @@ std::string	ServerInfo::getServerName() const
 {
 	return (this->_serverName);
 }
+
+void ServerInfo::setErrorPage(int error, std::string page)
+{
+	this->_errorPages[error] = page;
+}
+
+std::unordered_map<int, std::string>	ServerInfo::getErrorPages() const
+{
+	return (this->_errorPages);
+}

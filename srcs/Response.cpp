@@ -137,14 +137,30 @@ void	Response::respondPost(int clientfd, ServerInfo server)
 
 void	Response::respondDelete(int clientfd)
 {
-	//const char* supportedPaths[1] = {"./www/uploads/"};
+	std::vector<std::string> supportedPaths = {
+		"./www/uploads/"
+		};
 	std::string fileToDelete = "./www" + this->_url;
-	//Add comparison to supported paths
-	if (remove(fileToDelete.c_str()) == false)
+	bool canBeDeleted = false;
+	for (const std::string &path : supportedPaths){
+		if (fileToDelete.rfind(path,0) == 0){
+			canBeDeleted = true;
+			break ;
+		}
+	}
+	if (!canBeDeleted)
+		throw ResponseException403();
+	std::filesystem::path file = fileToDelete;
+	if (!std::filesystem::exists(file))
+		throw ResponseException404();
+	if (!std::filesystem::is_regular_file(file))
+		throw ResponseException403();
+	if (remove(fileToDelete.c_str()) != 0)
 		throw ResponseException();
 	std::string response = "HTTP/1.1 200 OK\r\n";
 
 	send (clientfd, response.c_str(), response.length(), 0);
+	std::cout << response << std::endl;
 }
 
 void	Response::handleCgi(std::string path, int client_socket)
@@ -247,7 +263,7 @@ void Response::openFile(ServerInfo server)
 	//std::cout << server.getlocationinfo()[temp].root + "/" + this->_url.substr(temp.size(), std::string::npos) << std::endl;
 
 	if (!server.getlocationinfo()[this->_url].index.empty())
-		this->_file.open(server.getlocationinfo()[this->_url].root + server.getlocationinfo()[this->_url].index);
+		this->_file.open(server.getlocationinfo()[this->_url].root + "/" + server.getlocationinfo()[this->_url].index);
 	else if (!server.getlocationinfo()[temp].root.empty())
 		this->_file.open(server.getlocationinfo()[temp].root + "/" + this->_url.substr(temp.size(), std::string::npos));
 	else
@@ -353,8 +369,10 @@ void Response::sendStandardErrorPage(int sanitizeStatus, int clientfd)
 	this->_fileSize = std::to_string(file.length());
 
 	response = formatGetResponseMsg(0);
-	response += file;
-	send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL);
+	if (this->_method == "GET")
+		response += file;
+	send(clientfd, response.c_str(), response.length(), 0);
+	std::cout << response << std::endl;
 }
 
 std::string makeErrorContent(int statusCode, std::string message)
@@ -382,6 +400,7 @@ void Response::sendCustomErrorPage(int clientfd)
 
 void Response::sendErrorResponse(std::string errorMessage, int clientfd, int errorCode)
 {
+	//std::cout << "sendErrorResponse: " << errorCode << " " << errorMessage <<  std::endl;
 	this->_errorMessage = errorMessage;
 	this->_sanitizeStatus = errorCode;
 	if (this->_sanitizeStatus == 400 ||

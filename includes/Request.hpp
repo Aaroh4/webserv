@@ -16,6 +16,7 @@ class Request
 		virtual void		parse(void);
 		virtual	void		sanitize(void);
 		virtual std::string	getHost(void);
+		virtual void		printRequest(void);
 
 	protected:
 		int	_sanitizeStatus;

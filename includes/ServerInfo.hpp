@@ -51,6 +51,9 @@ class ServerInfo
 
 			void												setServerName(std::string name);
 			std::string											getServerName() const;
+
+			void												setErrorPage(int error, std::string page);
+			std::unordered_map<int, std::string>				getErrorPages() const;
 	private:
 			std::string										_serverName;
 			std::string										_timeout;
@@ -61,6 +64,7 @@ class ServerInfo
 			int												_socketfd;
 			std::string 									_locations;
 			std::vector <struct pollfd>						_pollfds;
+			std::unordered_map<int, std::string>			_errorPages;
 };
 
 unsigned int convertip(std::string ip);
