@@ -4,8 +4,14 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include <filesystem>
+#include <signal.h>
 
 int	readconfig(std::string name, ServerManager &manager);
+
+void	sigint_handler(int signum)
+{
+	(void)signum;
+}
 
 int	main(int argc, char **argv)
 {
@@ -32,5 +38,7 @@ int	main(int argc, char **argv)
 		std::cout << "Wrong arguments in the config! reason: " << e.what() << "\n";
 		return (-1);
 	}
-	return (manager.startServers());
+	signal(SIGINT, sigint_handler);
+	manager.startServers();
+	return (0);
 }

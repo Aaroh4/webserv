@@ -43,6 +43,7 @@ void	ServerManager::addNewConnection(size_t i)
 	struct pollfd client_pollfd;
 	client_pollfd.fd = clientSocket;
 	client_pollfd.events = POLLIN;
+	client_pollfd.revents = 0;
 	this->_poll_fds.push_back(client_pollfd);
 	this->_connections[clientSocket] = i;
 	this->_clients[clientSocket] = "";
@@ -198,7 +199,8 @@ void	ServerManager::runServers()
 
 		if (pollcount < 0)
 		{
-			std::cerr << "poll failed" << std::endl;
+			if (errno != EINTR)
+				std::cerr << "poll failed" << std::endl;
 			break ;
 		}
 		for (size_t i = 0; i < this->_poll_fds.size(); i++)
@@ -237,6 +239,7 @@ int	ServerManager::startServers()
 		struct pollfd temp_s_pollfd;
 		temp_s_pollfd.fd = this->get_info()[i].getsocketfd();
 		temp_s_pollfd.events = POLLIN | POLLOUT;
+		temp_s_pollfd.revents = 0;
 		this->_poll_fds.push_back(temp_s_pollfd);
 	}
 	runServers();
