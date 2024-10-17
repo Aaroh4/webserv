@@ -38,7 +38,7 @@ int	main(int argc, char **argv)
 	}
 	catch (std::exception &e)
 	{
-		std::cout << "Wrong arguments in the config! reason: " << e.what() << "\n";
+		std::cerr << "Wrong arguments in the config! reason: " << e.what() << "\n";
 		return (-1);
 	}		
 	signal(SIGINT, sigint_handler);
