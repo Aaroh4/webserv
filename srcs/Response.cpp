@@ -101,9 +101,9 @@ void Response::respondGet(int clientfd, ServerInfo server)
 		const std::size_t chunkSize = 8192;
 		char buffer[chunkSize];
 		while (this->_file.read(buffer, chunkSize) || this->_file.gcount() > 0)
-			send(clientfd, buffer, this->_file.gcount(), 0);
+			send(clientfd, buffer, this->_file.gcount(), MSG_NOSIGNAL);
 	}
-	std::cout << response << std::endl;
+	//std::cout << response << std::endl;
 }
 
 void	Response::respondPost(int clientfd, ServerInfo server)
@@ -131,7 +131,7 @@ void	Response::respondPost(int clientfd, ServerInfo server)
 		this->_sanitizeStatus = 204;
 		this->_errorMessage = "No Content";
 		response = formatGetResponseMsg(0);
-		send(clientfd, response.c_str(), response.length(), 0);
+		send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL);
 	}
 }
 
@@ -209,7 +209,7 @@ void Response::directorylisting(int clientfd, std::string file)
 	this->_fileSize = std::to_string(file.size());
 	response = formatGetResponseMsg(0);
 	response += file;
-	send(clientfd, response.c_str(), response.length(), 0);
+	send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL);
 }
 
 std::string Response::buildDirectorylist(std::string name, int rootsize)
@@ -234,8 +234,8 @@ void Response::openFile(ServerInfo server)
 	std::string temp;
 	std::string	test = "/" + cutFromTo(this->_url, 1, "/");
 
-	std::cout << this->_url << std::endl;
-	while ((server.getlocationinfo()[temp].root.empty()
+	//std::cout << this->_url << std::endl;
+	while ((server.getlocationinfo()[temp].root.empty() 
 		|| !server.getlocationinfo()[test].root.empty()) && test.size() + 1 <= this->_url.size())
 	{
 		temp = test + "/";
@@ -258,7 +258,7 @@ void Response::openFile(ServerInfo server)
 
 	if (this->_file.is_open() == false)
 	{
-		std::cout << errno << std::endl;
+		//std::cout << errno << std::endl;
 		switch errno
 		{
 			case EIO:
@@ -354,7 +354,7 @@ void Response::sendStandardErrorPage(int sanitizeStatus, int clientfd)
 
 	response = formatGetResponseMsg(0);
 	response += file;
-	send(clientfd, response.c_str(), response.length(), 0);
+	send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL);
 }
 
 std::string makeErrorContent(int statusCode, std::string message)
@@ -377,7 +377,7 @@ void Response::sendCustomErrorPage(int clientfd)
 	response = formatGetResponseMsg(0);
 	response += this->_body;
 
-	send(clientfd, response.c_str(), response.length(), 0);
+	send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL);
 }
 
 void Response::sendErrorResponse(std::string errorMessage, int clientfd, int errorCode)

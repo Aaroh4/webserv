@@ -43,6 +43,7 @@ void	ServerManager::addNewConnection(size_t i)
 	struct pollfd client_pollfd;
 	client_pollfd.fd = clientSocket;
 	client_pollfd.events = POLLIN;
+	client_pollfd.revents = 0;
 	this->_poll_fds.push_back(client_pollfd);
 	this->_connections[clientSocket] = i;
 	this->_clients[clientSocket] = "";
@@ -223,7 +224,8 @@ int	ServerManager::startServers()
 		setsockopt(this->get_info()[i].getsocketfd(), SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
 		if (bind(this->get_info()[i].getsocketfd(), (struct sockaddr *) &serverAddress, sizeof(serverAddress)) < 0)
 		{
-			std::cout << "Bind failed!" << "\n";
+			if (errno != EINTR)
+				std::cout << "Bind failed!" << "\n";
 			return (1);
 		}
 		fcntl(this->get_info()[i].getsocketfd(), F_SETFL, O_NONBLOCK, FD_CLOEXEC);
@@ -232,6 +234,7 @@ int	ServerManager::startServers()
 		struct pollfd temp_s_pollfd;
 		temp_s_pollfd.fd = this->get_info()[i].getsocketfd();
 		temp_s_pollfd.events = POLLIN | POLLOUT;
+		temp_s_pollfd.revents = 0;
 		this->_poll_fds.push_back(temp_s_pollfd);
 	}
 	runServers();
