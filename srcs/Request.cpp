@@ -257,6 +257,7 @@ void	Request::_parseHeaders(void)
 		{
 			this->_sanitizeStatus = 400;
 			this->_errmsg = "Bad Request";
+			// std::cout << "\n\n in Parse() set up status 400\n\n" << std::endl;
 			break;
 		}
 		this->_headers[line.substr(0, i)] = line.substr(i + 2, lineEnd - (i + 3));
@@ -334,6 +335,7 @@ void	Request::_decodeChunks(void)
 
 void	Request::parse(void)
 {
+	//std::cout << "In parse() - Request received: \n" << this->_request << std::endl;
 	this->_parseRequestLine();
 	this->_parseHeaders();
 	if (this->_headers["Transfer-Encoding"] == "chunked")
@@ -370,6 +372,7 @@ void	Request::sanitize(void)
 	{
 		this->_sanitizeStatus = 400;
 		this->_errmsg = "Bad Request"; //Bad request
+		// std::cout << "\n\n in sanitize() set up status 400\n\n" << std::endl;
 		return;
 	}
 	for (const auto& map_content : this->_headers)
@@ -378,6 +381,7 @@ void	Request::sanitize(void)
 		{
 			this->_sanitizeStatus = 400;
 			this->_errmsg = "Bad Request"; //Bad request
+			// std::cout << "\n\n in sanitize2() set up status 400\n\n" << std::endl;
 			break;
 		}
 	}
@@ -386,4 +390,16 @@ void	Request::sanitize(void)
 std::string	Request::getHost(void)
 {
 	return (this->_headers["Host"]);
+}
+
+void Request::printRequest(void)
+{
+	std::cout << "Request parsed to :\n";
+	std::cout << this->_httpVersion << std::endl;
+	std::cout << this->_sanitizeStatus << std::endl;
+	std::cout << this->_errmsg << std::endl;
+	std::cout << this->_type << std::endl;
+	std::cout << this->_method<< std::endl;
+	std::cout << this->_url << std::endl;
+	std::cout << this->_body << std::endl;
 }

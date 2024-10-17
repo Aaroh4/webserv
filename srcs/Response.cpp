@@ -160,6 +160,7 @@ void	Response::respondDelete(int clientfd)
 	std::string response = "HTTP/1.1 200 OK\r\n";
 
 	send (clientfd, response.c_str(), response.length(), 0);
+	std::cout << response << std::endl;
 }
 
 void	Response::handleCgi(std::string path, int client_socket)
@@ -368,8 +369,10 @@ void Response::sendStandardErrorPage(int sanitizeStatus, int clientfd)
 	this->_fileSize = std::to_string(file.length());
 
 	response = formatGetResponseMsg(0);
-	response += file;
+	if (this->_method == "GET")
+		response += file;
 	send(clientfd, response.c_str(), response.length(), 0);
+	std::cout << response << std::endl;
 }
 
 std::string makeErrorContent(int statusCode, std::string message)
@@ -397,6 +400,7 @@ void Response::sendCustomErrorPage(int clientfd)
 
 void Response::sendErrorResponse(std::string errorMessage, int clientfd, int errorCode)
 {
+	//std::cout << "sendErrorResponse: " << errorCode << " " << errorMessage <<  std::endl;
 	this->_errorMessage = errorMessage;
 	this->_sanitizeStatus = errorCode;
 	if (this->_sanitizeStatus == 400 ||
