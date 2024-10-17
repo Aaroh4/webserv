@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Cat site</title>
+    <style>
+        body {
+            font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+            background-color: palegreen;
+        }
+		
+		form {
+			align-content: center;
+			padding-inline-start: 500px;
+			padding-block-end: 500px;
+		}
+
+        h1 {
+			align-content: center;
+            color: darkorange;
+        }
+ 
+        h3 {
+            color: #333;
+        }
+ 
+        input[type="file"] {
+            margin: 10px 0;
+        }
+ 
+        input[type="submit"] {
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+ 
+        input[type="submit"]:hover {
+            background-color: lavender;
+        }
+    </style>
+</head>
+<body>
+    <form action="/" method="post" enctype="multipart/form-data" accept-charset="UTF-8">
+        <h1>WEBSERV</h1>
+        <h3>Upload some amazing stuff!</h3>
+        <input type="file" name="file">
+        <input type="submit" value="Upload File">
+    </form>
+</body>
+</html>
