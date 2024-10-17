@@ -118,8 +118,6 @@ void	ServerManager::sendResponse(size_t& i)
 
 	request.parse();
 	request.sanitize();
-	std::cout << "server name " << this->_info[this->_connections.at(clientSocket)].getServerName() << std::endl;
-	std::cout << "is empty?? " << this->_info[this->_connections.at(clientSocket)].getServerName().empty() << std::endl;
 
 	if (request.getHost() == this->_info[this->_connections.at(clientSocket)].getServerName()
 		|| this->_info[this->_connections.at(clientSocket)].getServerName().empty())

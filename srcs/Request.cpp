@@ -265,7 +265,7 @@ void	Request::_parseHeaders(void)
 	this->_body = this->_request;
 }
 
-void	Request::_splitKeyValuePairs(void)
+/*void	Request::_splitKeyValuePairs(void)
 {
 	std::string data;
 	std::string key;
@@ -296,7 +296,7 @@ void	Request::_splitKeyValuePairs(void)
 		this->_data[key] = data.substr(start, end - start);
 		start = end + 1;
 	}
-}
+}*/
 
 void	Request::_decodeChunks(void)
 {
@@ -341,8 +341,8 @@ void	Request::parse(void)
 		this->_decodeChunks();
 	if (this->_headers["Content-Type"].find("multipart/form-data") != std::string::npos)
 		this->_parseMultipartContent();
-	else
-		this->_splitKeyValuePairs();
+	//else
+	//	this->_splitKeyValuePairs();
 }
 
 void	Request::sanitize(void)

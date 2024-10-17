@@ -29,7 +29,7 @@ class Request
 		std::string _formInput;
 		std::string _errmsg;
 		std::unordered_map<std::string, std::string> _headers;
-		std::unordered_map<std::string, std::string> _data;
+		//std::unordered_map<std::string, std::string> _data;
 	private:
 		void	_parseRequestLine(void);
 		void 	_parseHeaders(void);
@@ -37,7 +37,7 @@ class Request
 		void	_verifyPath(void);
 		void	_parseMultipartContent(void);
 		void	_parsePart(std::string& part);
-		void	_splitKeyValuePairs(void);
+		//void	_splitKeyValuePairs(void);
 		void	_decodeChunks(void);
 		std::string	_splitMultiFormParts(std::string& boundary);
 		std::string	_parseFileName(std::string& line);
