@@ -27,7 +27,7 @@ Request::Request(Request const& src)
 	this->_url = src._url;
 	this->_headers = src._headers;
 	this->_sanitizeStatus = src._sanitizeStatus;
-	this->_formInput = src._formInput;
+	this->_queryString = src._queryString;
 }
 
 Request& Request::operator=(Request const& src)
@@ -41,7 +41,7 @@ Request& Request::operator=(Request const& src)
 		this->_request = src._request;
 		this->_url = src._url;
 		this->_sanitizeStatus = src._sanitizeStatus;
-		this->_formInput = src._formInput;
+		this->_queryString = src._queryString;
 		this->_headers.clear();
 		for (const auto& map_content : src._headers)
 		{
@@ -78,16 +78,16 @@ void	Request::_parsePart(std::string& part)
 
 	if (part.find("filename") == std::string::npos) //If not a file build key - value pairs
 	{
-		if (this->_formInput.empty() == false)
-			this->_formInput += "&";
+		if (this->_queryString.empty() == false)
+			this->_queryString += "&";
 		start = part.find_first_of("\"");
 		start++;
 		end = part.find_first_of("\"", start);
-		this->_formInput += part.substr(start, end - start) + "=";
+		this->_queryString += part.substr(start, end - start) + "=";
 		part.erase(0, end + 2);
 		start = part.find_first_not_of("\r\n");
 		end = part.find_last_of("\n");
-		this->_formInput += part.substr(start, end - (start + 1));
+		this->_queryString += part.substr(start, end - (start + 1));
 	}
 	else	//Create newfile
 	{
@@ -114,8 +114,6 @@ void	Request::_parseMultipartContent(void)
 	std::string	value;
 	std::string part;
 
-	std::cout << "Boundary is: " << boundary << std::endl;
-	std::cout << "Body: " << this->_body << std::endl;
 	this->_body.erase(0, boundary.length() + 2);
 	ind = 0;
 	for (int i = 0; ind != std::string::npos; i++)
@@ -222,8 +220,8 @@ void	Request::_parseRequestLine(void)
 	{
 		this->_request.erase(0, 1);
 		i = this->_request.find_first_of(" ");
-		this->_formInput = this->_request.substr(0, i);
-		this->_request.erase(0, this->_formInput.length() + 1);
+		this->_queryString = this->_request.substr(0, i);
+		this->_request.erase(0, this->_queryString.length() + 1);
 	}
 	this->_getContentType();
 
@@ -272,8 +270,8 @@ void	Request::_parseHeaders(void)
 	size_t start = 0;
 	size_t end = 0;
 
-	if (!this->_formInput.empty())
-		data = this->_formInput;
+	if (!this->_queryString.empty())
+		data = this->_queryString;
 	else if (this->_headers["Content-Type"].find("application/x-www-form-urlencoded") != std::string::npos
 	&& this->_body.length() > 0)
 		data = this->_body;
@@ -367,7 +365,7 @@ void	Request::sanitize(void)
 		this->_url.pop_back();
 		i--;
 	}
-	if (this->_formInput.find_first_of(";|`<>") != std::string::npos)
+	if (this->_queryString.find_first_of(";|`<>") != std::string::npos)
 	{
 		this->_sanitizeStatus = 400;
 		this->_errmsg = "Bad Request"; //Bad request

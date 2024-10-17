@@ -26,7 +26,7 @@ class Request
 		std::string _url;
 		std::string _body;
 		std::string _httpVersion;
-		std::string _formInput;
+		std::string _queryString;
 		std::string _errmsg;
 		std::unordered_map<std::string, std::string> _headers;
 		//std::unordered_map<std::string, std::string> _data;
