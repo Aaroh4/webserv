@@ -5,8 +5,12 @@ This project involves creating an HTTP server in C++98, supporting GET, POST, an
 
 Key Features:
 
-Handles HTTP 1.1 requests and responses
-Implements non-blocking I/O using poll() or equivalent
-Configurable routing, error pages, and file handling
-Supports CGI execution (e.g., PHP, Python)
-Multi-port listening and file uploads
+-Handles HTTP 1.1 requests and responses
+
+-Implements non-blocking I/O using poll() or equivalent
+
+-Configurable routing, error pages, and file handling
+
+-Supports CGI execution (e.g., PHP, Python)
+
+-Multi-port listening and file uploads
