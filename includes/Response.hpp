@@ -71,6 +71,31 @@ class Response: public Request
 					int responseCode () const override;
 			};
 
+			//Unsupported media type
+			class ResponseException515: public ResponseException
+			{
+				public:
+					const char *what() const noexcept override;
+					int responseCode () const override;
+			};
+
+			//Unsupported method
+			class ResponseException501: public ResponseException
+			{
+				public:
+					const char *what() const noexcept override;
+					int responseCode () const override;
+			};
+
+			//Unsupported HTTP
+			class ResponseException505: public ResponseException
+			{
+				public:
+					const char *what() const noexcept override;
+					int responseCode () const override;
+			};
+
+
 	private:
 			ServerInfo	_server;
 			std::string _fileSize;

@@ -38,14 +38,17 @@ void	ServerManager::addNewConnection(size_t i)
 	int clientSocket = accept(this->_poll_fds[i].fd, nullptr, nullptr);
 	if (clientSocket < 0)
 		perror("Accept failed");
-	fcntl(clientSocket, F_SETFL, O_NONBLOCK, FD_CLOEXEC);
+	if (fcntl(clientSocket, F_SETFL, O_NONBLOCK | FD_CLOEXEC) == -1)
+		perror("fcntl(F_SETFL) failed");
 	struct pollfd client_pollfd;
 	client_pollfd.fd = clientSocket;
 	client_pollfd.events = POLLIN;
 	client_pollfd.revents = 0;
 	this->_poll_fds.push_back(client_pollfd);
 	this->_connections[clientSocket] = i;
+	this->_clients[clientSocket] = "";
 	std::cout << "New client connected on server " << i << "\n";
+	std::cout << "Client got clientSocket " << clientSocket << std::endl;
 }
 
 size_t	ServerManager::findLastChunk(std::string& request, size_t start_pos)
@@ -56,7 +59,6 @@ size_t	ServerManager::findLastChunk(std::string& request, size_t start_pos)
 	while (chunk_size != 0)
 	{
 		pos = request.find("\r\n", start_pos);
-
 		try
 		{
 			chunk_size = std::stoi(request.substr(start_pos, pos - start_pos), nullptr, 16);
@@ -65,8 +67,10 @@ size_t	ServerManager::findLastChunk(std::string& request, size_t start_pos)
 		}
 		catch(const std::exception& e)
 		{
+			std::cout << e.what() << std::endl;
 			return 0;
 		}
+		start_pos = pos;
 		start_pos += chunk_size + 4; // \r\n before and after chunk
 	}
 	return pos + 4;
@@ -103,9 +107,6 @@ size_t	ServerManager::getRequestLength(std::string& request)
 	{
 		std::cerr << e.what() << '\n';
 	}
-	//std::cout << "Content length: " << total_length - headers_length << std::endl;
-	//std::cout << "Headers length: " << headers_length << std::endl;
-	//std::cout << "Total length: " << total_length << std::endl;
 	return total_length;
 }
 
@@ -124,8 +125,10 @@ void	ServerManager::handleRequest(std::string& http_request, int clientSocket)
 void ServerManager::removeConnection(int clientSocket, size_t& i)
 {
 	close(clientSocket);
+	std::cout << "ClientSocket " << clientSocket << " closed\n\n" << std::endl;
 	this->_poll_fds.erase(this->_poll_fds.begin() + i);
 	this->_connections.erase(clientSocket);
+	this->_clients.erase(clientSocket);
 	i--;
 }
 
@@ -133,63 +136,61 @@ void	ServerManager::receiveRequest(size_t& i)
 {
 	char		buffer[1024] = {0};
 	int 		clientSocket = this->_poll_fds[i].fd;
-	std::string	http_request;
 	int 		bytes_received = 0;
 	size_t		total_length = 0;
 
 	// Receive data until complete request is sent
 	try
 	{
-		while (total_length == 0 || http_request.length() < total_length)
+		if (total_length == 0 || this->_clients[clientSocket].length() < total_length)
 		{
 			bytes_received = recv(clientSocket, buffer, sizeof(buffer), 0);
 			if (bytes_received > 0)
 			{
-				//std::cout << "buffer: " << buffer << std::endl;
-				http_request.append(buffer, bytes_received);
-				//std::cout << http_request << std::endl;
+				this->_clients[clientSocket].append(buffer, bytes_received);
 				if (total_length == 0)
-					total_length = getRequestLength(http_request);
+					total_length = getRequestLength(this->_clients[clientSocket]);
 				if (bytes_received < 1024 && total_length == 0)
 					throw Response::ResponseException400();
-
 			}
 			else if (bytes_received == 0)
 			{
 				std::cout << "Client disconnected" << "\n";
-				break;
 			}
 			else
 			{
 				std::cout << "recv failed" << "\n";
+				perror("error: ");
 				throw Response::ResponseException();
-				break;
 			}
 		}
 	}
 	catch (const Response::ResponseException & e){
 		Response obj;
 		obj.sendErrorResponse(e.what(), clientSocket, e.responseCode());
+		removeConnection(clientSocket, i);
 	}
-	try {
+/*	try {
 		if (total_length != http_request.length())
 			throw Response::ResponseException400();
 	} catch (const Response::ResponseException & e){
 		Response obj;
 		obj.sendErrorResponse(e.what(), clientSocket, e.responseCode());
 		removeConnection(clientSocket, i);
+		return ;
+	}*/
+	if (total_length == this->_clients[clientSocket].length())
+	{
+		handleRequest(this->_clients[clientSocket], clientSocket);
+		removeConnection(clientSocket, i);
 	}
-	//std::cout << "Total length: " << total_length << std::endl;
- 	//std::cout << "Request length: " << http_request.length() << std::endl;
-	handleRequest(http_request, clientSocket);
-	removeConnection(clientSocket, i);
 }
 
 void	ServerManager::runServers()
 {
 	while (true)
 	{
-		int pollcount = poll(this->_poll_fds.data(), this->_poll_fds.size(), 100);
+		int pollcount = poll(this->_poll_fds.data(), this->_poll_fds.size(), 1000);
 
 		if (pollcount < 0)
 		{
