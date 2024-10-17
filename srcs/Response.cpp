@@ -251,7 +251,7 @@ void Response::openFile(ServerInfo server)
 	std::string	test = "/" + cutFromTo(this->_url, 1, "/");
 
 	//std::cout << this->_url << std::endl;
-	while ((server.getlocationinfo()[temp].root.empty() 
+	while ((server.getlocationinfo()[temp].root.empty()
 		|| !server.getlocationinfo()[test].root.empty()) && test.size() + 1 <= this->_url.size())
 	{
 		temp = test + "/";
@@ -278,11 +278,10 @@ void Response::openFile(ServerInfo server)
 		switch errno
 		{
 			case EIO:
-					this->_sanitizeStatus = 500;
-					throw ResponseException();
 			case ENOMEM:
 					this->_sanitizeStatus = 500;
 					throw ResponseException(); //internal error when I/O problem or no memory might need some logging;
+			case ENOTDIR:
 			case ENOENT:
 					this->_sanitizeStatus = 404;
 					throw ResponseException404();
@@ -368,7 +367,7 @@ void Response::sendStandardErrorPage(int sanitizeStatus, int clientfd)
 
 	this->_fileSize = std::to_string(file.length());
 
-	response = formatGetResponseMsg(0);
+	response = formatGetResponseMsg(1);
 	if (this->_method == "GET")
 		response += file;
 	send(clientfd, response.c_str(), response.length(), 0);
