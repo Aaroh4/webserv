@@ -263,7 +263,7 @@ void Response::openFile(ServerInfo server)
 	//std::cout << server.getlocationinfo()[temp].root + "/" + this->_url.substr(temp.size(), std::string::npos) << std::endl;
 
 	if (!server.getlocationinfo()[this->_url].index.empty())
-		this->_file.open(server.getlocationinfo()[this->_url].root + server.getlocationinfo()[this->_url].index);
+		this->_file.open(server.getlocationinfo()[this->_url].root + "/" + server.getlocationinfo()[this->_url].index);
 	else if (!server.getlocationinfo()[temp].root.empty())
 		this->_file.open(server.getlocationinfo()[temp].root + "/" + this->_url.substr(temp.size(), std::string::npos));
 	else
