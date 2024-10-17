@@ -194,7 +194,8 @@ void	ServerManager::runServers()
 
 		if (pollcount < 0)
 		{
-			std::cerr << "poll failed" << std::endl;
+			if (errno != EINTR)
+				std::cerr << "poll failed" << std::endl;
 			break ;
 		}
 		for (size_t i = 0; i < this->_poll_fds.size(); i++)
@@ -224,8 +225,7 @@ int	ServerManager::startServers()
 		setsockopt(this->get_info()[i].getsocketfd(), SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
 		if (bind(this->get_info()[i].getsocketfd(), (struct sockaddr *) &serverAddress, sizeof(serverAddress)) < 0)
 		{
-			if (errno != EINTR)
-				std::cout << "Bind failed!" << "\n";
+			std::cout << "Bind failed!" << "\n";
 			return (1);
 		}
 		fcntl(this->get_info()[i].getsocketfd(), F_SETFL, O_NONBLOCK, FD_CLOEXEC);
