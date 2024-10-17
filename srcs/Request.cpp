@@ -7,7 +7,7 @@ Request::Request(void) : _sanitizeStatus(0)
 {
 }
 
-Request::Request(std::string request) :  _sanitizeStatus(0), _request(request)
+Request::Request(std::string request) :  _sanitizeStatus(200), _request(request)
 {
 	return;
 }
@@ -135,18 +135,21 @@ void	Request::_verifyPath(void)
 	std::filesystem::path file = "./www" + this->_url;
 	if (!std::filesystem::exists(file))
 	{
-		this->_sanitizeStatus = 404; //Not Found
+		this->_sanitizeStatus = 404;
+		this->_errmsg = "Not Found"; //Not Found
 		return;
 	}
 	else if (!std::filesystem::is_regular_file(file))
 	{
-		this->_sanitizeStatus = 403; //Forbidden
+		this->_sanitizeStatus = 403;
+		this->_errmsg = "Forbidden"; //Forbidden
 		return;
 	}
 	int permissions = access(file.c_str(), X_OK);
 	if (permissions != 0)
 	{
-		this->_sanitizeStatus = 403; //Forbidden
+		this->_sanitizeStatus = 403;
+		this->_errmsg = "Forbidden"; //Forbidden
 		return;
 	}
 }
@@ -171,7 +174,10 @@ void	Request::_getContentType(void)
 			this->_type = "cgi/" + type;
 		}
     	else if (this->_url != "/")
-			this->_sanitizeStatus = 415; // Error: Unsupported Media Type
+		{
+			this->_sanitizeStatus = 415;
+			this->_errmsg = "Unsupported Media Type"; // Error: Unsupported Media Type
+		}
 	}
 }
 
@@ -183,7 +189,6 @@ void	Request::_parseRequestLine(void)
 	size_t i = this->_request.find_first_of(" ");
 	this->_method = this->_request.substr(0, i);
 	size_t index;
-	this->_sanitizeStatus = 200;
 
 	for (index = 0; index < 3; index++)
 	{
@@ -193,7 +198,10 @@ void	Request::_parseRequestLine(void)
 		}
 	}
 	if (index == 3)
-		this->_sanitizeStatus = 501; // error: Unsupported method
+	{
+		this->_sanitizeStatus = 501;
+		this->_errmsg = "Unsupported method";
+	}
 	this->_request.erase(0, this->_method.length() + 1);
 
 	//Parses URI and put's it to string attribute _url, then erases it from the request
@@ -247,7 +255,9 @@ void	Request::_parseHeaders(void)
 		i = line.find_first_of(":");
 		if (i == std::string::npos)
 		{
-			this->_sanitizeStatus = 1666;
+			this->_sanitizeStatus = 400;
+			this->_errmsg = "Bad Request";
+			// std::cout << "\n\n in Parse() set up status 400\n\n" << std::endl;
 			break;
 		}
 		this->_headers[line.substr(0, i)] = line.substr(i + 2, lineEnd - (i + 3));
@@ -311,7 +321,8 @@ void	Request::_decodeChunks(void)
 		}
 		catch(const std::exception& e)
 		{
-			this->_sanitizeStatus = 6666666;
+			this->_sanitizeStatus = 500;
+			this->_errmsg = "Internal Server Error";
 			return;
 		}
 		decodedBody += this->_body.substr(0, chunkSize);
@@ -324,6 +335,7 @@ void	Request::_decodeChunks(void)
 
 void	Request::parse(void)
 {
+	//std::cout << "In parse() - Request received: \n" << this->_request << std::endl;
 	this->_parseRequestLine();
 	this->_parseHeaders();
 	if (this->_headers["Transfer-Encoding"] == "chunked")
@@ -336,14 +348,18 @@ void	Request::parse(void)
 
 void	Request::sanitize(void)
 {
+	if (this->_sanitizeStatus != 200)
+		return ;
 	if (this->_httpVersion != "HTTP/1.0" && this->_httpVersion != "HTTP/1.1")
 	{
-		this->_sanitizeStatus = 505; //Unsupported HTTP
+		this->_sanitizeStatus = 505;
+		this->_errmsg = "Unsupported HTTP";
 		return;
 	}
 	if (this->_url.find("..") != std::string::npos)
 	{
-		this->_sanitizeStatus = 403; //Forbidden
+		this->_sanitizeStatus = 403;
+		this->_errmsg = "Forbidden"; //Forbidden
 		return;
 	}
  	int i = this->_url.find_last_of("/");
@@ -354,14 +370,18 @@ void	Request::sanitize(void)
 	}
 	if (this->_formInput.find_first_of(";|`<>") != std::string::npos)
 	{
-		this->_sanitizeStatus = 400; //Bad request
+		this->_sanitizeStatus = 400;
+		this->_errmsg = "Bad Request"; //Bad request
+		// std::cout << "\n\n in sanitize() set up status 400\n\n" << std::endl;
 		return;
 	}
 	for (const auto& map_content : this->_headers)
 	{
 		if (map_content.first.find_first_of("&;|`<>()#") != std::string::npos || map_content.first.length() > INT_MAX)
 		{
-			this->_sanitizeStatus = 400; //Bad request
+			this->_sanitizeStatus = 400;
+			this->_errmsg = "Bad Request"; //Bad request
+			// std::cout << "\n\n in sanitize2() set up status 400\n\n" << std::endl;
 			break;
 		}
 	}
@@ -370,4 +390,16 @@ void	Request::sanitize(void)
 std::string	Request::getHost(void)
 {
 	return (this->_headers["Host"]);
+}
+
+void Request::printRequest(void)
+{
+	std::cout << "Request parsed to :\n";
+	std::cout << this->_httpVersion << std::endl;
+	std::cout << this->_sanitizeStatus << std::endl;
+	std::cout << this->_errmsg << std::endl;
+	std::cout << this->_type << std::endl;
+	std::cout << this->_method<< std::endl;
+	std::cout << this->_url << std::endl;
+	std::cout << this->_body << std::endl;
 }

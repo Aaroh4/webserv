@@ -120,7 +120,15 @@ ServerInfo	config_server(std::string temp, ServerInfo &server)
 		{"location "},
 		{"timeout:"},
 		{"bodylimit:"},
-		{"name:"}
+		{"name:"},
+		{"400:"},
+		{"403:"},
+		{"404:"},
+		{"405:"},
+		{"500:"},
+		{"501:"},
+		{"505:"},
+		{"515:"}
 
 	};
 
@@ -174,6 +182,33 @@ ServerInfo	config_server(std::string temp, ServerInfo &server)
 				case 5:
 						std::cout << value << std::endl;
 						server.setServerName(value);
+						break;
+				case 6:
+						server.setErrorPage(400, value);
+						break;
+				case 7:
+						server.setErrorPage(404, value);
+						break;
+				case 8:
+						server.setErrorPage(404, value);
+						break;
+				case 9:
+						server.setErrorPage(404, value);
+						break;
+				case 10:
+						server.setErrorPage(405, value);
+						break;
+				case 11:
+						server.setErrorPage(500, value);
+						break;
+				case 12:
+						server.setErrorPage(501, value);
+						break;
+				case 13:
+						server.setErrorPage(505, value);
+						break;
+				case 14:
+						server.setErrorPage(515, value);
 						break;
 				default:
 						break;

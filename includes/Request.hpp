@@ -16,6 +16,8 @@ class Request
 		virtual void		parse(void);
 		virtual	void		sanitize(void);
 		virtual std::string	getHost(void);
+		virtual void		printRequest(void);
+
 	protected:
 		int	_sanitizeStatus;
 		std::string	_type;
@@ -25,6 +27,7 @@ class Request
 		std::string _body;
 		std::string _httpVersion;
 		std::string _formInput;
+		std::string _errmsg;
 		std::unordered_map<std::string, std::string> _headers;
 		std::unordered_map<std::string, std::string> _data;
 	private:
