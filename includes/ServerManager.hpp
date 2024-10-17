@@ -22,7 +22,7 @@ class ServerManager
 			void	receiveRequest(size_t& i);
 			size_t	getRequestLength(std::string& request);
 			size_t	findLastChunk(std::string& request, size_t start_pos);
-			void	handleRequest(std::string& request, int clienSocket);
+			void	sendResponse(size_t& i);
 			void	removeConnection(int clientSocket, size_t& i);
 			std::vector<ServerInfo> get_info();
 	private:
@@ -30,6 +30,8 @@ class ServerManager
 			std::vector<struct pollfd> _poll_fds;
 			std::unordered_map<int, int> _connections;
 			std::unordered_map<int, std::string> _clients;
+			std::unordered_map<int, bool> _requestReceived;
+
 };
 
 #endif

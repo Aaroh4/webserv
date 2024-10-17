@@ -42,11 +42,12 @@ void	ServerManager::addNewConnection(size_t i)
 		perror("fcntl(F_SETFL) failed");
 	struct pollfd client_pollfd;
 	client_pollfd.fd = clientSocket;
-	client_pollfd.events = POLLIN;
+	client_pollfd.events = POLLIN | POLLOUT;
 	client_pollfd.revents = 0;
 	this->_poll_fds.push_back(client_pollfd);
 	this->_connections[clientSocket] = i;
 	this->_clients[clientSocket] = "";
+	this->_requestReceived[clientSocket] = false;
 	std::cout << "New client connected on server " << i << "\n";
 	std::cout << "Client got clientSocket " << clientSocket << std::endl;
 }
@@ -110,16 +111,23 @@ size_t	ServerManager::getRequestLength(std::string& request)
 	return total_length;
 }
 
-void	ServerManager::handleRequest(std::string& http_request, int clientSocket)
+void	ServerManager::sendResponse(size_t& i)
 {
-	Request request(http_request);
+	int	clientSocket = this->_poll_fds[i].fd;
+	Request request(this->_clients[clientSocket]);
+
 	request.parse();
 	request.sanitize();
-	if (request.getHost() == this->_info[this->_connections.at(clientSocket)].getServerName())
+	std::cout << "server name " << this->_info[this->_connections.at(clientSocket)].getServerName() << std::endl;
+	std::cout << "is empty?? " << this->_info[this->_connections.at(clientSocket)].getServerName().empty() << std::endl;
+
+	if (request.getHost() == this->_info[this->_connections.at(clientSocket)].getServerName()
+		|| this->_info[this->_connections.at(clientSocket)].getServerName().empty())
 	{
 		Response respond(request);
 		respond.respond(clientSocket, this->_info[this->_connections.at(clientSocket)]);
-	}	
+		removeConnection(clientSocket, i);
+	}
 }
 
 void ServerManager::removeConnection(int clientSocket, size_t& i)
@@ -179,11 +187,8 @@ void	ServerManager::receiveRequest(size_t& i)
 		removeConnection(clientSocket, i);
 		return ;
 	}*/
-	if (total_length == this->_clients[clientSocket].length())
-	{
-		handleRequest(this->_clients[clientSocket], clientSocket);
-		removeConnection(clientSocket, i);
-	}
+	if (total_length != 0 && total_length == this->_clients[clientSocket].length() )
+		this->_requestReceived[clientSocket] = true;
 }
 
 void	ServerManager::runServers()
@@ -207,6 +212,8 @@ void	ServerManager::runServers()
 				else
 					receiveRequest(i);
 			}
+			if (this->_poll_fds[i].revents & POLLOUT && this->_requestReceived[this->_poll_fds[i].fd] == true)
+				sendResponse(i);
 		}
 	}
 }

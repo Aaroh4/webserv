@@ -248,7 +248,6 @@ void	Request::_parseHeaders(void)
 		line = this->_request.substr(0, lineEnd + 1);
 		if (line == "\r\n")
 		{
-			//i = this->_request.find_last_of("\n");
 			this->_request.erase(0, 2);
 			break;
 		}
