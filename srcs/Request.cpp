@@ -386,29 +386,7 @@ void	Request::sanitize(void)
 
 std::string	Request::getHost(void)
 {
-	return this->_headers["Host"];
-}
-
-std::string	Request::getType(void)
-{
-	return this->_type;
-}
-
-std::string	Request::getContentLength(void)
-{
-	if (this->_headers.find("Content-Length") != this->_headers.end())
-		return this->_headers["Content-Length"];
-	return "";
-}
-
-std::string	Request::getQueryString(void)
-{
-	return this->_queryString;
-}
-
-std::string	Request::getMethod(void)
-{
-	return this->_method;
+	return (this->_headers["Host"]);
 }
 
 void Request::printRequest(void)

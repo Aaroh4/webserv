@@ -1,8 +1,15 @@
 #include "../includes/Response.hpp"
 #include "../includes/ServerManager.hpp"
 #include "../includes/Request.hpp"
-#include <sys/wait.h>
-#include <cstring>
+#include <signal.h>
+
+bool sigint_sent = false;
+
+void	sigint_handler(int signum)
+{
+	(void)signum;
+	sigint_sent = true;
+}
 
 ServerManager::ServerManager()
 {}
@@ -35,7 +42,7 @@ ServerManager::~ServerManager()
 {
 }
 
-void	ServerManager::addNewConnection(size_t& i)
+void	ServerManager::addNewConnection(size_t i)
 {
 	int clientSocket = accept(this->_poll_fds[i].fd, nullptr, nullptr);
 	if (clientSocket < 0)
@@ -48,25 +55,10 @@ void	ServerManager::addNewConnection(size_t& i)
 	client_pollfd.revents = 0;
 	this->_poll_fds.push_back(client_pollfd);
 	this->_connections[clientSocket] = i;
-	
-	t_clientInfo clientInfo;
-	std::memset(&clientInfo, 0, sizeof(t_clientInfo));
-	this->_clientInfos[clientSocket] = clientInfo;
+	this->_clients[clientSocket] = "";
+	this->_requestReceived[clientSocket] = false;
 	std::cout << "New client connected on server " << i << "\n";
 	std::cout << "Client got clientSocket " << clientSocket << std::endl;
-}
-
-void	ServerManager::addPipeFd(int pipeFd)
-{
-	if (fcntl(pipeFd, F_SETFL, O_NONBLOCK | FD_CLOEXEC) == -1)
-		perror("fcntl(F_SETFL) failed");
-
-	struct pollfd pipe_pollfd;
-
-	pipe_pollfd.fd = pipeFd;
-	pipe_pollfd.events = POLLIN;
-	pipe_pollfd.revents = 0;
-	this->_poll_fds.push_back(pipe_pollfd);
 }
 
 size_t	ServerManager::findLastChunk(std::string& request, size_t start_pos)
@@ -102,7 +94,7 @@ size_t	ServerManager::getRequestLength(std::string& request)
 
 	size_t	headers_length = end + 4;
 	size_t	content_length = 0;
-	size_t	totalLength = 0;
+	size_t	total_length = 0;
 	size_t	start = request.find("Content-Length: ");
 
 	try
@@ -114,10 +106,10 @@ size_t	ServerManager::getRequestLength(std::string& request)
 			start += 16;
 			end = request.find("\r\n", start);
 			content_length = std::stoi(request.substr(start, end - start));
-			totalLength = content_length + headers_length;
+			total_length = content_length + headers_length;
 		}
 		else if (request.find("Transfer-Encoding: chunked") != std::string::npos)
-			totalLength = findLastChunk(request, headers_length);
+			total_length = findLastChunk(request, headers_length);
 		else
 			return 0;
 	}
@@ -125,112 +117,63 @@ size_t	ServerManager::getRequestLength(std::string& request)
 	{
 		std::cerr << e.what() << '\n';
 	}
-	return totalLength;
+	return total_length;
 }
 
-void	ServerManager::runCgi(std::string path, char** envp, int& clientSocket)
-{
-	int	pipeFd[2];
-	if (pipe(pipeFd) == -1)
-	{
-		//Handle error
-	}
-	int	pid = fork();
-	if (pid == 0)
-	{
-		close(pipeFd[0]);
-		if (dup2(pipeFd[1], STDOUT_FILENO) == -1)
-		{
-			//Handle error
-		}
-		close(pipeFd[1]);
-		char *argv[] = { (char*)path.c_str(), nullptr };
-		try {
-			execve(path.c_str(), argv, envp);
-			throw Response::ResponseException();
-		}
-		catch (const Response::ResponseException &e){
-			std::cout << "jooo\n";
-			//Response::sendErrorResponse(e.what(), req.getClientSocket(), e.responseCode());
-		}
-	}
-	else
-	{
-		close(pipeFd[1]);
-		int	status;
-		waitpid(pid, &status, 0);
-		this->_clientInfos[clientSocket].pipeFd = pipeFd[0];
-		this->_clientPipe[pipeFd[0]] = clientSocket;
-	}
-}
-
-int	ServerManager::sendResponse(size_t& i)
+void	ServerManager::sendResponse(size_t& i)
 {
 	int	clientSocket = this->_poll_fds[i].fd;
-	//Request request(this->_clients[clientSocket]);
+	Request request(this->_clients[clientSocket]);
 
-	//request.parse();
-	//request.sanitize();
-	if (this->_clientInfos[clientSocket].req->getHost() == this->_info[this->_connections.at(clientSocket)].getServerName()
+	request.parse();
+	request.sanitize();
+
+	if (request.getHost() == this->_info[this->_connections.at(clientSocket)].getServerName()
 		|| this->_info[this->_connections.at(clientSocket)].getServerName().empty())
 	{
-		if (this->_clientInfos[clientSocket].cgiResponseReady == true)
-		{
-			Response respond(*this->_clientInfos[clientSocket].req);
-			respond.respond(clientSocket, this->_info[this->_connections.at(clientSocket)]);
-		}
-		else
-		{
-			Response respond(*this->_clientInfos[clientSocket].req);
-			respond.respond(clientSocket, this->_info[this->_connections.at(clientSocket)]);
-		}
+		Response respond(request);
+		respond.respond(clientSocket, this->_info[this->_connections.at(clientSocket)]);
 		removeConnection(clientSocket, i);
 	}
-	return 0;
 }
 
 void ServerManager::removeConnection(int clientSocket, size_t& i)
 {
-	try
-	{
-		close(clientSocket);
-		// std::cout << "removeConneciton: ClientSocket " << clientSocket << " closed\n\n" << std::endl;
-		this->_poll_fds.erase(this->_poll_fds.begin() + i);
-		this->_connections.erase(clientSocket);
-		delete this->_clientInfos[clientSocket].req;
-		this->_clientInfos.erase(clientSocket);
-		i--;
-	}
-	catch(const std::exception& e)
-	{
-		std::cerr << e.what() << '\n';
-	}
+	close(clientSocket);
+	std::cout << "removeConneciton: ClientSocket " << clientSocket << " closed\n\n" << std::endl;
+	this->_poll_fds.erase(this->_poll_fds.begin() + i);
+	this->_connections.erase(clientSocket);
+	this->_clients.erase(clientSocket);
+	i--;
 }
 
 void	ServerManager::receiveRequest(size_t& i)
 {
 	char		buffer[1024] = {0};
 	int 		clientSocket = this->_poll_fds[i].fd;
-	int 		bytesReceived = 0;
-	size_t		totalLength = 0;
+	int 		bytes_received = 0;
+	size_t		total_length = 0;
 
 	// Receive data until complete request is sent
 	try
 	{
-		if (totalLength == 0 || this->_clientInfos[clientSocket].request.length() < totalLength)
+		if (total_length == 0 || this->_clients[clientSocket].length() < total_length)
 		{
-			bytesReceived = recv(clientSocket, buffer, sizeof(buffer), 0);
-			if (bytesReceived > 0)
+			bytes_received = recv(clientSocket, buffer, sizeof(buffer), 0);
+			if (bytes_received > 0)
 			{
-				this->_clientInfos[clientSocket].request.append(buffer, bytesReceived);
-				if (totalLength == 0)
-					totalLength = getRequestLength(this->_clientInfos[clientSocket].request);
-				if (bytesReceived < 1024 && totalLength == 0)
+				this->_clients[clientSocket].append(buffer, bytes_received);
+				if (total_length == 0)
+					total_length = getRequestLength(this->_clients[clientSocket]);
+				if (bytes_received < 1024 && total_length == 0)
 				{
+					// std::cout << "req \n"<< this->_clients[clientSocket] << std::endl;
+					// std::cout << "buffer \n" << buffer << std::endl;
+					// std::cout << "\n\n in receiveRequest() set up status 400\n\n" << std::endl;
 					throw Response::ResponseException400();
 				}
 			}
-			else if (bytesReceived == 0)
+			else if (bytes_received == 0)
 			{
 				removeConnection(clientSocket, i);
 				std::cout << "Client disconnected" << "\n";
@@ -249,8 +192,8 @@ void	ServerManager::receiveRequest(size_t& i)
 		removeConnection(clientSocket, i);
 		return ;
 	}
-	/*	try {
-		if (totalLength != http_request.length())
+/*	try {
+		if (total_length != http_request.length())
 			throw Response::ResponseException400();
 	} catch (const Response::ResponseException & e){
 		Response obj;
@@ -258,113 +201,21 @@ void	ServerManager::receiveRequest(size_t& i)
 		removeConnection(clientSocket, i);
 		return ;
 	}*/
-	if (totalLength != 0 && totalLength == this->_clientInfos[clientSocket].request.length())
-	{
-		this->_clientInfos[clientSocket].requestReceived = true;
-		try 
-		{
-			Request* request = new Request(this->_clientInfos[clientSocket].request);
-			request->parse();
-			request->sanitize();
-			this->_clientInfos[clientSocket].req = request;
-			if (checkForCgi(*request, clientSocket) == 1)
-			{
-				addPipeFd(this->_clientInfos[clientSocket].pipeFd);
-			}
-		}
-		catch (std::exception& e)
-		{
-			std::cout << "ERROR\n";
-		}
-	}
-}
-
-void	ServerManager::readFromCgiFd(const int& fd)
-{
-	char buffer[1024];
-	ssize_t nbytes;
-
-	nbytes = read(fd, buffer, sizeof(buffer));
-	if (nbytes == -1)
-	{
-		perror("read failed");
-		close(fd);
-		this->_clientPipe.erase(fd);
-	}
-	else if (nbytes == 0)
-	{
-		int clientSocket = this->_clientPipe[fd];
-		this->_clientInfos[clientSocket].cgiResponseReady = true;
-		close(fd);
-		this->_clientPipe.erase(fd);
-	}	
-	else
-	{
-		int clientSocket = this->_clientPipe[fd];
-		this->_clientInfos[clientSocket].cgiResponse.append(buffer, nbytes);
-	}
-	//std::cout.write(buffer, nbytes).flush();
-	//send(client_socket, buffer, nbytes, 0);
-	/*= "HTTP/1.1 204 No Content\r\n";
-	response += "Content-Type: text/plain\r\n";
-	//response += "Content-Length: " + std::to_string(file.size()) + "\r\n";
-	response += "Keep-Alive: timeout=5, max=100\r\n\r\n";
-	send(client_socket, response.c_str(), response.length(), 0);*/
-}
-
-int	ServerManager::checkForCgi(Request& req, int& clientSocket)
-{
-	std::string type = req.getType();
-	if (type == "cgi/py" || type == "cgi/php")
-	{
-		std::string contentLen = req.getContentLength();
-		std::string method = "REQUEST_METHOD=" + req.getMethod();
-		std::string query = "QUERY_STRING=" + req.getQueryString();
-		std::string	length;
-
-		if (contentLen.empty())
-			length = "CONTENT_LENGTH=" + contentLen;
-		else
-			length = "CONTENT_LENGTH=0";
-		
-		char *envp[] = {
-		(char *) method.c_str(),
-		(char *) query.c_str(),
-		(char *) length.c_str(),
-		nullptr
-		};
-	
-		std::string location = std::filesystem::canonical("/proc/self/exe");
-		size_t lastDash = location.find_last_of("/");
-		location.erase(lastDash + 1, location.length() - (lastDash + 1));
-		location.append(type, type.length());
-		runCgi(location, envp, clientSocket);
-		return 1;
-	}
-	else
-		return 0;
-}
-
-bool	ServerManager::isPipeFd(int& fd)
-{
-	for (auto it = this->_clientInfos.begin(); it != this->_clientInfos.end(); it++)
-	{
-		if (it->second.pipeFd == fd)
-		return true;
-	}
-	return false;
+	if (total_length != 0 && total_length == this->_clients[clientSocket].length() )
+		this->_requestReceived[clientSocket] = true;
 }
 
 void	ServerManager::runServers()
 {
-	while (true)
+	signal(SIGINT, sigint_handler);
+	while (sigint_sent == false)
 	{
-		int pollcount = poll(this->_poll_fds.data(), this->_poll_fds.size(), 1000);
+		int pollcount = poll(this->_poll_fds.data(), this->_poll_fds.size(), 0);
 
 		if (pollcount < 0)
 		{
 			if (errno != EINTR)
-				std::cerr << "poll failed" << std::endl;
+				std::cerr << "Poll failed likely due to IP or Port being wrong!" << std::endl;
 			break ;
 		}
 		for (size_t i = 0; i < this->_poll_fds.size(); i++)
@@ -373,13 +224,11 @@ void	ServerManager::runServers()
 			{
 				if (i < this->get_info().size())
 					addNewConnection(i);
-				else if (isPipeFd(this->_poll_fds[i].fd))
-					readFromCgiFd(this->_poll_fds[i].fd);
 				else
 					receiveRequest(i);
 			}
-			if (this->_poll_fds[i].revents & POLLOUT && this->_clientInfos[this->_poll_fds[i].fd].requestReceived == true)
-				sendResponse(i);		
+			if (this->_poll_fds[i].revents & POLLOUT && this->_requestReceived[this->_poll_fds[i].fd] == true)
+				sendResponse(i);
 		}
 	}
 }
@@ -413,6 +262,7 @@ int	ServerManager::startServers()
 	runServers();
 	return (0);
 }
+
 
 void ServerManager::setNewInfo(ServerInfo server)
 {

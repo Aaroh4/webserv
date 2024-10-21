@@ -9,17 +9,13 @@ class Request
 	public:
 		Request(void);
 		Request(std::string request);
-		virtual ~Request(void);
+		~Request(void);
 		Request(Request const& src);
 		Request& operator=(Request const& src);
 
 		virtual void		parse(void);
 		virtual	void		sanitize(void);
 		virtual std::string	getHost(void);
-		virtual std::string	getType(void);
-		virtual std::string	getContentLength(void);
-		virtual std::string	getQueryString(void);
-		virtual std::string	getMethod(void);
 		virtual void		printRequest(void);
 
 	protected:
