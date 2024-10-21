@@ -36,11 +36,11 @@ void Response::handleCRUD(int clientfd, ServerInfo server)
 		else if (this->_method == "POST")
 			respondPost(clientfd, server);
 		else if (this->_method == "DELETE")
-				respondDelete(clientfd);
+			respondDelete(clientfd);
 		else
 			throw ResponseException405();
 	} catch (const ResponseException &e){
-			sendErrorResponse(e.what(), clientfd, e.responseCode());
+		sendErrorResponse(e.what(), clientfd, e.responseCode());
 	}
 }
 
@@ -49,20 +49,20 @@ void	Response::respond(int clientfd, ServerInfo server)
 	this->_server = server;
 	try{
 		switch (this->_sanitizeStatus){
-			//case 404:
-			//	throw ResponseException404();
-			//case 400:
-			//	throw ResponseException400();
-			//case 403:
-			//	throw ResponseException403();
-			//case 501:
-			//	throw ResponseException501();
-			//case 505:
-			//	throw ResponseException505();
-			//case 515:
-			//	throw ResponseException515();
-			//case 500:
-			//	throw ResponseException();
+			case 404:
+				throw ResponseException404();
+			case 400:
+				throw ResponseException400();
+			case 403:
+				throw ResponseException403();
+			case 501:
+				throw ResponseException501();
+			case 505:
+				throw ResponseException505();
+			case 515:
+				throw ResponseException515();
+			case 500:
+				throw ResponseException();
 		}
 	} catch(const ResponseException& e) {
 		sendErrorResponse(e.what(), clientfd, e.responseCode());
@@ -76,89 +76,61 @@ void	Response::respond(int clientfd, ServerInfo server)
 	}
 }
 
-std::string generateSessionId( void ){
-	//generate a 16 random numbers between 0-255 using mt19937 randomnumber gen.
-	std::random_device randomSeed;
-	std::mt19937 generator(randomSeed());
-	std::uniform_int_distribution<int> dist(0, 255);
-
-	unsigned char buf[16];
-	for (unsigned long i = 0; i < sizeof(buf); i++){
-		buf[i] = dist(generator);
-	}
-
-	//makes the 16 random bytes to hexa values
-	std::stringstream ss;
-	for (unsigned long i = 0; i < sizeof(buf); i++){
-		ss << std::hex << std::setw(2) << std::setfill('0') << (int)buf[i];
-	}
-	return ss.str();
-}
-
-std::string formatSessionCookie( void ){
-	std::string response = "Set-Cookie: session_id=" + generateSessionId() + "; HttpOnly; Path=/; Max-Age=60;\r\n";
-	return response;
-}
-
 void Response::respondGet(int clientfd, ServerInfo server)
 {
-	std::string response;
-
-	//std::cout << "index: " << server.getlocationinfo()[this->_url].index << " Url< " << this->_url << std::endl;
-	//std::cout << "url: " << this->_url << "::" << server.getlocationinfo()[this->_url].dirList << std::endl;
-	if (server.getlocationinfo()[this->_url].dirList != false && server.getlocationinfo()[this->_url].index.empty())
+/*	if (this->_type == "cgi/py" || this->_type == "cgi/php")
 	{
-		this->directorylisting(clientfd, this->buildDirectorylist(server.getlocationinfo()[this->_url].root, server.getlocationinfo()[this->_url].root.size() + 1));
+		std::string location = std::filesystem::canonical("/proc/self/exe");
+		this->handleCgi(location.substr(0, location.rfind("/")) + server.getlocationinfo()["/" + cutFromTo(this->_url, 1, "/")].root + this->_url, clientfd);
 	}
 	else
-	{
-		try
+	{*/
+		std::string response;
+
+		//std::cout << "index: " << server.getlocationinfo()[this->_url].index << " Url< " << this->_url << std::endl;
+		if (server.getlocationinfo()[this->_url].dirList != false && server.getlocationinfo()[this->_url].index.empty())
 		{
-			openFile(server);
+			this->directorylisting(clientfd, this->buildDirectorylist(server.getlocationinfo()[this->_url].root, server.getlocationinfo()[this->_url].root.size() + 1));
 		}
-		catch(ResponseException &e)
+		else
 		{
-			sendErrorResponse(e.what(), clientfd, e.responseCode());
-			return;
+			try
+			{
+				openFile(server);
+			}
+			catch(ResponseException &e)
+			{
+				sendErrorResponse(e.what(), clientfd, e.responseCode());
+				return;
+			}
+			response = formatGetResponseMsg(0);
+			send(clientfd, response.c_str(), response.length(), 0);
+			const std::size_t chunkSize = 8192;
+			char buffer[chunkSize];
+			while (this->_file.read(buffer, chunkSize) || this->_file.gcount() > 0)
+				send(clientfd, buffer, this->_file.gcount(), MSG_NOSIGNAL);
 		}
-		response = formatGetResponseMsg(0);
-		send(clientfd, response.c_str(), response.length(), 0);
-		const std::size_t chunkSize = 8192;
-		char buffer[chunkSize];
-		while (this->_file.read(buffer, chunkSize) || this->_file.gcount() > 0)
-			send(clientfd, buffer, this->_file.gcount(), MSG_NOSIGNAL);
-	}
+	//}
 	//std::cout << response << std::endl;
 }
 
 void	Response::respondPost(int clientfd, ServerInfo server)
 {
-	if (this->_type == "cgi/py" || this->_type == "cgi/php")
+	/*if (this->_type == "cgi/py" || this->_type == "cgi/php")
 	{
-		char result[4096];
-		std::string location;
-		ssize_t count = readlink("/proc/self/exe", result, 4096);
-		try {
-			if (count == -1)
-				throw ResponseException();
-		} catch (const ResponseException &e){
-			sendErrorResponse(e.what(), clientfd, e.responseCode());
-			return ;
-		}
-
-		location = std::string(result, (count > 0) ? count : 0);
+		std::string location = std::filesystem::canonical("/proc/self/exe");
 		this->handleCgi(location.substr(0, location.rfind("/")) + server.getlocationinfo()["/" + cutFromTo(this->_url, 1, "/")].root + this->_url, clientfd);
 	}
 	else
-	{
+	{*/
+		(void) server;
 		std::string response;
 
 		this->_sanitizeStatus = 204;
 		this->_errorMessage = "No Content";
 		response = formatGetResponseMsg(0);
 		send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL);
-		//std::cout << response << std::endl;
-	}
+	//}
 }
 
 void	Response::respondDelete(int clientfd)
@@ -186,60 +158,7 @@ void	Response::respondDelete(int clientfd)
 	std::string response = "HTTP/1.1 200 OK\r\n";
 
 	send (clientfd, response.c_str(), response.length(), 0);
-	//std::cout << response << std::endl;
-}
-
-void	Response::handleCgi(std::string path, int client_socket)
-{
-	int	pipefd[2];
-
-	pipe(pipefd);
-	int	pid = fork();
-	if (pid == 0)
-	{
-		std::string request = "REQUEST_METHOD=" + this->_method;
-		std::string query = "QUERY_STRING=param=value";
-		std::string length = "CONTENT_LENGTH=" + this->_headers["Content-Length"];
-		char *envp[] = {
-			(char *) request.c_str(),
-			(char *) query.c_str(),
-			(char *) length.c_str(),
-			nullptr
-		};
-		close(pipefd[0]);
-		dup2(pipefd[1], STDOUT_FILENO);
-		close(pipefd[1]);
-		char *argv[] = { (char*)path.c_str(), nullptr };
-		try {
-			execve(path.c_str(), argv, envp);
-			throw ResponseException();
-		}
-		catch (const ResponseException &e){
-			sendErrorResponse(e.what(), client_socket, e.responseCode());
-		}
-	}
-	else
-	{
-		close(pipefd[1]);
-
-		std::string response = "HTTP/1.1 204 No Content\r\n";
-		response += "Content-Type: text/plain\r\n";
-		//response += "Content-Length: " + std::to_string(file.size()) + "\r\n";
-		response += "Keep-Alive: timeout=" + this->_server.get_timeout() + ", max=100\r\n\r\n";
-		send(client_socket, response.c_str(), response.length(), 0);
-
-		char buffer[1024];
-		ssize_t nbytes;
-
-		while ((nbytes = read(pipefd[0], buffer, sizeof(buffer))) > 0)
-		{
-			std::cout.write(buffer, nbytes).flush();
-			//send(client_socket, buffer, nbytes, 0);
-		}
-		close(pipefd[0]);
-		int	status;
-		waitpid(pid, &status, 0);
-	}
+	std::cout << response << std::endl;
 }
 
 void Response::directorylisting(int clientfd, std::string file)
@@ -341,12 +260,10 @@ std::string Response::formatGetResponseMsg(int close)
 
 	response += "Content-Length: " + this->_fileSize + "\r\n";
 
-	response += formatSessionCookie();
 	if (close == 0)
 		response += "Keep-Alive: timeout=" + this->_server.get_timeout() + ", max=100\r\n\r\n";
 	else
 		response += "Connection: close\r\n\r\n";
-	// std::cout << response << std::endl;
 	return (response);
 }
 
@@ -399,7 +316,7 @@ void Response::sendStandardErrorPage(int sanitizeStatus, int clientfd)
 	if (this->_method == "GET")
 		response += file;
 	send(clientfd, response.c_str(), response.length(), 0);
-	//std::cout << response << std::endl;
+	std::cout << response << std::endl;
 }
 
 std::string makeErrorContent(int statusCode, std::string message)

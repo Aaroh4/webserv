@@ -9,10 +9,15 @@
 
 int	readconfig(std::string name, ServerManager &manager);
 
+void	sigint_handler(int signum)
+{
+	(void)signum;
+}
+
 int	main(int argc, char **argv)
 {
-	std::string path;
 	ServerManager	manager;
+	std::string path;
 
 	if (argc != 2)
 		path = DEFAULT; //defined in ServerManager.hpp
@@ -33,9 +38,10 @@ int	main(int argc, char **argv)
 	}
 	catch (std::exception &e)
 	{
-		std::cerr << "Wrong arguments in the config! reason: " << e.what() << "\n";
+		std::cout << "Wrong arguments in the config! reason: " << e.what() << "\n";
 		return (-1);
 	}		
+	signal(SIGINT, sigint_handler);
 	manager.startServers();
 	return (0);
 }
