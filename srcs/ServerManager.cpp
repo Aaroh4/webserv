@@ -205,7 +205,7 @@ void	ServerManager::runServers()
 		if (pollcount < 0)
 		{
 			if (errno != EINTR)
-				std::cerr << "poll failed" << std::endl;
+				std::cerr << "Poll failed likely due to IP or Port being wrong!" << std::endl;
 			break ;
 		}
 		for (size_t i = 0; i < this->_poll_fds.size(); i++)
