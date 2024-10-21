@@ -76,6 +76,30 @@ void	Response::respond(int clientfd, ServerInfo server)
 	}
 }
 
+std::string generateSessionId( void ){
+	//generate a 16 random numbers between 0-255 using mt19937 randomnumber gen.
+	std::random_device randomSeed;
+	std::mt19937 generator(randomSeed());
+	std::uniform_int_distribution<int> dist(0, 255);
+
+	unsigned char buf[16];
+	for (unsigned long i = 0; i < sizeof(buf); i++){
+		buf[i] = dist(generator);
+	}
+
+	//makes the 16 random bytes to hexa values
+	std::stringstream ss;
+	for (unsigned long i = 0; i < sizeof(buf); i++){
+		ss << std::hex << std::setw(2) << std::setfill('0') << (int)buf[i];
+	}
+	return ss.str();
+}
+
+std::string formatSessionCookie( void ){
+	std::string response = "Set-Cookie: session_id=" + generateSessionId() + "; HttpOnly; Path=/; Max-Age=60;\r\n";
+	return response;
+}
+
 void Response::respondGet(int clientfd, ServerInfo server)
 {
 	std::string response;
@@ -103,7 +127,7 @@ void Response::respondGet(int clientfd, ServerInfo server)
 		while (this->_file.read(buffer, chunkSize) || this->_file.gcount() > 0)
 			send(clientfd, buffer, this->_file.gcount(), MSG_NOSIGNAL);
 	}
-	//std::cout << response << std::endl;
+	std::cout << response << std::endl;
 }
 
 void	Response::respondPost(int clientfd, ServerInfo server)
@@ -132,6 +156,7 @@ void	Response::respondPost(int clientfd, ServerInfo server)
 		this->_errorMessage = "No Content";
 		response = formatGetResponseMsg(0);
 		send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL);
+		std::cout << response << std::endl;
 	}
 }
 
@@ -199,7 +224,7 @@ void	Response::handleCgi(std::string path, int client_socket)
 		std::string response = "HTTP/1.1 204 No Content\r\n";
 		response += "Content-Type: text/plain\r\n";
 		//response += "Content-Length: " + std::to_string(file.size()) + "\r\n";
-		response += "Keep-Alive: timeout=5, max=100\r\n\r\n";
+		response += "Keep-Alive: timeout=" + this->_server.get_timeout() + ", max=100\r\n\r\n";
 		send(client_socket, response.c_str(), response.length(), 0);
 
 		char buffer[1024];
@@ -315,10 +340,12 @@ std::string Response::formatGetResponseMsg(int close)
 
 	response += "Content-Length: " + this->_fileSize + "\r\n";
 
+	response += formatSessionCookie();
 	if (close == 0)
 		response += "Keep-Alive: timeout=" + this->_server.get_timeout() + ", max=100\r\n\r\n";
 	else
 		response += "Connection: close\r\n\r\n";
+	// std::cout << response << std::endl;
 	return (response);
 }
 
