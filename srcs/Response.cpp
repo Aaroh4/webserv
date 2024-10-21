@@ -49,20 +49,20 @@ void	Response::respond(int clientfd, ServerInfo server)
 	this->_server = server;
 	try{
 		switch (this->_sanitizeStatus){
-			case 404:
-				throw ResponseException404();
-			case 400:
-				throw ResponseException400();
-			case 403:
-				throw ResponseException403();
-			case 501:
-				throw ResponseException501();
-			case 505:
-				throw ResponseException505();
-			case 515:
-				throw ResponseException515();
-			case 500:
-				throw ResponseException();
+			//case 404:
+			//	throw ResponseException404();
+			//case 400:
+			//	throw ResponseException400();
+			//case 403:
+			//	throw ResponseException403();
+			//case 501:
+			//	throw ResponseException501();
+			//case 505:
+			//	throw ResponseException505();
+			//case 515:
+			//	throw ResponseException515();
+			//case 500:
+			//	throw ResponseException();
 		}
 	} catch(const ResponseException& e) {
 		sendErrorResponse(e.what(), clientfd, e.responseCode());
@@ -105,6 +105,7 @@ void Response::respondGet(int clientfd, ServerInfo server)
 	std::string response;
 
 	//std::cout << "index: " << server.getlocationinfo()[this->_url].index << " Url< " << this->_url << std::endl;
+	//std::cout << "url: " << this->_url << "::" << server.getlocationinfo()[this->_url].dirList << std::endl;
 	if (server.getlocationinfo()[this->_url].dirList != false && server.getlocationinfo()[this->_url].index.empty())
 	{
 		this->directorylisting(clientfd, this->buildDirectorylist(server.getlocationinfo()[this->_url].root, server.getlocationinfo()[this->_url].root.size() + 1));
@@ -127,7 +128,7 @@ void Response::respondGet(int clientfd, ServerInfo server)
 		while (this->_file.read(buffer, chunkSize) || this->_file.gcount() > 0)
 			send(clientfd, buffer, this->_file.gcount(), MSG_NOSIGNAL);
 	}
-	std::cout << response << std::endl;
+	//std::cout << response << std::endl;
 }
 
 void	Response::respondPost(int clientfd, ServerInfo server)
@@ -156,7 +157,7 @@ void	Response::respondPost(int clientfd, ServerInfo server)
 		this->_errorMessage = "No Content";
 		response = formatGetResponseMsg(0);
 		send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL);
-		std::cout << response << std::endl;
+		//std::cout << response << std::endl;
 	}
 }
 
@@ -185,7 +186,7 @@ void	Response::respondDelete(int clientfd)
 	std::string response = "HTTP/1.1 200 OK\r\n";
 
 	send (clientfd, response.c_str(), response.length(), 0);
-	std::cout << response << std::endl;
+	//std::cout << response << std::endl;
 }
 
 void	Response::handleCgi(std::string path, int client_socket)
@@ -398,7 +399,7 @@ void Response::sendStandardErrorPage(int sanitizeStatus, int clientfd)
 	if (this->_method == "GET")
 		response += file;
 	send(clientfd, response.c_str(), response.length(), 0);
-	std::cout << response << std::endl;
+	//std::cout << response << std::endl;
 }
 
 std::string makeErrorContent(int statusCode, std::string message)
