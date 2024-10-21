@@ -166,6 +166,7 @@ void	ServerManager::receiveRequest(size_t& i)
 			}
 			else if (bytes_received == 0)
 			{
+				removeConnection(clientSocket, i);
 				std::cout << "Client disconnected" << "\n";
 			}
 			else
