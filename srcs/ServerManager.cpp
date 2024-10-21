@@ -1,6 +1,15 @@
 #include "../includes/Response.hpp"
 #include "../includes/ServerManager.hpp"
 #include "../includes/Request.hpp"
+#include <signal.h>
+
+bool sigint_sent = false;
+
+void	sigint_handler(int signum)
+{
+	(void)signum;
+	sigint_sent = true;
+}
 
 ServerManager::ServerManager()
 {}
@@ -198,9 +207,10 @@ void	ServerManager::receiveRequest(size_t& i)
 
 void	ServerManager::runServers()
 {
-	while (true)
+	signal(SIGINT, sigint_handler);
+	while (sigint_sent == false)
 	{
-		int pollcount = poll(this->_poll_fds.data(), this->_poll_fds.size(), 1000);
+		int pollcount = poll(this->_poll_fds.data(), this->_poll_fds.size(), 0);
 
 		if (pollcount < 0)
 		{
