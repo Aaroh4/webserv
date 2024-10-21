@@ -131,7 +131,7 @@ void	ServerManager::sendResponse(size_t& i)
 void ServerManager::removeConnection(int clientSocket, size_t& i)
 {
 	close(clientSocket);
-	// std::cout << "removeConneciton: ClientSocket " << clientSocket << " closed\n\n" << std::endl;
+	std::cout << "removeConneciton: ClientSocket " << clientSocket << " closed\n\n" << std::endl;
 	this->_poll_fds.erase(this->_poll_fds.begin() + i);
 	this->_connections.erase(clientSocket);
 	this->_clients.erase(clientSocket);
