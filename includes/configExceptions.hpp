@@ -21,6 +21,15 @@ class wrongBodyLimit : public std::exception
     }
 };
 
+class wrongTimeout : public std::exception
+{
+    public:
+    const char* what() const noexcept override
+    {
+        return "Wrong Timeout!";
+    }
+};
+
 class wrongIP : public std::exception
 {
     public:

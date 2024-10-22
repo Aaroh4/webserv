@@ -102,10 +102,25 @@ std::string formatSessionCookie( void ){
 
 void Response::respondGet(int clientfd, ServerInfo server)
 {
+	if (this->_type == "cgi/py" || this->_type == "cgi/php")
+	{
+		char result[4096];
+		std::string location;
+		ssize_t count = readlink("/proc/self/exe", result, 4096);
+		try {
+			if (count == -1)
+				throw ResponseException();
+		} catch (const ResponseException &e){
+			sendErrorResponse(e.what(), clientfd, e.responseCode());
+			return ;
+		}
+
+		location = std::string(result, (count > 0) ? count : 0);
+		this->handleCgi(location.substr(0, location.rfind("/")) + server.getlocationinfo()["/" + cutFromTo(this->_url, 1, "/")].root + this->_url, clientfd);
+	}
+
 	std::string response;
 
-	//std::cout << "index: " << server.getlocationinfo()[this->_url].index << " Url< " << this->_url << std::endl;
-	//std::cout << "url: " << this->_url << "::" << server.getlocationinfo()[this->_url].dirList << std::endl;
 	if (server.getlocationinfo()[this->_url].dirList != false && server.getlocationinfo()[this->_url].index.empty())
 	{
 		this->directorylisting(clientfd, this->buildDirectorylist(server.getlocationinfo()[this->_url].root, server.getlocationinfo()[this->_url].root.size() + 1));
@@ -200,8 +215,18 @@ void	Response::handleCgi(std::string path, int client_socket)
 	int	pid = fork();
 	if (pid == 0)
 	{
+		//std::cout << "this query: " << this->_queryString << std::endl;
+		if (this->_method == "GET")
+		{
+			std::cout << "thingy: " << this->_httpVersion << std::endl;
+			std::cout << cutFromTo(this->_httpVersion, this->_httpVersion.rfind("?") + 1, " ") << std::endl;
+		}
 		std::string request = "REQUEST_METHOD=" + this->_method;
-		std::string query = "QUERY_STRING=param=value";
+		std::string query;
+		if (this->_method == "GET")
+			query = "QUERY_STRING=" + cutFromTo(this->_httpVersion, this->_httpVersion.rfind("?") + 1, " ");
+		else
+			query = "QUERY_STRING=param=value";
 		std::string length = "CONTENT_LENGTH=" + this->_headers["Content-Length"];
 		char *envp[] = {
 			(char *) request.c_str(),
@@ -229,8 +254,8 @@ void	Response::handleCgi(std::string path, int client_socket)
 		response += "Content-Type: text/plain\r\n";
 		//response += "Content-Length: " + std::to_string(file.size()) + "\r\n";
 		response += "Keep-Alive: timeout=" + this->_server.get_timeout() + ", max=100\r\n\r\n";
-		send(client_socket, response.c_str(), response.length(), 0);
-		std::cout << "Response to client: " << client_socket << std::endl;
+		send(client_socket, response.c_str(), response.length(), MSG_NOSIGNAL);
+    std::cout << "Response to client: " << client_socket << std::endl;
 		std::cout << response << std::endl;
 
 		char buffer[1024];

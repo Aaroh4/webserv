@@ -129,6 +129,8 @@ void	ServerManager::sendResponse(size_t& i)
 	request.sanitize();
 	request.printRequest(clientSocket);
 
+	//request.printRequest();
+
 	if (request.getHost() == this->_info[this->_connections.at(clientSocket)].getServerName()
 		|| this->_info[this->_connections.at(clientSocket)].getServerName().empty())
 	{
