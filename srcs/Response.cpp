@@ -128,7 +128,7 @@ void Response::respondGet(int clientfd, ServerInfo server)
 		while (this->_file.read(buffer, chunkSize) || this->_file.gcount() > 0)
 			send(clientfd, buffer, this->_file.gcount(), MSG_NOSIGNAL);
 	}
-	//std::cout << response << std::endl;
+	std::cout << response << std::endl;
 }
 
 void	Response::respondPost(int clientfd, ServerInfo server)
@@ -157,7 +157,7 @@ void	Response::respondPost(int clientfd, ServerInfo server)
 		this->_errorMessage = "No Content";
 		response = formatGetResponseMsg(0);
 		send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL);
-		//std::cout << response << std::endl;
+		std::cout << response << std::endl;
 	}
 }
 
@@ -186,7 +186,7 @@ void	Response::respondDelete(int clientfd)
 	std::string response = "HTTP/1.1 200 OK\r\n";
 
 	send (clientfd, response.c_str(), response.length(), 0);
-	//std::cout << response << std::endl;
+	std::cout << response << std::endl;
 }
 
 void	Response::handleCgi(std::string path, int client_socket)
@@ -227,7 +227,7 @@ void	Response::handleCgi(std::string path, int client_socket)
 		//response += "Content-Length: " + std::to_string(file.size()) + "\r\n";
 		response += "Keep-Alive: timeout=" + this->_server.get_timeout() + ", max=100\r\n\r\n";
 		send(client_socket, response.c_str(), response.length(), 0);
-
+		std::cout << response << std::endl;
 		char buffer[1024];
 		ssize_t nbytes;
 
@@ -399,7 +399,7 @@ void Response::sendStandardErrorPage(int sanitizeStatus, int clientfd)
 	if (this->_method == "GET")
 		response += file;
 	send(clientfd, response.c_str(), response.length(), 0);
-	//std::cout << response << std::endl;
+	std::cout << response << std::endl;
 }
 
 std::string makeErrorContent(int statusCode, std::string message)
@@ -423,6 +423,7 @@ void Response::sendCustomErrorPage(int clientfd)
 	response += this->_body;
 
 	send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL);
+	std::cout << response << std::endl;
 }
 
 void Response::sendErrorResponse(std::string errorMessage, int clientfd, int errorCode)

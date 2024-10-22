@@ -125,8 +125,15 @@ void	ServerManager::sendResponse(size_t& i)
 	int	clientSocket = this->_poll_fds[i].fd;
 	Request request(this->_clients[clientSocket]);
 
-	request.parse();
-	request.sanitize();
+	try{
+		request.parse();
+		request.sanitize();
+	} catch (const Response::ResponseException & e){
+		Response obj;
+		obj.sendErrorResponse(e.what(), clientSocket, e.responseCode());
+		removeConnection(clientSocket, i);
+		return ;
+	}
 
 	if (request.getHost() == this->_info[this->_connections.at(clientSocket)].getServerName()
 		|| this->_info[this->_connections.at(clientSocket)].getServerName().empty())

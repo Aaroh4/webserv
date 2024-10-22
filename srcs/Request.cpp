@@ -1,4 +1,5 @@
 #include "../includes/Request.hpp"
+#include "../includes/Response.hpp"
 #include <iostream>
 #include <climits>
 #include <filesystem>
@@ -135,12 +136,14 @@ void	Request::_verifyPath(void)
 	{
 		this->_sanitizeStatus = 404;
 		this->_errmsg = "Not Found"; //Not Found
+		throw Response::ResponseException404();
 		return;
 	}
 	else if (!std::filesystem::is_regular_file(file))
 	{
 		this->_sanitizeStatus = 403;
 		this->_errmsg = "Forbidden"; //Forbidden
+		throw Response::ResponseException403();
 		return;
 	}
 	int permissions = access(file.c_str(), X_OK);
@@ -148,6 +151,7 @@ void	Request::_verifyPath(void)
 	{
 		this->_sanitizeStatus = 403;
 		this->_errmsg = "Forbidden"; //Forbidden
+		throw Response::ResponseException403();
 		return;
 	}
 }
@@ -173,8 +177,9 @@ void	Request::_getContentType(void)
 		}
     	else if (this->_url != "/")
 		{
-			this->_sanitizeStatus = 415;
+			this->_sanitizeStatus = 515;
 			this->_errmsg = "Unsupported Media Type"; // Error: Unsupported Media Type
+			throw Response::ResponseException515();
 		}
 	}
 }
@@ -199,6 +204,7 @@ void	Request::_parseRequestLine(void)
 	{
 		this->_sanitizeStatus = 501;
 		this->_errmsg = "Unsupported method";
+		throw Response::ResponseException501();
 	}
 	this->_request.erase(0, this->_method.length() + 1);
 
@@ -255,6 +261,7 @@ void	Request::_parseHeaders(void)
 			this->_sanitizeStatus = 400;
 			this->_errmsg = "Bad Request";
 			// std::cout << "\n\n in Parse() set up status 400\n\n" << std::endl;
+			throw Response::ResponseException400();
 			break;
 		}
 		this->_headers[line.substr(0, i)] = line.substr(i + 2, lineEnd - (i + 3));
@@ -320,13 +327,19 @@ void	Request::_decodeChunks(void)
 		{
 			this->_sanitizeStatus = 500;
 			this->_errmsg = "Internal Server Error";
+			throw Response::ResponseException();
 			return;
 		}
 		decodedBody += this->_body.substr(0, chunkSize);
 		this->_body.erase(0, chunkSize + 2);
 	}
 	if (totalSize != static_cast<int>(decodedBody.length()))
-		std::cout << "paha\n";
+	{
+		std::cout << "paha\n"; //What this means?
+		//Response::ResponseException400(); //bad request?
+		//Response::ResponseException(); //Internal Server Error?
+
+	}
 	this->_body = decodedBody;
 }
 
@@ -351,13 +364,13 @@ void	Request::sanitize(void)
 	{
 		this->_sanitizeStatus = 505;
 		this->_errmsg = "Unsupported HTTP";
-		return;
+		throw Response::ResponseException505();
 	}
 	if (this->_url.find("..") != std::string::npos)
 	{
 		this->_sanitizeStatus = 403;
 		this->_errmsg = "Forbidden"; //Forbidden
-		return;
+		throw Response::ResponseException403();
 	}
  	int i = this->_url.find_last_of("/");
 	while (this->_url[i - 1] == '/')
@@ -370,7 +383,8 @@ void	Request::sanitize(void)
 		this->_sanitizeStatus = 400;
 		this->_errmsg = "Bad Request"; //Bad request
 		// std::cout << "\n\n in sanitize() set up status 400\n\n" << std::endl;
-		return;
+		throw Response::ResponseException400();
+
 	}
 	for (const auto& map_content : this->_headers)
 	{
@@ -379,7 +393,7 @@ void	Request::sanitize(void)
 			this->_sanitizeStatus = 400;
 			this->_errmsg = "Bad Request"; //Bad request
 			// std::cout << "\n\n in sanitize2() set up status 400\n\n" << std::endl;
-			break;
+			throw Response::ResponseException400();
 		}
 	}
 }
