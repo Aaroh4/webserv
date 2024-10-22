@@ -1,0 +1,5 @@
+invalidLocation:
+	-does it need to check if there is root in locations?
+	-Is dirlisting variable needed to be checked?
+
+

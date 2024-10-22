@@ -57,8 +57,8 @@ void	ServerManager::addNewConnection(size_t i)
 	this->_connections[clientSocket] = i;
 	this->_clients[clientSocket] = "";
 	this->_requestReceived[clientSocket] = false;
-	std::cout << "New client connected on server " << i << "\n";
-	std::cout << "Client got clientSocket " << clientSocket << std::endl;
+	std::cout << "\n----------------------------" << std::endl;
+	std::cout << "Client connected via socket " << clientSocket << " in server " << i << std::endl;
 }
 
 size_t	ServerManager::findLastChunk(std::string& request, size_t start_pos)
@@ -127,6 +127,7 @@ void	ServerManager::sendResponse(size_t& i)
 
 	request.parse();
 	request.sanitize();
+	request.printRequest(clientSocket);
 
 	//request.printRequest();
 
@@ -142,7 +143,8 @@ void	ServerManager::sendResponse(size_t& i)
 void ServerManager::removeConnection(int clientSocket, size_t& i)
 {
 	close(clientSocket);
-	std::cout << "removeConneciton: ClientSocket " << clientSocket << " closed\n\n" << std::endl;
+	std::cout << "Socket " << clientSocket << " closed\n" << std::endl;
+	std::cout << "----------------------------" << std::endl;
 	this->_poll_fds.erase(this->_poll_fds.begin() + i);
 	this->_connections.erase(clientSocket);
 	this->_clients.erase(clientSocket);

@@ -138,12 +138,13 @@ void Response::respondGet(int clientfd, ServerInfo server)
 		}
 		response = formatGetResponseMsg(0);
 		send(clientfd, response.c_str(), response.length(), 0);
+		std::cout << "Response to client: " << clientfd << std::endl;
+		std::cout << response << std::endl;
 		const std::size_t chunkSize = 8192;
 		char buffer[chunkSize];
 		while (this->_file.read(buffer, chunkSize) || this->_file.gcount() > 0)
 			send(clientfd, buffer, this->_file.gcount(), MSG_NOSIGNAL);
 	}
-	//std::cout << response << std::endl;
 }
 
 void	Response::respondPost(int clientfd, ServerInfo server)
@@ -172,7 +173,8 @@ void	Response::respondPost(int clientfd, ServerInfo server)
 		this->_errorMessage = "No Content";
 		response = formatGetResponseMsg(0);
 		send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL);
-		//std::cout << response << std::endl;
+		std::cout << "Response to client: " << clientfd << std::endl;
+		std::cout << response << std::endl;
 	}
 }
 
@@ -201,7 +203,8 @@ void	Response::respondDelete(int clientfd)
 	std::string response = "HTTP/1.1 200 OK\r\n";
 
 	send (clientfd, response.c_str(), response.length(), 0);
-	//std::cout << response << std::endl;
+	std::cout << "Response to client: " << clientfd << std::endl;
+	std::cout << response << std::endl;
 }
 
 void	Response::handleCgi(std::string path, int client_socket)
@@ -252,6 +255,8 @@ void	Response::handleCgi(std::string path, int client_socket)
 		//response += "Content-Length: " + std::to_string(file.size()) + "\r\n";
 		response += "Keep-Alive: timeout=" + this->_server.get_timeout() + ", max=100\r\n\r\n";
 		send(client_socket, response.c_str(), response.length(), MSG_NOSIGNAL);
+    std::cout << "Response to client: " << client_socket << std::endl;
+		std::cout << response << std::endl;
 
 		char buffer[1024];
 		ssize_t nbytes;
@@ -275,8 +280,11 @@ void Response::directorylisting(int clientfd, std::string file)
 			this->_type = "text/html";
 	this->_fileSize = std::to_string(file.size());
 	response = formatGetResponseMsg(0);
+	std::string responseWithoutFile = response;
 	response += file;
 	send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL);
+	std::cout << "Response to client: " << clientfd << std::endl;
+	std::cout << responseWithoutFile << std::endl;
 }
 
 std::string Response::buildDirectorylist(std::string name, int rootsize)
@@ -371,7 +379,6 @@ std::string Response::formatGetResponseMsg(int close)
 		response += "Keep-Alive: timeout=" + this->_server.get_timeout() + ", max=100\r\n\r\n";
 	else
 		response += "Connection: close\r\n\r\n";
-	// std::cout << response << std::endl;
 	return (response);
 }
 
@@ -421,10 +428,13 @@ void Response::sendStandardErrorPage(int sanitizeStatus, int clientfd)
 	this->_fileSize = std::to_string(file.length());
 
 	response = formatGetResponseMsg(1);
+	std::string responseWithoutFile = response;
 	if (this->_method == "GET")
 		response += file;
 	send(clientfd, response.c_str(), response.length(), 0);
-	//std::cout << response << std::endl;
+	std::cout << "Response to client: " << clientfd << std::endl;
+	std::cout << responseWithoutFile << std::endl;
+
 }
 
 std::string makeErrorContent(int statusCode, std::string message)
@@ -448,6 +458,8 @@ void Response::sendCustomErrorPage(int clientfd)
 	response += this->_body;
 
 	send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL);
+	std::cout << "Response to client: " << clientfd << std::endl;
+	std::cout << response << std::endl;
 }
 
 void Response::sendErrorResponse(std::string errorMessage, int clientfd, int errorCode)

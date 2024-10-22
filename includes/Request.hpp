@@ -16,7 +16,7 @@ class Request
 		virtual void		parse(void);
 		virtual	void		sanitize(void);
 		virtual std::string	getHost(void);
-		virtual void		printRequest(void);
+		virtual void		printRequest(int clientSocket);
 
 	protected:
 		int	_sanitizeStatus;
