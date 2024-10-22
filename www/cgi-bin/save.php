@@ -4,7 +4,7 @@
 
 $file_path = realpath(__DIR__ . '/../data/strings.txt');
 
-if ($file = fopen($file_path, "w")) 
+if ($file = fopen($file_path, "a")) 
 {
 	 $sanitized_query_string = strip_tags($_SERVER['QUERY_STRING']);
 	 $sanitized_query_string = htmlspecialchars($sanitized_query_string, ENT_QUOTES, 'UTF-8');
