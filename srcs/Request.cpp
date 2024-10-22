@@ -332,7 +332,6 @@ void	Request::_decodeChunks(void)
 
 void	Request::parse(void)
 {
-	//std::cout << "In parse() - Request received: \n" << this->_request << std::endl;
 	this->_parseRequestLine();
 	this->_parseHeaders();
 	if (this->_headers["Transfer-Encoding"] == "chunked")
