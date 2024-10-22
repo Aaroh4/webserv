@@ -15,7 +15,12 @@
 	</video>
 	<br />
 	<form action="../www/cgi-bin/save.php" method="post">
-		<button type="submit">Print message</button>
+		<label for="name">Append message POST</label>
+		<input type="text" id="name" name="input" />
+	</form>
+	<form action="../www/cgi-bin/save.php" method="get">
+		<label for="name">GET method</label>
+		<input type="text" id="name" name="input" />
 	</form>
 	<a href="www/form.html">Fill a form</a>
 </body>
