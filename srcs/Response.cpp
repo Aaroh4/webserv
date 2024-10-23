@@ -200,7 +200,8 @@ void	Response::respondDelete(int clientfd)
 		throw ResponseException403();
 	if (remove(fileToDelete.c_str()) != 0)
 		throw ResponseException();
-	std::string response = "HTTP/1.1 200 OK\r\n";
+	std::string response = "HTTP/1.1 204 No Content\r\n";
+	response += "Connection: close\r\n\r\n";
 
 	send (clientfd, response.c_str(), response.length(), 0);
 	std::cout << "Response to client: " << clientfd << std::endl;
