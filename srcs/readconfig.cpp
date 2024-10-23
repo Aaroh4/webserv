@@ -63,7 +63,6 @@ void locations(std::string temp, ServerInfo &server)
 	}
 	if (std::filesystem::is_directory(temploc.root) && temploc.name.back() != '/')
 		temploc.name += "/";
-	//std::cout << "name: " << temploc.name << std::endl;
 	server.setnewlocation(temploc);
 }
 
@@ -74,7 +73,6 @@ int bracketfinder(std::string configfile, std::string type, ServerInfo &server)
 	int					brackets = 0;
 	std::istringstream	file(configfile);
 
-	//std::cout << "type" << type << std::endl;
 	for (std::string line; std::getline(file, line);)
 	{
 		if (line.find("{") != std::string::npos)
@@ -92,21 +90,26 @@ int bracketfinder(std::string configfile, std::string type, ServerInfo &server)
 		if (line.find("}") != std::string::npos && brackets > 0)
 			brackets--;
 	}
-	//std::cout << "\n\n temp: " << temp  << " type : " << type << "\n\n" << std::endl;
 	if (type == "location")
 	{
 		locations(temp, server);
 		std::string newconfig = configfile.substr(configfile.find(temp) + temp.size(), std::string::npos);
 		if (newconfig.find("{") != std::string::npos)
 		{
-			//std::cout << "asd" << std::endl;
 			newconfig = newconfig.substr(newconfig.find("location ") + 9, std::string::npos);
-			//std::cout << "asd2" << std::endl;
 			bracketfinder(newconfig, "location", server);
 		}
 	}
 	else if (type == "server")
 		config_server(temp, server);
+	file.clear();
+    file.seekg(0);
+	for (std::string line; std::getline(file, line);)
+	{
+		if (line.find("server") != std::string::npos && line.find("{") != std::string::npos)
+      		break; 
+		temp += line;
+	}
 	return (temp.size());
 }
 
@@ -189,7 +192,6 @@ ServerInfo	config_server(std::string temp, ServerInfo &server)
 						}
 						break;
 				case 5:
-						std::cout << value << std::endl;
 						server.setServerName(value);
 						break;
 				case 6:
@@ -225,10 +227,7 @@ ServerInfo	config_server(std::string temp, ServerInfo &server)
 		}
 	}
 	if (server.get_ip() == 0 || server.get_port() == 0 || server.getlocationinfo().empty())
-	{
-		std::cout << "Ip: " << server.get_ip() << " port: " << server.get_port() << " location: " << server.getlocationinfo().empty() << std::endl;
 		throw(serverNotFilled());
-	}
 	return (server);
 }
 
@@ -253,10 +252,7 @@ int	readconfig(std::string name, ServerManager &manager)
 	for (int info = 1; info <= i; info++)
 	{
 		ServerInfo server;
-		//std::cout << temp << std::endl;
 		temp = temp.substr(bracketfinder(temp, "server", server), std::string::npos);
-		//if (temp.find("{") != std::string::npos)
-		//	temp = temp.substr(temp.find("{"), std::string::npos);
 		manager.setNewInfo(server);
 	}
 	return (0);
