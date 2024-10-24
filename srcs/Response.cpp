@@ -102,67 +102,39 @@ std::string formatSessionCookie( void ){
 
 void Response::respondGet(int clientfd, ServerInfo server)
 {
-/*	if (this->_type == "cgi/py" || this->_type == "cgi/php")
-	if (this->_type == "cgi/py" || this->_type == "cgi/php")
-	{
-		char result[4096];
-		std::string location;
-		ssize_t count = readlink("/proc/self/exe", result, 4096);
-		try {
-			if (count == -1)
-				throw ResponseException();
-		} catch (const ResponseException &e){
-			sendErrorResponse(e.what(), clientfd, e.responseCode());
-			return ;
-		}
-
-		location = std::string(result, (count > 0) ? count : 0);
-		this->handleCgi(location.substr(0, location.rfind("/")) + server.getlocationinfo()["/" + cutFromTo(this->_url, 1, "/")].root + this->_url, clientfd);
-	}
-
 	std::string response;
 
+	//std::cout << "index: " << server.getlocationinfo()[this->_url].index << " Url< " << this->_url << std::endl;
 	if (server.getlocationinfo()[this->_url].dirList != false && server.getlocationinfo()[this->_url].index.empty())
 	{
-		std::string location = std::filesystem::canonical("/proc/self/exe");
-		this->handleCgi(location.substr(0, location.rfind("/")) + server.getlocationinfo()["/" + cutFromTo(this->_url, 1, "/")].root + this->_url, clientfd);
+		this->directorylisting(clientfd, this->buildDirectorylist(server.getlocationinfo()[this->_url].root, server.getlocationinfo()[this->_url].root.size() + 1));
 	}
 	else
-	{*/
-		std::string response;
-
-		//std::cout << "index: " << server.getlocationinfo()[this->_url].index << " Url< " << this->_url << std::endl;
-		if (server.getlocationinfo()[this->_url].dirList != false && server.getlocationinfo()[this->_url].index.empty())
+	{
+		try
 		{
-			this->directorylisting(clientfd, this->buildDirectorylist(server.getlocationinfo()[this->_url].root, server.getlocationinfo()[this->_url].root.size() + 1));
+			openFile(server);
 		}
-		else
+		catch(ResponseException &e)
 		{
-			try
-			{
-				openFile(server);
-			}
-			catch(ResponseException &e)
-			{
-				sendErrorResponse(e.what(), clientfd, e.responseCode());
-				return;
-			}
-			response = formatGetResponseMsg(0);
-			send(clientfd, response.c_str(), response.length(), 0);
-			const std::size_t chunkSize = 8192;
-			char buffer[chunkSize];
-			while (this->_file.read(buffer, chunkSize) || this->_file.gcount() > 0)
-				send(clientfd, buffer, this->_file.gcount(), MSG_NOSIGNAL);
+			sendErrorResponse(e.what(), clientfd, e.responseCode());
+			return;
 		}
 		response = formatGetResponseMsg(0);
 		send(clientfd, response.c_str(), response.length(), 0);
-		std::cout << "Response to client: " << clientfd << std::endl;
-		std::cout << response << std::endl;
 		const std::size_t chunkSize = 8192;
 		char buffer[chunkSize];
 		while (this->_file.read(buffer, chunkSize) || this->_file.gcount() > 0)
 			send(clientfd, buffer, this->_file.gcount(), MSG_NOSIGNAL);
 	}
+	response = formatGetResponseMsg(0);
+	send(clientfd, response.c_str(), response.length(), 0);
+	std::cout << "Response to client: " << clientfd << std::endl;
+	std::cout << response << std::endl;
+	const std::size_t chunkSize = 8192;
+	char buffer[chunkSize];
+	while (this->_file.read(buffer, chunkSize) || this->_file.gcount() > 0)
+		send(clientfd, buffer, this->_file.gcount(), MSG_NOSIGNAL);
 }
 
 void	Response::respondPost(int clientfd, ServerInfo server)

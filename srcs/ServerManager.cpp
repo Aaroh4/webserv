@@ -59,7 +59,7 @@ void	ServerManager::addNewConnection(size_t& i)
 		client_pollfd.revents = 0;
 		this->_poll_fds.push_back(client_pollfd);
 		this->_connections[clientSocket] = i;
-		
+
 		t_clientInfo clientInfo;
 		std::memset(&clientInfo, 0, sizeof(t_clientInfo));
 		this->_clientInfos[clientSocket] = clientInfo;
@@ -90,21 +90,6 @@ void	ServerManager::addPipeFd(int pipeFd)
 	{
 		throw;
 	}
-	int clientSocket = accept(this->_poll_fds[i].fd, nullptr, nullptr);
-	if (clientSocket < 0)
-		perror("Accept failed");
-	if (fcntl(clientSocket, F_SETFL, O_NONBLOCK | FD_CLOEXEC) == -1)
-		perror("fcntl(F_SETFL) failed");
-	struct pollfd client_pollfd;
-	client_pollfd.fd = clientSocket;
-	client_pollfd.events = POLLIN | POLLOUT;
-	client_pollfd.revents = 0;
-	this->_poll_fds.push_back(client_pollfd);
-	this->_connections[clientSocket] = i;
-	this->_clients[clientSocket] = "";
-	this->_requestReceived[clientSocket] = false;
-	std::cout << "\n----------------------------" << std::endl;
-	std::cout << "Client connected via socket " << clientSocket << " in server " << i << std::endl;
 }
 
 size_t	ServerManager::findLastChunk(std::string& request, size_t start_pos)
@@ -186,7 +171,7 @@ void	ServerManager::runCgi(std::string path, char** envp, int& clientSocket)
 		}
 		close(pipeFd[1]);
 		char *argv[] = { (char*)path.c_str(), nullptr };
-		if (execve(path.c_str(), argv, envp) == -1) 
+		if (execve(path.c_str(), argv, envp) == -1)
 		{
 			throw std::runtime_error("execve() failed");
 		}
@@ -242,13 +227,6 @@ void ServerManager::removeConnection(int clientSocket, size_t& i)
 	{
 		//500 Error response
 	}
-	close(clientSocket);
-	std::cout << "Socket " << clientSocket << " closed\n" << std::endl;
-	std::cout << "----------------------------" << std::endl;
-	this->_poll_fds.erase(this->_poll_fds.begin() + i);
-	this->_connections.erase(clientSocket);
-	this->_clients.erase(clientSocket);
-	i--;
 }
 
 void	ServerManager::receiveRequest(size_t& i)
@@ -296,7 +274,7 @@ void	ServerManager::receiveRequest(size_t& i)
 	if (totalLength != 0 && totalLength == this->_clientInfos[clientSocket].request.length())
 	{
 		this->_clientInfos[clientSocket].requestReceived = true;
-		try 
+		try
 		{
 			Request* request = new Request(this->_clientInfos[clientSocket].request);
 			request->parse();
@@ -332,7 +310,7 @@ void	ServerManager::readFromCgiFd(const int& fd)
 		this->_clientInfos[clientSocket].cgiResponseReady = true;
 		close(fd);
 		this->_clientPipe.erase(fd);
-	}	
+	}
 	else
 	{
 		int clientSocket = this->_clientPipe[fd];
@@ -361,14 +339,14 @@ int	ServerManager::checkForCgi(Request& req, int& clientSocket)
 			length = "CONTENT_LENGTH=" + contentLen;
 		else
 			length = "CONTENT_LENGTH=0";
-		
+
 		char *envp[] = {
 		(char *) method.c_str(),
 		(char *) query.c_str(),
 		(char *) length.c_str(),
 		nullptr
 		};
-	
+
 		std::string location = std::filesystem::canonical("/proc/self/exe");
 		size_t lastDash = location.find_last_of("/");
 		location.erase(lastDash + 1, location.length() - (lastDash + 1));
@@ -422,7 +400,7 @@ void	ServerManager::runServers()
 					receiveRequest(i);
 			}
 			if (this->_poll_fds[i].revents & POLLOUT && this->_clientInfos[this->_poll_fds[i].fd].requestReceived == true)
-				sendResponse(i);		
+				sendResponse(i);
 		}
 	}
 }
