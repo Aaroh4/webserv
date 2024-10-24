@@ -45,7 +45,7 @@ class ServerManager
 			std::unordered_map<int, t_clientInfo>  	_clientInfos; //key = client socket
 			std::vector<ServerInfo>					_info;
 			std::vector<struct pollfd> 				_poll_fds;
-			std::unordered_map<int, int> 			_connections;
+			std::unordered_map<int, int> 			_connections; // clients and servers
 			std::unordered_map<int, int> 			_clientPipe; //key = pipe fd & value = client socket
 };
 
