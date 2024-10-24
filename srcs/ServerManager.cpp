@@ -225,6 +225,7 @@ int	ServerManager::sendResponse(size_t& i)
 		if (this->_clientInfos[clientSocket].cgiResponseReady == true)
 		{
 			Response respond(*this->_clientInfos[clientSocket].req);
+			respond.setResponseBody(this->_clientInfos[clientSocket].cgiResponse);
 			respond.respond(clientSocket, this->_info[this->_connections.at(clientSocket)]);
 		}
 		else
@@ -336,6 +337,7 @@ void	ServerManager::readFromCgiFd(const int& fd)
 		this->_clientInfos[clientSocket].cgiResponseReady = true;
 		close(fd);
 		this->_clientPipe.erase(fd);
+
 	}
 	else
 	{

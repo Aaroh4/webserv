@@ -463,6 +463,11 @@ void Response::sendErrorResponse(std::string errorMessage, int clientfd, int err
 		sendCustomErrorPage(clientfd);
 }
 
+void	Response::setResponseBody(std::string body)
+{
+	this->_responseBody = body;
+}
+
 const char* Response::ResponseException::what() const noexcept{
 	return "Internal Server Error";
 }

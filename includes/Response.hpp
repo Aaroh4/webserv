@@ -24,13 +24,13 @@ class Response: public Request
 			void			sendCustomErrorPage(int clientfd);
       		std::string		buildDirectorylist(std::string name, int rootsize);
 			void			directorylisting(int clientfd, std::string file);
-			void			handleCgi(std::string path, int client_socket);
 			void			respond(int clientfd, ServerInfo server);
 			void			respondGet(int clientfd, ServerInfo server);
 			void			respondPost(int clientfd, ServerInfo server);
 			void			respondDelete(int clientfd);
 			void			handleCRUD(int clientfd, ServerInfo server);
 			void 			sendStandardErrorPage(int sanitizeStatus, int clientfd);
+			void			setResponseBody(std::string body);
 
 			// RESPONSE EXCEPTIONS
 			//base class for 500 internal error
