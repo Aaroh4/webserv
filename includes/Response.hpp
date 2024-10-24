@@ -5,6 +5,9 @@
 #include "ServerInfo.hpp"
 #include <filesystem>
 #include <cerrno>
+#include <random>
+#include <sstream>
+#include <iomanip>
 
 class Response: public Request
 {
@@ -15,7 +18,6 @@ class Response: public Request
 			Response(const Response &);
 			Response operator=(const Response &);
 
-			std::string 	getStatusMessage(int statusCode);
 			std::string 	formatGetResponseMsg(int code);
 			void			sendErrorResponse(std::string errorMessage, int clientfd, int errorCode);
 			void			openFile(ServerInfo server);

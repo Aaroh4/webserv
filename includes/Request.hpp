@@ -20,7 +20,7 @@ class Request
 		virtual std::string	getContentLength(void);
 		virtual std::string	getQueryString(void);
 		virtual std::string	getMethod(void);
-		virtual void		printRequest(void);
+		virtual void		printRequest(int clientSocket);
 
 	protected:
 		int	_sanitizeStatus;

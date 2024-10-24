@@ -3,6 +3,15 @@
 #include "../includes/Request.hpp"
 #include <sys/wait.h>
 #include <cstring>
+#include <signal.h>
+
+bool sigint_sent = false;
+
+void	sigint_handler(int signum)
+{
+	(void)signum;
+	sigint_sent = true;
+}
 
 ServerManager::ServerManager()
 {}
@@ -81,6 +90,21 @@ void	ServerManager::addPipeFd(int pipeFd)
 	{
 		throw;
 	}
+	int clientSocket = accept(this->_poll_fds[i].fd, nullptr, nullptr);
+	if (clientSocket < 0)
+		perror("Accept failed");
+	if (fcntl(clientSocket, F_SETFL, O_NONBLOCK | FD_CLOEXEC) == -1)
+		perror("fcntl(F_SETFL) failed");
+	struct pollfd client_pollfd;
+	client_pollfd.fd = clientSocket;
+	client_pollfd.events = POLLIN | POLLOUT;
+	client_pollfd.revents = 0;
+	this->_poll_fds.push_back(client_pollfd);
+	this->_connections[clientSocket] = i;
+	this->_clients[clientSocket] = "";
+	this->_requestReceived[clientSocket] = false;
+	std::cout << "\n----------------------------" << std::endl;
+	std::cout << "Client connected via socket " << clientSocket << " in server " << i << std::endl;
 }
 
 size_t	ServerManager::findLastChunk(std::string& request, size_t start_pos)
@@ -218,6 +242,13 @@ void ServerManager::removeConnection(int clientSocket, size_t& i)
 	{
 		//500 Error response
 	}
+	close(clientSocket);
+	std::cout << "Socket " << clientSocket << " closed\n" << std::endl;
+	std::cout << "----------------------------" << std::endl;
+	this->_poll_fds.erase(this->_poll_fds.begin() + i);
+	this->_connections.erase(clientSocket);
+	this->_clients.erase(clientSocket);
+	i--;
 }
 
 void	ServerManager::receiveRequest(size_t& i)
@@ -368,14 +399,15 @@ bool	ServerManager::isPipeFd(int& fd)
 
 void	ServerManager::runServers()
 {
-	while (true)
+	signal(SIGINT, sigint_handler);
+	while (sigint_sent == false)
 	{
-		int pollcount = poll(this->_poll_fds.data(), this->_poll_fds.size(), 1000);
+		int pollcount = poll(this->_poll_fds.data(), this->_poll_fds.size(), 0);
 
 		if (pollcount < 0)
 		{
 			if (errno != EINTR)
-				std::cerr << "poll failed" << std::endl;
+				std::cerr << "Poll failed likely due to IP or Port being wrong!" << std::endl;
 			break ;
 		}
 		for (size_t i = 0; i < this->_poll_fds.size(); i++)

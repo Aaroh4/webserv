@@ -410,14 +410,11 @@ std::string	Request::getMethod(void)
 	return this->_method;
 }
 
-void Request::printRequest(void)
+void Request::printRequest(int clientSocket)
 {
-	std::cout << "Request parsed to :\n";
-	std::cout << this->_httpVersion << std::endl;
-	std::cout << this->_sanitizeStatus << std::endl;
-	std::cout << this->_errmsg << std::endl;
-	std::cout << this->_type << std::endl;
-	std::cout << this->_method<< std::endl;
-	std::cout << this->_url << std::endl;
-	std::cout << this->_body << std::endl;
+	std::cout << "Client " << clientSocket << " Requested:\n";
+	std::cout << "URL: "<< this->_url << std::endl;
+	std::cout << "Method: "<< this->_httpVersion << " " << this->_method << std::endl;
+	std::cout << "Type: "<< this-> _type << std::endl;
+	std::cout << "*******" << std::endl;
 }

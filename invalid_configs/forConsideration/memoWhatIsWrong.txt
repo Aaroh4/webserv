@@ -1,0 +1,17 @@
+invalidLocation:
+	-does it need to check if there is root in locations?
+	-Is dirlisting variable needed to be checked?
+
+
+noLocation:
+	-First location is missing "/"
+	-
+
+nomethods_dirlisting:
+	-allowed-methods in 127.0.0.2 is NONE.
+	-still works with GET and POST
+
+untypicalfield:
+	- contains a setting of "doesnotexist: true"
+	- runs normally
+
