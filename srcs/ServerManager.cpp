@@ -352,8 +352,12 @@ int	ServerManager::checkForCgi(Request& req, int& clientSocket)
 		size_t lastDash = location.find_last_of("/");
 		location.erase(lastDash + 1, location.length() - (lastDash + 1));
 
-		location += req.getRoot() + "/" + req.getUrl().substr(req.getOrigLocLen(), std::string::npos);
-		std::cout << "loation " << location << std::endl; 
+		std::cout << "root " << req.getRoot() << std::endl;
+		std::cout << "url1: " << req.getUrl() << std::endl;
+		std::cout << "size: " << req.getOrigLocLen() << std::endl;
+		std::cout << "url: " << req.getUrl().substr(req.getOrigLocLen().length(), std::string::npos) << std::endl;
+		location += req.getRoot() + "/" + req.getUrl().substr(req.getOrigLocLen().length(), std::string::npos);
+		std::cout << "location " << location << std::endl; 
 		try
 		{
 			runCgi(location, envp, clientSocket);

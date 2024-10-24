@@ -411,9 +411,9 @@ std::string	Request::getRoot(void)
 	return this->_root;
 }
 
-size_t	Request::getOrigLocLen(void)
+std::string	Request::getOrigLocLen(void)
 {
-	return this->_origLoc.length();
+	return this->_origLoc;
 }
 
 void Request::printRequest(int clientSocket)
