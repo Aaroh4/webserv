@@ -1,6 +1,6 @@
 TARGET = webserv
 
-FLAGS = -std=c++17 -Wall -Wextra -Werror -g
+FLAGS = -std=c++17 #-Wall -Wextra -Werror -g
 
 SRCS = srcs/main.cpp srcs/conversion.cpp srcs/readconfig.cpp\
 	srcs/ServerManager.cpp srcs/ServerInfo.cpp srcs/Request.cpp\
