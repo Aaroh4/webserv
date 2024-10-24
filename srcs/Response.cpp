@@ -138,15 +138,41 @@ void Response::respondGet(int clientfd, ServerInfo server)
 
 void	Response::respondPost(int clientfd, ServerInfo server)
 {
-	(void) server;
 	std::string response;
 
-	this->_sanitizeStatus = 204;
-	this->_errorMessage = "No Content";
-	response = formatGetResponseMsg(0);
-	send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL);
+	response = formatPostResponseMsg(1);
+	send(clientfd, response.c_str(), response.length(), 0);
 	std::cout << "Response to client: " << clientfd << std::endl;
 	std::cout << response << std::endl;
+
+	std::cout << "this should be the responsebody: " << this->_responseBody << std::endl;
+}
+
+std::string Response::formatPostResponseMsg (int close){
+
+	std::string response;
+
+	if (this->_httpVersion.empty())
+		this->_httpVersion = "HTTP/1.1";
+	if (this->_responseBody.empty())
+	{
+		this->_sanitizeStatus = 204;
+		response = this->_httpVersion + " 204 No Content\r\n";
+	}
+	else
+		response = this->_httpVersion + " 200 OK\r\n";
+	this->_type = "text/html";
+	if (this->_sanitizeStatus == 200)
+		response += "Content-Type: " + this->_type + "\r\n";
+	response += formatSessionCookie();
+	if (close == 0)
+		response += "Keep-Alive: timeout=" + this->_server.get_timeout() + ", max=100\r\n\r\n";
+	else
+		response += "Connection: close\r\n\r\n";
+	if (!this->_responseBody.empty())
+		response += this->_responseBody;
+	return (response);
+
 }
 
 void	Response::respondDelete(int clientfd)

@@ -324,6 +324,7 @@ void	ServerManager::readFromCgiFd(const int& fd)
 	{
 		int clientSocket = this->_clientPipe[fd];
 		this->_clientInfos[clientSocket].cgiResponse.append(buffer, nbytes);
+		std::cout << "responsebody from cgi: "<< this->_clientInfos[clientSocket].cgiResponse << std::endl;
 	}
 }
 
@@ -352,8 +353,12 @@ int	ServerManager::checkForCgi(Request& req, int& clientSocket)
 		std::string location = std::filesystem::canonical("/proc/self/exe");
 		size_t lastDash = location.find_last_of("/");
 		location.erase(lastDash + 1, location.length() - (lastDash + 1));
-		location += "www" + req.getUrl();
-		std::cout << "location: " << location << std::endl;
+		// location += "www" + req.getUrl();
+		// std::cout << "location: " << location << std::endl;
+		std::string script = req.getUrl();
+        lastDash = script.find_last_of("/");
+        script = script.substr(lastDash + 1, script.length() - (lastDash + 1));
+        location += "www/cgi-bin/" + script;
 		try
 		{
 			runCgi(location, envp, clientSocket);
