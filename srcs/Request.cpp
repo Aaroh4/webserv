@@ -410,6 +410,11 @@ std::string	Request::getMethod(void)
 	return this->_method;
 }
 
+std::string	Request::getUrl(void)
+{
+	return this->_url;
+}
+
 void Request::printRequest(int clientSocket)
 {
 	std::cout << "Client " << clientSocket << " Requested:\n";

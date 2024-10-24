@@ -153,6 +153,7 @@ size_t	ServerManager::getRequestLength(std::string& request)
 void	ServerManager::runCgi(std::string path, char** envp, int& clientSocket)
 {
 	int	pipeFd[2];
+
 	if (pipe(pipeFd) == -1)
 	{
 		throw std::runtime_error("pipe() failed");
@@ -186,6 +187,30 @@ void	ServerManager::runCgi(std::string path, char** envp, int& clientSocket)
 		}
 		this->_clientInfos[clientSocket].pipeFd = pipeFd[0];
 		this->_clientPipe[pipeFd[0]] = clientSocket;
+		std:: cout << "run cgi created pipe fd " << this->_clientInfos[clientSocket].pipeFd << std::endl; 
+	/*	char buffer[1024];
+		ssize_t nbytes;
+		std::cout << "hello from read from cgi\n";
+		nbytes = read(pipeFd[0], buffer, sizeof(buffer));
+		if (nbytes == -1)
+		{
+			close(pipeFd[0]);
+			this->_clientPipe.erase(pipeFd[0]);
+			throw std::runtime_error("read() failed");
+		}
+		else if (nbytes == 0)
+		{
+			int clientSocket = this->_clientPipe[pipeFd[0]];
+			this->_clientInfos[clientSocket].cgiResponseReady = true;
+			close(pipeFd[0]);
+			this->_clientPipe.erase(pipeFd[0]);
+		}
+		else
+		{
+			int clientSocket = this->_clientPipe[pipeFd[0]];
+			this->_clientInfos[clientSocket].cgiResponse.append(buffer, nbytes);
+			std::cout << "from cgi fd " << this->_clientInfos[clientSocket].cgiResponse << std::endl;
+		}*/ 
 	}
 }
 
@@ -259,8 +284,6 @@ void	ServerManager::receiveRequest(size_t& i)
 			}
 			else
 			{
-				std::cout << "recv failed" << "\n";
-				perror("error: ");
 				throw Response::ResponseException();
 			}
 		}
@@ -296,7 +319,7 @@ void	ServerManager::readFromCgiFd(const int& fd)
 {
 	char buffer[1024];
 	ssize_t nbytes;
-
+    std::cout << "hello from read from cgi\n";
 	nbytes = read(fd, buffer, sizeof(buffer));
 	if (nbytes == -1)
 	{
@@ -315,6 +338,7 @@ void	ServerManager::readFromCgiFd(const int& fd)
 	{
 		int clientSocket = this->_clientPipe[fd];
 		this->_clientInfos[clientSocket].cgiResponse.append(buffer, nbytes);
+		std::cout << "cgi response " << this->_clientInfos[clientSocket].cgiResponse << std::endl;
 	}
 	//std::cout.write(buffer, nbytes).flush();
 	//send(client_socket, buffer, nbytes, 0);
@@ -350,7 +374,8 @@ int	ServerManager::checkForCgi(Request& req, int& clientSocket)
 		std::string location = std::filesystem::canonical("/proc/self/exe");
 		size_t lastDash = location.find_last_of("/");
 		location.erase(lastDash + 1, location.length() - (lastDash + 1));
-		location.append(type, type.length());
+		location += "www" + req.getUrl();
+		std::cout << "location: " << location << std::endl;
 		try
 		{
 			runCgi(location, envp, clientSocket);
@@ -367,11 +392,22 @@ int	ServerManager::checkForCgi(Request& req, int& clientSocket)
 
 bool	ServerManager::isPipeFd(int& fd)
 {
-	for (auto it = this->_clientInfos.begin(); it != this->_clientInfos.end(); it++)
+	std::cout << "fd in is pipe" << fd << std::endl;
+	/*for (auto it = this->_clientInfos.begin(); it != this->_clientInfos.end(); it++)
 	{
+		std::cout << "iter pipe " << it->second.pipeFd << std::endl;
 		if (it->second.pipeFd == fd)
+		{
+			std::cout << "is pipe??" << std::endl;
+			return true;
+		}
+	}*/
+	if (this->_clientPipe[fd] != 0)
+	{
+		std::cout << "is pipe??" << std::endl;
 		return true;
 	}
+	std::cout << "not pipe" << std::endl;
 	return false;
 }
 

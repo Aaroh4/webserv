@@ -13,14 +13,15 @@ class Request
 		Request(Request const& src);
 		Request& operator=(Request const& src);
 
-		virtual void		parse(void);
-		virtual	void		sanitize(void);
-		virtual std::string	getHost(void);
-		virtual std::string	getType(void);
-		virtual std::string	getContentLength(void);
-		virtual std::string	getQueryString(void);
-		virtual std::string	getMethod(void);
-		virtual void		printRequest(int clientSocket);
+		void		parse(void);
+		void		sanitize(void);
+		std::string	getHost(void);
+		std::string	getType(void);
+		std::string	getContentLength(void);
+		std::string	getQueryString(void);
+		std::string	getMethod(void);
+		std::string	getUrl(void);
+		void		printRequest(int clientSocket);
 
 	protected:
 		int	_sanitizeStatus;
