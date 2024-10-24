@@ -5,7 +5,18 @@
 #include "libraries.hpp"
 #include <algorithm>
 #include <unordered_map>
+#include "Request.hpp"
 #define DEFAULT "test1.cfg"
+
+typedef struct s_clientInfo
+{
+	Request*	req;
+	int			pipeFd;
+	std::string	request;
+	std::string cgiResponse;
+	bool		requestReceived;
+	bool		cgiResponseReady;
+}	t_clientInfo;
 
 class ServerManager
 {
@@ -15,23 +26,27 @@ class ServerManager
 			ServerManager operator=(const ServerManager &);
 			~ServerManager();
 
-			int		startServers();
+			int		startServers(void);
 			void	setNewInfo(ServerInfo server);
-			void	runServers();
-			void	addNewConnection(size_t i);
+			void	runServers(void);
+			void	runCgi(std::string path, char** envp, int& clientSocket);
+			void	addNewConnection(size_t& i);
 			void	receiveRequest(size_t& i);
 			size_t	getRequestLength(std::string& request);
 			size_t	findLastChunk(std::string& request, size_t start_pos);
-			void	sendResponse(size_t& i);
+			int		sendResponse(size_t& i);
 			void	removeConnection(int clientSocket, size_t& i);
-			std::vector<ServerInfo> get_info();
+			void	addPipeFd(int pipeFd);
+			int		checkForCgi(Request& req, int& clientSocket);
+			bool	isPipeFd(int& fd);
+			void	readFromCgiFd(const int& fd);
+			std::vector<ServerInfo> get_info(void);
 	private:
-			std::vector<ServerInfo> _info;
-			std::vector<struct pollfd> _poll_fds;
-			std::unordered_map<int, int> _connections;
-			std::unordered_map<int, std::string> _clients;
-			std::unordered_map<int, bool> _requestReceived;
-
+			std::unordered_map<int, t_clientInfo>  	_clientInfos; //key = client socket
+			std::vector<ServerInfo>					_info;
+			std::vector<struct pollfd> 				_poll_fds;
+			std::unordered_map<int, int> 			_connections;
+			std::unordered_map<int, int> 			_clientPipe; //key = pipe fd & value = client socket
 };
 
 #endif

@@ -36,11 +36,11 @@ void Response::handleCRUD(int clientfd, ServerInfo server)
 		else if (this->_method == "POST")
 			respondPost(clientfd, server);
 		else if (this->_method == "DELETE")
-				respondDelete(clientfd);
+			respondDelete(clientfd);
 		else
 			throw ResponseException405();
 	} catch (const ResponseException &e){
-			sendErrorResponse(e.what(), clientfd, e.responseCode());
+		sendErrorResponse(e.what(), clientfd, e.responseCode());
 	}
 }
 
@@ -102,6 +102,7 @@ std::string formatSessionCookie( void ){
 
 void Response::respondGet(int clientfd, ServerInfo server)
 {
+/*	if (this->_type == "cgi/py" || this->_type == "cgi/php")
 	if (this->_type == "cgi/py" || this->_type == "cgi/php")
 	{
 		char result[4096];
@@ -123,18 +124,35 @@ void Response::respondGet(int clientfd, ServerInfo server)
 
 	if (server.getlocationinfo()[this->_url].dirList != false && server.getlocationinfo()[this->_url].index.empty())
 	{
-		this->directorylisting(clientfd, this->buildDirectorylist(server.getlocationinfo()[this->_url].root, server.getlocationinfo()[this->_url].root.size() + 1));
+		std::string location = std::filesystem::canonical("/proc/self/exe");
+		this->handleCgi(location.substr(0, location.rfind("/")) + server.getlocationinfo()["/" + cutFromTo(this->_url, 1, "/")].root + this->_url, clientfd);
 	}
 	else
-	{
-		try
+	{*/
+		std::string response;
+
+		//std::cout << "index: " << server.getlocationinfo()[this->_url].index << " Url< " << this->_url << std::endl;
+		if (server.getlocationinfo()[this->_url].dirList != false && server.getlocationinfo()[this->_url].index.empty())
 		{
-			openFile(server);
+			this->directorylisting(clientfd, this->buildDirectorylist(server.getlocationinfo()[this->_url].root, server.getlocationinfo()[this->_url].root.size() + 1));
 		}
-		catch(ResponseException &e)
+		else
 		{
-			sendErrorResponse(e.what(), clientfd, e.responseCode());
-			return;
+			try
+			{
+				openFile(server);
+			}
+			catch(ResponseException &e)
+			{
+				sendErrorResponse(e.what(), clientfd, e.responseCode());
+				return;
+			}
+			response = formatGetResponseMsg(0);
+			send(clientfd, response.c_str(), response.length(), 0);
+			const std::size_t chunkSize = 8192;
+			char buffer[chunkSize];
+			while (this->_file.read(buffer, chunkSize) || this->_file.gcount() > 0)
+				send(clientfd, buffer, this->_file.gcount(), MSG_NOSIGNAL);
 		}
 		response = formatGetResponseMsg(0);
 		send(clientfd, response.c_str(), response.length(), 0);
@@ -149,24 +167,14 @@ void Response::respondGet(int clientfd, ServerInfo server)
 
 void	Response::respondPost(int clientfd, ServerInfo server)
 {
-	if (this->_type == "cgi/py" || this->_type == "cgi/php")
+	/*if (this->_type == "cgi/py" || this->_type == "cgi/php")
 	{
-		char result[4096];
-		std::string location;
-		ssize_t count = readlink("/proc/self/exe", result, 4096);
-		try {
-			if (count == -1)
-				throw ResponseException();
-		} catch (const ResponseException &e){
-			sendErrorResponse(e.what(), clientfd, e.responseCode());
-			return ;
-		}
-
-		location = std::string(result, (count > 0) ? count : 0);
+		std::string location = std::filesystem::canonical("/proc/self/exe");
 		this->handleCgi(location.substr(0, location.rfind("/")) + server.getlocationinfo()["/" + cutFromTo(this->_url, 1, "/")].root + this->_url, clientfd);
 	}
 	else
-	{
+	{*/
+		(void) server;
 		std::string response;
 
 		this->_sanitizeStatus = 204;
@@ -175,7 +183,6 @@ void	Response::respondPost(int clientfd, ServerInfo server)
 		send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL);
 		std::cout << "Response to client: " << clientfd << std::endl;
 		std::cout << response << std::endl;
-	}
 }
 
 void	Response::respondDelete(int clientfd)
@@ -208,7 +215,7 @@ void	Response::respondDelete(int clientfd)
 	std::cout << response << std::endl;
 }
 
-void	Response::handleCgi(std::string path, int client_socket)
+/*void	Response::handleCgi(std::string path, int client_socket)
 {
 	int	pipefd[2];
 
@@ -271,7 +278,7 @@ void	Response::handleCgi(std::string path, int client_socket)
 		int	status;
 		waitpid(pid, &status, 0);
 	}
-}
+}*/
 
 void Response::directorylisting(int clientfd, std::string file)
 {
