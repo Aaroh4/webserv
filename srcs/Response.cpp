@@ -53,8 +53,8 @@ void	Response::respond(int clientfd, ServerInfo server)
 			//	throw ResponseException404();
 			//case 400:
 			//	throw ResponseException400();
-			//case 403:
-			//	throw ResponseException403();
+			case 403:
+				throw ResponseException403();
 			//case 501:
 			//	throw ResponseException501();
 			//case 505:
