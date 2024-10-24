@@ -104,7 +104,6 @@ void Response::respondGet(int clientfd, ServerInfo server)
 {
 	std::string response;
 
-	//std::cout << "index: " << server.getlocationinfo()[this->_url].index << " Url< " << this->_url << std::endl;
 	if (server.getlocationinfo()[this->_url].dirList != false && server.getlocationinfo()[this->_url].index.empty())
 	{
 		this->directorylisting(clientfd, this->buildDirectorylist(server.getlocationinfo()[this->_url].root, server.getlocationinfo()[this->_url].root.size() + 1));
@@ -139,22 +138,15 @@ void Response::respondGet(int clientfd, ServerInfo server)
 
 void	Response::respondPost(int clientfd, ServerInfo server)
 {
-	/*if (this->_type == "cgi/py" || this->_type == "cgi/php")
-	{
-		std::string location = std::filesystem::canonical("/proc/self/exe");
-		this->handleCgi(location.substr(0, location.rfind("/")) + server.getlocationinfo()["/" + cutFromTo(this->_url, 1, "/")].root + this->_url, clientfd);
-	}
-	else
-	{*/
-		(void) server;
-		std::string response;
+	(void) server;
+	std::string response;
 
-		this->_sanitizeStatus = 204;
-		this->_errorMessage = "No Content";
-		response = formatGetResponseMsg(0);
-		send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL);
-		std::cout << "Response to client: " << clientfd << std::endl;
-		std::cout << response << std::endl;
+	this->_sanitizeStatus = 204;
+	this->_errorMessage = "No Content";
+	response = formatGetResponseMsg(0);
+	send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL);
+	std::cout << "Response to client: " << clientfd << std::endl;
+	std::cout << response << std::endl;
 }
 
 void	Response::respondDelete(int clientfd)
@@ -289,7 +281,6 @@ void Response::openFile(ServerInfo server)
 	std::string temp;
 	std::string	test = "/" + cutFromTo(this->_url, 1, "/");
 
-	//std::cout << this->_url << std::endl;
 	while ((server.getlocationinfo()[temp].root.empty()
 		|| !server.getlocationinfo()[test].root.empty()) && test.size() + 1 <= this->_url.size())
 	{
@@ -298,8 +289,6 @@ void Response::openFile(ServerInfo server)
 		if (!server.getlocationinfo()[test].root.empty())
 			temp = test;
 	}
-	//std::cout << "url:" << this->_url << std::endl;
-	//std::cout << server.getlocationinfo()[temp].root + "/" + this->_url.substr(temp.size(), std::string::npos) << std::endl;
 
 	if (!server.getlocationinfo()[this->_url].index.empty())
 		this->_file.open(server.getlocationinfo()[this->_url].root + "/" + server.getlocationinfo()[this->_url].index);
@@ -308,12 +297,9 @@ void Response::openFile(ServerInfo server)
 	else
 		this->_file.open(server.getlocationinfo()["/"].root + "/" + this->_url);
 
-	//if (this->_file.is_open() == false)
-	//	this->_file.open(server.getlocationinfo()["/"].root + "/" + this->_url);
 
 	if (this->_file.is_open() == false)
 	{
-		//std::cout << errno << std::endl;
 		switch errno
 		{
 			case EIO:
@@ -444,7 +430,6 @@ void Response::sendCustomErrorPage(int clientfd)
 
 void Response::sendErrorResponse(std::string errorMessage, int clientfd, int errorCode)
 {
-	//std::cout << "sendErrorResponse: " << errorCode << " " << errorMessage <<  std::endl;
 	this->_errorMessage = errorMessage;
 	this->_sanitizeStatus = errorCode;
 	if (this->_sanitizeStatus == 400 ||

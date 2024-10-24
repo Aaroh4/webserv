@@ -189,29 +189,6 @@ void	ServerManager::runCgi(std::string path, char** envp, int& clientSocket)
 		this->_clientInfos[clientSocket].pipeFd = pipeFd[0];
 		this->_clientPipe[pipeFd[0]] = clientSocket;
 		std:: cout << "run cgi created pipe fd " << this->_clientInfos[clientSocket].pipeFd << std::endl; 
-	/*	char buffer[1024];
-		ssize_t nbytes;
-		std::cout << "hello from read from cgi\n";
-		nbytes = read(pipeFd[0], buffer, sizeof(buffer));
-		if (nbytes == -1)
-		{
-			close(pipeFd[0]);
-			this->_clientPipe.erase(pipeFd[0]);
-			throw std::runtime_error("read() failed");
-		}
-		else if (nbytes == 0)
-		{
-			int clientSocket = this->_clientPipe[pipeFd[0]];
-			this->_clientInfos[clientSocket].cgiResponseReady = true;
-			close(pipeFd[0]);
-			this->_clientPipe.erase(pipeFd[0]);
-		}
-		else
-		{
-			int clientSocket = this->_clientPipe[pipeFd[0]];
-			this->_clientInfos[clientSocket].cgiResponse.append(buffer, nbytes);
-			std::cout << "from cgi fd " << this->_clientInfos[clientSocket].cgiResponse << std::endl;
-		}*/ 
 	}
 }
 
@@ -304,7 +281,7 @@ void	ServerManager::receiveRequest(size_t& i)
 		{
 			Request* request = new Request(this->_clientInfos[clientSocket].request);
 			request->parse();
-			request->sanitize();
+			request->sanitize(this->_info[i]);
 			request->printRequest(clientSocket);
 			this->_clientInfos[clientSocket].req = request;
 			if (checkForCgi(*request, clientSocket) == 1)
@@ -345,13 +322,6 @@ void	ServerManager::readFromCgiFd(const int& fd)
 		this->_clientInfos[clientSocket].cgiResponse.append(buffer, nbytes);
 		std::cout << "cgi response " << this->_clientInfos[clientSocket].cgiResponse << std::endl;
 	}
-	//std::cout.write(buffer, nbytes).flush();
-	//send(client_socket, buffer, nbytes, 0);
-	/*= "HTTP/1.1 204 No Content\r\n";
-	response += "Content-Type: text/plain\r\n";
-	//response += "Content-Length: " + std::to_string(file.size()) + "\r\n";
-	response += "Keep-Alive: timeout=5, max=100\r\n\r\n";
-	send(client_socket, response.c_str(), response.length(), 0);*/
 }
 
 int	ServerManager::checkForCgi(Request& req, int& clientSocket)
@@ -398,15 +368,6 @@ int	ServerManager::checkForCgi(Request& req, int& clientSocket)
 bool	ServerManager::isPipeFd(int& fd)
 {
 	std::cout << "fd in is pipe" << fd << std::endl;
-	/*for (auto it = this->_clientInfos.begin(); it != this->_clientInfos.end(); it++)
-	{
-		std::cout << "iter pipe " << it->second.pipeFd << std::endl;
-		if (it->second.pipeFd == fd)
-		{
-			std::cout << "is pipe??" << std::endl;
-			return true;
-		}
-	}*/
 	if (this->_clientPipe[fd] != 0)
 	{
 		std::cout << "is pipe??" << std::endl;

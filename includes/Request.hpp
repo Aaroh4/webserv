@@ -3,6 +3,7 @@
 
 #include "libraries.hpp"
 #include <unordered_map>
+#include "ServerInfo.hpp"
 
 class Request
 {
@@ -14,7 +15,7 @@ class Request
 		Request& operator=(Request const& src);
 
 		void		parse(void);
-		void		sanitize(void);
+		void		sanitize(ServerInfo &info);
 		std::string	getHost(void);
 		std::string	getType(void);
 		std::string	getContentLength(void);

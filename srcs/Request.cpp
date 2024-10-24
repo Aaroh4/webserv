@@ -254,7 +254,6 @@ void	Request::_parseHeaders(void)
 		{
 			this->_sanitizeStatus = 400;
 			this->_errmsg = "Bad Request";
-			// std::cout << "\n\n in Parse() set up status 400\n\n" << std::endl;
 			break;
 		}
 		this->_headers[line.substr(0, i)] = line.substr(i + 2, lineEnd - (i + 3));
@@ -338,11 +337,9 @@ void	Request::parse(void)
 		this->_decodeChunks();
 	if (this->_headers["Content-Type"].find("multipart/form-data") != std::string::npos)
 		this->_parseMultipartContent();
-	//else
-	//	this->_splitKeyValuePairs();
 }
 
-void	Request::sanitize(void)
+void	Request::sanitize(ServerInfo &info)
 {
 	if (this->_sanitizeStatus != 200)
 		return ;
@@ -368,7 +365,6 @@ void	Request::sanitize(void)
 	{
 		this->_sanitizeStatus = 400;
 		this->_errmsg = "Bad Request"; //Bad request
-		// std::cout << "\n\n in sanitize() set up status 400\n\n" << std::endl;
 		return;
 	}
 	for (const auto& map_content : this->_headers)
@@ -377,7 +373,6 @@ void	Request::sanitize(void)
 		{
 			this->_sanitizeStatus = 400;
 			this->_errmsg = "Bad Request"; //Bad request
-			// std::cout << "\n\n in sanitize2() set up status 400\n\n" << std::endl;
 			break;
 		}
 	}

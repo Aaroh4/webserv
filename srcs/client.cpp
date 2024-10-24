@@ -33,9 +33,7 @@ int main()
 	std::cout << "Headers length: " << request.length() << "\n";
 	request += temp;
 	std::cout << "request len?? " << request.length() << "\n";
-	//int bytes_sent = send(clientSocket, request.c_str(), request.length(), 0);
 
-	//std::cout << "bytes sent: " << bytes_sent << "\n";
 	size_t total_sent = 0;
 	std::string requesti = "POST / HTTP/1.1\r\n"
 	"Transfer-Encoding: chunked\r\n"
