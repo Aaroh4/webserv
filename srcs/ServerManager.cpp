@@ -286,7 +286,7 @@ void	ServerManager::receiveRequest(size_t& i)
 		{
 			Request* request = new Request(this->_clientInfos[clientSocket].request);
 			request->parse();
-			request->sanitize(this->_info[i]);
+			request->sanitize(this->_info[this->_connections[clientSocket]]);
 			request->printRequest(clientSocket);
 			this->_clientInfos[clientSocket].req = request;
 			if (checkForCgi(*request, clientSocket) == 1)

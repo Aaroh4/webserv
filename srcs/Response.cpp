@@ -278,22 +278,11 @@ std::string Response::buildDirectorylist(std::string name, int rootsize)
 void Response::openFile(ServerInfo server)
 {
 	this->_fsize = 0;
-	std::string temp;
-	std::string	test = "/" + cutFromTo(this->_url, 1, "/");
-
-	while ((server.getlocationinfo()[temp].root.empty()
-		|| !server.getlocationinfo()[test].root.empty()) && test.size() + 1 <= this->_url.size())
-	{
-		temp = test + "/";
-		test += "/" + cutFromTo(this->_url, test.size() + 1, "/");
-		if (!server.getlocationinfo()[test].root.empty())
-			temp = test;
-	}
 
 	if (!server.getlocationinfo()[this->_url].index.empty())
 		this->_file.open(server.getlocationinfo()[this->_url].root + "/" + server.getlocationinfo()[this->_url].index);
-	else if (!server.getlocationinfo()[temp].root.empty())
-		this->_file.open(server.getlocationinfo()[temp].root + "/" + this->_url.substr(temp.size(), std::string::npos));
+	else if (!this->_root.empty())
+		this->_file.open(this->_root + "/" + this->_url.substr(this->_origLoc.size(), std::string::npos));
 	else
 		this->_file.open(server.getlocationinfo()["/"].root + "/" + this->_url);
 

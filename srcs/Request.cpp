@@ -28,6 +28,8 @@ Request::Request(Request const& src)
 	this->_headers = src._headers;
 	this->_sanitizeStatus = src._sanitizeStatus;
 	this->_queryString = src._queryString;
+	this->_root = src._root;
+	this->_origLoc = src._origLoc;
 }
 
 Request& Request::operator=(Request const& src)
@@ -43,6 +45,8 @@ Request& Request::operator=(Request const& src)
 		this->_sanitizeStatus = src._sanitizeStatus;
 		this->_queryString = src._queryString;
 		this->_headers.clear();
+		this->_root = src._root;
+		this->_origLoc = src._origLoc;
 		for (const auto& map_content : src._headers)
 		{
 			this->_headers[map_content.first] = map_content.second;
@@ -262,39 +266,6 @@ void	Request::_parseHeaders(void)
 	this->_body = this->_request;
 }
 
-/*void	Request::_splitKeyValuePairs(void)
-{
-	std::string data;
-	std::string key;
-	size_t start = 0;
-	size_t end = 0;
-
-	if (!this->_queryString.empty())
-		data = this->_queryString;
-	else if (this->_headers["Content-Type"].find("application/x-www-form-urlencoded") != std::string::npos
-	&& this->_body.length() > 0)
-		data = this->_body;
-	else
-		return;
-	while (1)
-	{
-		end = data.find_first_of("=", end);
-		if (end == std::string::npos)
-			break;
-		key = data.substr(start, end - start);
-		start = end + 1;
-		end = data.find_first_of("&", end);
-		if (end == std::string::npos)
-		{
-			end = data.find_last_not_of("\r\n");
-			this->_data[key] = data.substr(start, end - (start - 1));
-			break;
-		}
-		this->_data[key] = data.substr(start, end - start);
-		start = end + 1;
-	}
-}*/
-
 void	Request::_decodeChunks(void)
 {
 	int			chunkSize = 1;
@@ -339,9 +310,26 @@ void	Request::parse(void)
 		this->_parseMultipartContent();
 }
 
-void	Request::sanitize(ServerInfo &info)
+void	Request::sanitize(ServerInfo server)
 {
-	(void)info;
+	std::string temp;
+	std::string	test = "/" + cutFromTo(this->_url, 1, "/");
+
+	while ((server.getlocationinfo()[temp].root.empty()
+		|| !server.getlocationinfo()[test].root.empty()) && test.size() + 1 <= this->_url.size())
+	{
+		temp = test + "/";
+		test += "/" + cutFromTo(this->_url, test.size() + 1, "/");
+		if (!server.getlocationinfo()[test].root.empty())
+			temp = test;
+	}
+	if (!server.getlocationinfo()[temp].root.empty())
+	{
+		this->_root = server.getlocationinfo()[temp].root;
+		std::cout << "test:" << this->_root << std::endl;;
+		this->_origLoc = temp;
+	}
+	
 	if (this->_sanitizeStatus != 200)
 		return ;
 	if (this->_httpVersion != "HTTP/1.0" && this->_httpVersion != "HTTP/1.1")
