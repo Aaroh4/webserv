@@ -316,7 +316,7 @@ void	Request::sanitize(ServerInfo server)
 	std::string	test = "/" + cutFromTo(this->_url, 1, "/");
 
 	while ((server.getlocationinfo()[temp].root.empty()
-		|| !server.getlocationinfo()[test].root.empty()) && test.size() + 1 <= this->_url.size())
+		|| server.getlocationinfo()[test].root.empty()) && test.size() + 1 <= this->_url.size())
 	{
 		temp = test + "/";
 		test += "/" + cutFromTo(this->_url, test.size() + 1, "/");
@@ -326,7 +326,6 @@ void	Request::sanitize(ServerInfo server)
 	if (!server.getlocationinfo()[temp].root.empty())
 	{
 		this->_root = server.getlocationinfo()[temp].root;
-		std::cout << "test:" << this->_root << std::endl;;
 		this->_origLoc = temp;
 	}
 	else
@@ -344,8 +343,7 @@ void	Request::sanitize(ServerInfo server)
 		this->_errmsg = "Unsupported HTTP";
 		return;
 	}
-	if (this->_url.find("..") != std::string::npos 
-		|| server.getlocationinfo()[temp].methods.find("GET") == server.getlocationinfo()[temp].methods.end())
+	if (this->_url.find("..") != std::string::npos )
 	{
 		this->_sanitizeStatus = 403;
 		this->_errmsg = "Forbidden"; //Forbidden
