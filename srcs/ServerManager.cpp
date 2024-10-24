@@ -63,6 +63,7 @@ void	ServerManager::addNewConnection(size_t& i)
 		t_clientInfo clientInfo;
 		std::memset(&clientInfo, 0, sizeof(t_clientInfo));
 		this->_clientInfos[clientSocket] = clientInfo;
+		std::cout << "----------------------------------------" << std::endl;
 		std::cout << "New client connected on server " << i << "\n";
 		std::cout << "Client got clientSocket " << clientSocket << std::endl;
 	}
@@ -262,6 +263,7 @@ void	ServerManager::receiveRequest(size_t& i)
 	size_t		totalLength = 0;
 
 	// Receive data until complete request is sent
+
 	try
 	{
 		if (totalLength == 0 || this->_clientInfos[clientSocket].request.length() < totalLength)
@@ -302,6 +304,7 @@ void	ServerManager::receiveRequest(size_t& i)
 			Request* request = new Request(this->_clientInfos[clientSocket].request);
 			request->parse();
 			request->sanitize();
+			request->printRequest(clientSocket);
 			this->_clientInfos[clientSocket].req = request;
 			if (checkForCgi(*request, clientSocket) == 1)
 			{
