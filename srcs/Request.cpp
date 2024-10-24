@@ -329,7 +329,13 @@ void	Request::sanitize(ServerInfo server)
 		std::cout << "test:" << this->_root << std::endl;;
 		this->_origLoc = temp;
 	}
-	
+	else
+	{
+		this->_root = server.getlocationinfo()["/"].root;
+		this->_origLoc = "/";
+		temp = "/";
+	}
+
 	if (this->_sanitizeStatus != 200)
 		return ;
 	if (this->_httpVersion != "HTTP/1.0" && this->_httpVersion != "HTTP/1.1")
@@ -338,7 +344,8 @@ void	Request::sanitize(ServerInfo server)
 		this->_errmsg = "Unsupported HTTP";
 		return;
 	}
-	if (this->_url.find("..") != std::string::npos)
+	if (this->_url.find("..") != std::string::npos 
+		|| server.getlocationinfo()[temp].methods.find("GET") == server.getlocationinfo()[temp].methods.end())
 	{
 		this->_sanitizeStatus = 403;
 		this->_errmsg = "Forbidden"; //Forbidden
