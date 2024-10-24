@@ -51,6 +51,8 @@ void locations(std::string temp, ServerInfo &server)
 						for (std::string method : all_methods)
 							if (value.find(method) != std::string::npos)
 								temploc.methods.insert(method);
+						if (temploc.methods.find("GET") == temploc.methods.end())
+							std::cout << "asdasdasda" << std::endl;
 						break;
 				case 3:
 						temploc.upload = value;
