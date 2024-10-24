@@ -197,7 +197,7 @@ void	ServerManager::runCgi(std::string path, char** envp, int& clientSocket)
 	}
 }
 
-int	ServerManager::sendResponse(size_t& i)
+void	ServerManager::sendResponse(size_t& i)
 {
 	int	clientSocket = this->_poll_fds[i].fd;
 
@@ -217,7 +217,6 @@ int	ServerManager::sendResponse(size_t& i)
 		}
 		removeConnection(clientSocket, i);
 	}
-	return 0;
 }
 
 void ServerManager::removeConnection(int clientSocket, size_t& i)
@@ -352,8 +351,9 @@ int	ServerManager::checkForCgi(Request& req, int& clientSocket)
 		std::string location = std::filesystem::canonical("/proc/self/exe");
 		size_t lastDash = location.find_last_of("/");
 		location.erase(lastDash + 1, location.length() - (lastDash + 1));
-		location += "www" + req.getUrl();
-		std::cout << "location: " << location << std::endl;
+
+		location += req.getRoot() + "/" + req.getUrl().substr(req.getOrigLocLen(), std::string::npos);
+		std::cout << "loation " << location << std::endl; 
 		try
 		{
 			runCgi(location, envp, clientSocket);

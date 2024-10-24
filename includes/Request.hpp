@@ -22,6 +22,8 @@ class Request
 		std::string	getQueryString(void);
 		std::string	getMethod(void);
 		std::string	getUrl(void);
+		std::string	getRoot(void);
+		size_t		getOrigLocLen(void);
 		void		printRequest(int clientSocket);
 
 	protected:

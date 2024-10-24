@@ -186,7 +186,6 @@ void	Request::_getContentType(void)
 void	Request::_parseRequestLine(void)
 {
 	//Parses method and put's it to string attribute _method, then erases it from the request
-
 	const char* methods[3] = {"GET", "POST", "DELETE"};
 	size_t i = this->_request.find_first_of(" ");
 	this->_method = this->_request.substr(0, i);
@@ -211,7 +210,10 @@ void	Request::_parseRequestLine(void)
 	i = this->_request.find_first_of("?");
 	index = this->_request.find_first_of(" ");
 	if (i < index)
+	{
 		this->_url = this->_request.substr(0, i);
+		this->_request.erase(0, this->_url.length());
+	}	
 	else
 	{
 		this->_url = this->_request.substr(0, index);
@@ -399,10 +401,21 @@ std::string	Request::getUrl(void)
 	return this->_url;
 }
 
+std::string	Request::getRoot(void)
+{
+	return this->_root;
+}
+
+size_t	Request::getOrigLocLen(void)
+{
+	return this->_origLoc.length();
+}
+
 void Request::printRequest(int clientSocket)
 {
 	std::cout << "Client " << clientSocket << " Requested:\n";
 	std::cout << "URL: "<< this->_url << std::endl;
+	std::cout << "queryString: "<< this->_queryString << std::endl;
 	std::cout << "Method: "<< this->_httpVersion << " " << this->_method << std::endl;
 	std::cout << "Type: "<< this-> _type << std::endl;
 	std::cout << "*******" << std::endl;
