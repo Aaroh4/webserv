@@ -341,6 +341,7 @@ void	Request::parse(void)
 
 void	Request::sanitize(ServerInfo &info)
 {
+	(void)info;
 	if (this->_sanitizeStatus != 200)
 		return ;
 	if (this->_httpVersion != "HTTP/1.0" && this->_httpVersion != "HTTP/1.1")

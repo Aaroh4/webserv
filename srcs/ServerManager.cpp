@@ -42,6 +42,12 @@ ServerManager ServerManager::operator=(const ServerManager &input)
 
 ServerManager::~ServerManager()
 {
+	for (auto& it: this->_clientInfos)
+	{
+		close(it.first);
+		close(it.second.pipeFd);
+		delete it.second.req;
+	}
 }
 
 void	ServerManager::addNewConnection(size_t& i)
@@ -188,7 +194,6 @@ void	ServerManager::runCgi(std::string path, char** envp, int& clientSocket)
 		}
 		this->_clientInfos[clientSocket].pipeFd = pipeFd[0];
 		this->_clientPipe[pipeFd[0]] = clientSocket;
-		std:: cout << "run cgi created pipe fd " << this->_clientInfos[clientSocket].pipeFd << std::endl; 
 	}
 }
 
@@ -300,7 +305,7 @@ void	ServerManager::readFromCgiFd(const int& fd)
 {
 	char buffer[1024];
 	ssize_t nbytes;
-    std::cout << "hello from read from cgi\n";
+
 	nbytes = read(fd, buffer, sizeof(buffer));
 	if (nbytes == -1)
 	{
@@ -314,13 +319,11 @@ void	ServerManager::readFromCgiFd(const int& fd)
 		this->_clientInfos[clientSocket].cgiResponseReady = true;
 		close(fd);
 		this->_clientPipe.erase(fd);
-
 	}
 	else
 	{
 		int clientSocket = this->_clientPipe[fd];
 		this->_clientInfos[clientSocket].cgiResponse.append(buffer, nbytes);
-		std::cout << "cgi response " << this->_clientInfos[clientSocket].cgiResponse << std::endl;
 	}
 }
 
@@ -367,13 +370,10 @@ int	ServerManager::checkForCgi(Request& req, int& clientSocket)
 
 bool	ServerManager::isPipeFd(int& fd)
 {
-	std::cout << "fd in is pipe" << fd << std::endl;
 	if (this->_clientPipe[fd] != 0)
 	{
-		std::cout << "is pipe??" << std::endl;
 		return true;
 	}
-	std::cout << "not pipe" << std::endl;
 	return false;
 }
 
