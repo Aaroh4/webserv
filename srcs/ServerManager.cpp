@@ -200,11 +200,16 @@ void	ServerManager::runCgi(std::string path, char** envp, int& clientSocket)
 void	ServerManager::sendResponse(size_t& i)
 {
 	int	clientSocket = this->_poll_fds[i].fd;
+	int	pipeFd = this->_clientInfos[clientSocket].pipeFd;
 
 	if (this->_clientInfos[clientSocket].req->getHost() == this->_info[this->_connections.at(clientSocket)].getServerName()
 		|| this->_info[this->_connections.at(clientSocket)].getServerName().empty())
 	{
-		if (this->_clientInfos[clientSocket].cgiResponseReady == true)
+		if (this->_clientPipe.find(pipeFd) != this->_clientPipe.end() && this->_clientInfos[clientSocket].cgiResponseReady == false)
+		{
+			return;
+		}
+		else if (this->_clientInfos[clientSocket].cgiResponseReady == true)
 		{
 			Response respond(*this->_clientInfos[clientSocket].req);
 			respond.setResponseBody(this->_clientInfos[clientSocket].cgiResponse);

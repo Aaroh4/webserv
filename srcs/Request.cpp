@@ -336,7 +336,6 @@ void	Request::sanitize(ServerInfo server)
 		this->_origLoc = "/";
 		temp = "/";
 	}
-
 	if (this->_sanitizeStatus != 200)
 		return ;
 	if (this->_httpVersion != "HTTP/1.0" && this->_httpVersion != "HTTP/1.1")
