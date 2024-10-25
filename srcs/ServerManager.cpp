@@ -228,16 +228,28 @@ void ServerManager::removeConnection(int clientSocket, size_t& i)
 {
 	try
 	{
+		int pipeFd = this->_clientInfos[clientSocket].pipeFd;
 		close(clientSocket);
-		std::cout << "removeConnection: ClientSocket " << clientSocket << " closed\n\n" << std::endl;
 		this->_poll_fds.erase(this->_poll_fds.begin() + i);
+		if (pipeFd){
+			for (auto it = this->_poll_fds.begin(); it != this->_poll_fds.end();){
+				if (it->fd == pipeFd)
+					it = this->_poll_fds.erase(it);
+				else
+					++it;
+			}
+		}
+		this->_clientPipe.erase(pipeFd);
 		this->_connections.erase(clientSocket);
 		delete this->_clientInfos[clientSocket].req;
 		this->_clientInfos.erase(clientSocket);
+
+		std::cout << "removeConnection: ClientSocket " << clientSocket << " closed\n\n" << std::endl;
 		i--;
 	}
 	catch(const std::exception& e)
 	{
+		std::cout << "there was an error in remove connection" << std::endl;
 		//500 Error response
 	}
 }
@@ -250,7 +262,8 @@ void	ServerManager::receiveRequest(size_t& i)
 	size_t		totalLength = 0;
 
 	// Receive data until complete request is sent
-
+	if (this->_clientInfos[clientSocket].requestReceived == true)
+		return;
 	try
 	{
 		if (totalLength == 0 || this->_clientInfos[clientSocket].request.length() < totalLength)
@@ -273,6 +286,7 @@ void	ServerManager::receiveRequest(size_t& i)
 			}
 			else
 			{
+				std::cout << strerror(errno) << std::endl;
 				throw Response::ResponseException();
 			}
 		}
@@ -283,8 +297,6 @@ void	ServerManager::receiveRequest(size_t& i)
 		removeConnection(clientSocket, i);
 		return ;
 	}
-	if (this->_clientInfos[clientSocket].requestReceived = true)
-		return;
 	if (totalLength != 0 && totalLength == this->_clientInfos[clientSocket].request.length())
 	{
 		this->_clientInfos[clientSocket].requestReceived = true;
@@ -358,19 +370,19 @@ int	ServerManager::checkForCgi(Request& req, int& clientSocket)
 		std::string location = std::filesystem::canonical("/proc/self/exe");
 		size_t lastDash = location.find_last_of("/");
 		location.erase(lastDash + 1, location.length() - (lastDash + 1));
-// 		// location += "www" + req.getUrl();
-// 		// std::cout << "location: " << location << std::endl;
-// 		std::string script = req.getUrl();
-//         lastDash = script.find_last_of("/");
-//         script = script.substr(lastDash + 1, script.length() - (lastDash + 1));
-//         location += "www/cgi-bin/" + script;
+		// location += "www" + req.getUrl();
+		// std::cout << "location: " << location << std::endl;
+		std::string script = req.getUrl();
+        lastDash = script.find_last_of("/");
+        script = script.substr(lastDash + 1, script.length() - (lastDash + 1));
+        location += "www/cgi-bin/" + script;
 
-		std::cout << "root " << req.getRoot() << std::endl;
-		std::cout << "url1: " << req.getUrl() << std::endl;
-		std::cout << "size: " << req.getOrigLocLen() << std::endl;
-		std::cout << "url: " << req.getUrl().substr(req.getOrigLocLen().length(), std::string::npos) << std::endl;
-		location += req.getRoot() + "/" + req.getUrl().substr(req.getOrigLocLen().length(), std::string::npos);
-		std::cout << "location " << location << std::endl; 
+		// std::cout << "root " << req.getRoot() << std::endl;
+		// std::cout << "url1: " << req.getUrl() << std::endl;
+		// std::cout << "size: " << req.getOrigLocLen() << std::endl;
+		// std::cout << "url: " << req.getUrl().substr(req.getOrigLocLen().length(), std::string::npos) << std::endl;
+		// location += req.getRoot() + "/" + req.getUrl().substr(req.getOrigLocLen().length(), std::string::npos);
+		// std::cout << "location " << location << std::endl;
 		try
 		{
 			runCgi(location, envp, clientSocket);
@@ -412,15 +424,17 @@ void	ServerManager::runServers()
 			bool pipeFd = false;
 			if (this->_poll_fds[i].revents & POLLIN)
 			{
-				if (i < this->get_info().size())
+				if (i < this->get_info().size()){
 					addNewConnection(i);
+				}
 				else if (isPipeFd(this->_poll_fds[i].fd))
 				{
 					readFromCgiFd(this->_poll_fds[i].fd);
 					pipeFd = true;
 				}
-				else
+				else{
 					receiveRequest(i);
+				}
 			}
 			if (this->_poll_fds[i].revents & POLLOUT && this->_clientInfos[this->_poll_fds[i].fd].requestReceived == true
 				&& pipeFd == false)
