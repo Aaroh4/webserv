@@ -140,6 +140,7 @@ void	Response::respondPost(int clientfd, ServerInfo server)
 {
 	std::string response;
 
+	(void) server;
 	response = formatPostResponseMsg(1);
 	send(clientfd, response.c_str(), response.length(), 0);
 	std::cout << "Response to client: " << clientfd << std::endl;
