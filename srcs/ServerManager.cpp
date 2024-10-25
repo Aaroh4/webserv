@@ -283,6 +283,8 @@ void	ServerManager::receiveRequest(size_t& i)
 		removeConnection(clientSocket, i);
 		return ;
 	}
+	if (this->_clientInfos[clientSocket].requestReceived = true)
+		return;
 	if (totalLength != 0 && totalLength == this->_clientInfos[clientSocket].request.length())
 	{
 		this->_clientInfos[clientSocket].requestReceived = true;
@@ -317,7 +319,7 @@ void	ServerManager::readFromCgiFd(const int& fd)
 		this->_clientPipe.erase(fd);
 		throw std::runtime_error("read() failed");
 	}
-	else if (nbytes == 0)
+	else if (nbytes == 0 || nbytes < 1024)
 	{
 		int clientSocket = this->_clientPipe[fd];
 		this->_clientInfos[clientSocket].cgiResponseReady = true;
@@ -370,7 +372,7 @@ int	ServerManager::checkForCgi(Request& req, int& clientSocket)
 		}
 		catch (std::exception& e)
 		{
-			throw;
+			throw Response::ResponseException();
 		}
 	}
 	else
@@ -401,16 +403,21 @@ void	ServerManager::runServers()
 		}
 		for (size_t i = 0; i < this->_poll_fds.size(); i++)
 		{
+			bool pipeFd = false;
 			if (this->_poll_fds[i].revents & POLLIN)
 			{
 				if (i < this->get_info().size())
 					addNewConnection(i);
 				else if (isPipeFd(this->_poll_fds[i].fd))
+				{
 					readFromCgiFd(this->_poll_fds[i].fd);
+					pipeFd = true;
+				}
 				else
 					receiveRequest(i);
 			}
-			if (this->_poll_fds[i].revents & POLLOUT && this->_clientInfos[this->_poll_fds[i].fd].requestReceived == true)
+			if (this->_poll_fds[i].revents & POLLOUT && this->_clientInfos[this->_poll_fds[i].fd].requestReceived == true
+				&& pipeFd == false)
 				sendResponse(i);
 		}
 	}
