@@ -13,7 +13,7 @@ typedef struct s_clientInfo
 	Request*	req;
 	int			pipeFd;
 	std::string	request;
-	std::string cgiResponse;
+	std::string cgiResponseBody;
 	bool		requestReceived;
 	bool		cgiResponseReady;
 }	t_clientInfo;
