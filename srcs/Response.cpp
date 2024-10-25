@@ -46,6 +46,8 @@ void Response::handleCRUD(int clientfd, ServerInfo server)
 
 void	Response::respond(int clientfd, ServerInfo server)
 {
+
+	std::cout << this->_sanitizeStatus << std::endl;
 	this->_server = server;
 	try{
 		switch (this->_sanitizeStatus){

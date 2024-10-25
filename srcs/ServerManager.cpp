@@ -205,18 +205,22 @@ void	ServerManager::sendResponse(size_t& i)
 	if (this->_clientInfos[clientSocket].req->getHost() == this->_info[this->_connections.at(clientSocket)].getServerName()
 		|| this->_info[this->_connections.at(clientSocket)].getServerName().empty())
 	{
+		std::cout << (this->_clientInfos[clientSocket].cgiResponseReady ? "true" : "false") << std::endl;
 		if (this->_clientPipe.find(pipeFd) != this->_clientPipe.end() && this->_clientInfos[clientSocket].cgiResponseReady == false)
 		{
 			return;
 		}
 		else if (this->_clientInfos[clientSocket].cgiResponseReady == true)
 		{
+
+			std::cout << " I want to respond!" << std::endl;
 			Response respond(*this->_clientInfos[clientSocket].req);
 			respond.setResponseBody(this->_clientInfos[clientSocket].cgiResponseBody);
 			respond.respond(clientSocket, this->_info[this->_connections.at(clientSocket)]);
 		}
 		else
 		{
+			std::cout << " I want to respond from else!" << std::endl;
 			Response respond(*this->_clientInfos[clientSocket].req);
 			respond.respond(clientSocket, this->_info[this->_connections.at(clientSocket)]);
 		}
@@ -317,7 +321,7 @@ void	ServerManager::readFromCgiFd(const int& fd)
 		this->_clientPipe.erase(fd);
 		throw std::runtime_error("read() failed");
 	}
-	else if (nbytes == 0)
+	else if (nbytes == 0 || nbytes < 1024)
 	{
 		int clientSocket = this->_clientPipe[fd];
 		this->_clientInfos[clientSocket].cgiResponseReady = true;
@@ -356,19 +360,19 @@ int	ServerManager::checkForCgi(Request& req, int& clientSocket)
 		std::string location = std::filesystem::canonical("/proc/self/exe");
 		size_t lastDash = location.find_last_of("/");
 		location.erase(lastDash + 1, location.length() - (lastDash + 1));
-// 		// location += "www" + req.getUrl();
-// 		// std::cout << "location: " << location << std::endl;
-// 		std::string script = req.getUrl();
-//         lastDash = script.find_last_of("/");
-//         script = script.substr(lastDash + 1, script.length() - (lastDash + 1));
-//         location += "www/cgi-bin/" + script;
+		// location += "www" + req.getUrl();
+		// std::cout << "location: " << location << std::endl;
+		std::string script = req.getUrl();
+        lastDash = script.find_last_of("/");
+        script = script.substr(lastDash + 1, script.length() - (lastDash + 1));
+        location += "www/cgi-bin/" + script;
 
-		std::cout << "root " << req.getRoot() << std::endl;
-		std::cout << "url1: " << req.getUrl() << std::endl;
-		std::cout << "size: " << req.getOrigLocLen() << std::endl;
-		std::cout << "url: " << req.getUrl().substr(req.getOrigLocLen().length(), std::string::npos) << std::endl;
-		location += req.getRoot() + "/" + req.getUrl().substr(req.getOrigLocLen().length(), std::string::npos);
-		std::cout << "location " << location << std::endl; 
+		// std::cout << "root " << req.getRoot() << std::endl;
+		// std::cout << "url1: " << req.getUrl() << std::endl;
+		// std::cout << "size: " << req.getOrigLocLen() << std::endl;
+		// std::cout << "url: " << req.getUrl().substr(req.getOrigLocLen().length(), std::string::npos) << std::endl;
+		// location += req.getRoot() + "/" + req.getUrl().substr(req.getOrigLocLen().length(), std::string::npos);
+		// std::cout << "location " << location << std::endl;
 		try
 		{
 			runCgi(location, envp, clientSocket);

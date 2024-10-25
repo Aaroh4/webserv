@@ -137,6 +137,8 @@ void	Request::_verifyPath(void)
 	std::filesystem::path file = "./www" + this->_url;
 	if (!std::filesystem::exists(file))
 	{
+
+		std::cout << "verifypath set 404" << std::endl;
 		this->_sanitizeStatus = 404;
 		this->_errmsg = "Not Found"; //Not Found
 		return;
@@ -213,7 +215,7 @@ void	Request::_parseRequestLine(void)
 	{
 		this->_url = this->_request.substr(0, i);
 		this->_request.erase(0, this->_url.length());
-	}	
+	}
 	else
 	{
 		this->_url = this->_request.substr(0, index);
