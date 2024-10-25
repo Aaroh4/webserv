@@ -315,15 +315,19 @@ void	Request::parse(void)
 void	Request::sanitize(ServerInfo server)
 {
 	std::string temp;
-	std::string	test = "/" + cutFromTo(this->_url, 1, "/");
+	std::string	test = "/" + cutFromTo(this->_url, 1, "/")  + "/";
 
+	std::cout << "asdadsatest: " << test << std::endl;
+	if (!server.getlocationinfo()[test].root.empty())
+		temp = test;
 	while (test.size() + 1 <= this->_url.size())
 	{
-		temp = test + "/";
-		test += "/" + cutFromTo(this->_url, test.size() + 1, "/");
+		test += cutFromTo(this->_url, test.size(), "/") + "/";
+		std::cout << "asdasdtest2: " << test << std::endl;
 		if (!server.getlocationinfo()[test].root.empty())
 			temp = test;
 	}
+	std::cout << "asdasdasd: "<< temp << std::endl;
 	if (!server.getlocationinfo()[temp].root.empty())
 	{
 		this->_root = server.getlocationinfo()[temp].root;
