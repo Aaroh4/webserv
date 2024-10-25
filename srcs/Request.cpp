@@ -413,6 +413,11 @@ std::string	Request::getRoot(void)
 	return this->_root;
 }
 
+std::string	Request::getBody(void)
+{
+	return this->_body;
+}
+
 std::string	Request::getOrigLocLen(void)
 {
 	return this->_origLoc;

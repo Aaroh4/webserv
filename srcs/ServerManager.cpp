@@ -352,7 +352,7 @@ int	ServerManager::checkForCgi(Request& req, int& clientSocket)
 	{
 		std::string contentLen = req.getContentLength();
 		std::string method = "REQUEST_METHOD=" + req.getMethod();
-		std::string query = "QUERY_STRING=" + req.getQueryString();
+		std::string query;
 		std::string	length;
 
 		if (contentLen.empty())
@@ -360,6 +360,10 @@ int	ServerManager::checkForCgi(Request& req, int& clientSocket)
 		else
 			length = "CONTENT_LENGTH=0";
 
+		if (!req.getQueryString().empty())
+			query = "QUERY_STRING=" + req.getQueryString();
+		else
+			query = "QUERY_STRING=" + req.getBody();
 		char *envp[] = {
 		(char *) method.c_str(),
 		(char *) query.c_str(),
@@ -370,19 +374,16 @@ int	ServerManager::checkForCgi(Request& req, int& clientSocket)
 		std::string location = std::filesystem::canonical("/proc/self/exe");
 		size_t lastDash = location.find_last_of("/");
 		location.erase(lastDash + 1, location.length() - (lastDash + 1));
-		// location += "www" + req.getUrl();
-		// std::cout << "location: " << location << std::endl;
 		std::string script = req.getUrl();
         lastDash = script.find_last_of("/");
         script = script.substr(lastDash + 1, script.length() - (lastDash + 1));
         location += "www/cgi-bin/" + script;
-
-		// std::cout << "root " << req.getRoot() << std::endl;
-		// std::cout << "url1: " << req.getUrl() << std::endl;
-		// std::cout << "size: " << req.getOrigLocLen() << std::endl;
-		// std::cout << "url: " << req.getUrl().substr(req.getOrigLocLen().length(), std::string::npos) << std::endl;
-		// location += req.getRoot() + "/" + req.getUrl().substr(req.getOrigLocLen().length(), std::string::npos);
-		// std::cout << "location " << location << std::endl;
+		 /*std::cout << "root " << req.getRoot() << std::endl;
+		 std::cout << "url1: " << req.getUrl() << std::endl;
+		 std::cout << "size: " << req.getOrigLocLen() << std::endl;
+		 std::cout << "url: " << req.getUrl().substr(req.getOrigLocLen().length(), std::string::npos) << std::endl;
+		 location += req.getRoot() + "/" + req.getUrl().substr(req.getOrigLocLen().length(), std::string::npos);*/
+		 std::cout << "location " << location << std::endl;
 		try
 		{
 			runCgi(location, envp, clientSocket);

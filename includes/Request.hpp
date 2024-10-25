@@ -23,6 +23,7 @@ class Request
 		std::string	getMethod(void);
 		std::string	getUrl(void);
 		std::string	getRoot(void);
+		std::string	getBody(void);
 		std::string	getOrigLocLen(void);
 		void		printRequest(int clientSocket);
 
