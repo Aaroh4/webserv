@@ -31,6 +31,7 @@ class Response: public Request
 			void			handleCRUD(int clientfd, ServerInfo server);
 			void 			sendStandardErrorPage(int sanitizeStatus, int clientfd);
 			void			setResponseBody(std::string body);
+			std::string		formatPostResponseMsg(int close);
 
 			// RESPONSE EXCEPTIONS
 			//base class for 500 internal error

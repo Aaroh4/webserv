@@ -317,8 +317,7 @@ void	Request::sanitize(ServerInfo server)
 	std::string temp;
 	std::string	test = "/" + cutFromTo(this->_url, 1, "/");
 
-	while ((server.getlocationinfo()[temp].root.empty()
-		|| server.getlocationinfo()[test].root.empty()) && test.size() + 1 <= this->_url.size())
+	while (test.size() + 1 <= this->_url.size())
 	{
 		temp = test + "/";
 		test += "/" + cutFromTo(this->_url, test.size() + 1, "/");
