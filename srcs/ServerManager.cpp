@@ -197,17 +197,22 @@ void	ServerManager::runCgi(std::string path, char** envp, int& clientSocket)
 	}
 }
 
-int	ServerManager::sendResponse(size_t& i)
+void	ServerManager::sendResponse(size_t& i)
 {
 	int	clientSocket = this->_poll_fds[i].fd;
+	int	pipeFd = this->_clientInfos[clientSocket].pipeFd;
 
 	if (this->_clientInfos[clientSocket].req->getHost() == this->_info[this->_connections.at(clientSocket)].getServerName()
 		|| this->_info[this->_connections.at(clientSocket)].getServerName().empty())
 	{
-		if (this->_clientInfos[clientSocket].cgiResponseReady == true)
+		if (this->_clientPipe.find(pipeFd) != this->_clientPipe.end() && this->_clientInfos[clientSocket].cgiResponseReady == false)
+		{
+			return;
+		}
+		else if (this->_clientInfos[clientSocket].cgiResponseReady == true)
 		{
 			Response respond(*this->_clientInfos[clientSocket].req);
-			respond.setResponseBody(this->_clientInfos[clientSocket].cgiResponse);
+			respond.setResponseBody(this->_clientInfos[clientSocket].cgiResponseBody);
 			respond.respond(clientSocket, this->_info[this->_connections.at(clientSocket)]);
 		}
 		else
@@ -217,7 +222,6 @@ int	ServerManager::sendResponse(size_t& i)
 		}
 		removeConnection(clientSocket, i);
 	}
-	return 0;
 }
 
 void ServerManager::removeConnection(int clientSocket, size_t& i)
@@ -323,8 +327,7 @@ void	ServerManager::readFromCgiFd(const int& fd)
 	else
 	{
 		int clientSocket = this->_clientPipe[fd];
-		this->_clientInfos[clientSocket].cgiResponse.append(buffer, nbytes);
-		std::cout << "responsebody from cgi: "<< this->_clientInfos[clientSocket].cgiResponse << std::endl;
+		this->_clientInfos[clientSocket].cgiResponseBody.append(buffer, nbytes);
 	}
 }
 
@@ -353,12 +356,19 @@ int	ServerManager::checkForCgi(Request& req, int& clientSocket)
 		std::string location = std::filesystem::canonical("/proc/self/exe");
 		size_t lastDash = location.find_last_of("/");
 		location.erase(lastDash + 1, location.length() - (lastDash + 1));
-		// location += "www" + req.getUrl();
-		// std::cout << "location: " << location << std::endl;
-		std::string script = req.getUrl();
-        lastDash = script.find_last_of("/");
-        script = script.substr(lastDash + 1, script.length() - (lastDash + 1));
-        location += "www/cgi-bin/" + script;
+// 		// location += "www" + req.getUrl();
+// 		// std::cout << "location: " << location << std::endl;
+// 		std::string script = req.getUrl();
+//         lastDash = script.find_last_of("/");
+//         script = script.substr(lastDash + 1, script.length() - (lastDash + 1));
+//         location += "www/cgi-bin/" + script;
+
+		std::cout << "root " << req.getRoot() << std::endl;
+		std::cout << "url1: " << req.getUrl() << std::endl;
+		std::cout << "size: " << req.getOrigLocLen() << std::endl;
+		std::cout << "url: " << req.getUrl().substr(req.getOrigLocLen().length(), std::string::npos) << std::endl;
+		location += req.getRoot() + "/" + req.getUrl().substr(req.getOrigLocLen().length(), std::string::npos);
+		std::cout << "location " << location << std::endl; 
 		try
 		{
 			runCgi(location, envp, clientSocket);

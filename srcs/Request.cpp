@@ -186,7 +186,6 @@ void	Request::_getContentType(void)
 void	Request::_parseRequestLine(void)
 {
 	//Parses method and put's it to string attribute _method, then erases it from the request
-
 	const char* methods[3] = {"GET", "POST", "DELETE"};
 	size_t i = this->_request.find_first_of(" ");
 	this->_method = this->_request.substr(0, i);
@@ -211,7 +210,10 @@ void	Request::_parseRequestLine(void)
 	i = this->_request.find_first_of("?");
 	index = this->_request.find_first_of(" ");
 	if (i < index)
+	{
 		this->_url = this->_request.substr(0, i);
+		this->_request.erase(0, this->_url.length());
+	}	
 	else
 	{
 		this->_url = this->_request.substr(0, index);
@@ -316,7 +318,7 @@ void	Request::sanitize(ServerInfo server)
 	std::string	test = "/" + cutFromTo(this->_url, 1, "/");
 
 	while ((server.getlocationinfo()[temp].root.empty()
-		|| !server.getlocationinfo()[test].root.empty()) && test.size() + 1 <= this->_url.size())
+		|| server.getlocationinfo()[test].root.empty()) && test.size() + 1 <= this->_url.size())
 	{
 		temp = test + "/";
 		test += "/" + cutFromTo(this->_url, test.size() + 1, "/");
@@ -326,10 +328,14 @@ void	Request::sanitize(ServerInfo server)
 	if (!server.getlocationinfo()[temp].root.empty())
 	{
 		this->_root = server.getlocationinfo()[temp].root;
-		std::cout << "test:" << this->_root << std::endl;;
 		this->_origLoc = temp;
 	}
-	
+	else
+	{
+		this->_root = server.getlocationinfo()["/"].root;
+		this->_origLoc = "/";
+		temp = "/";
+	}
 	if (this->_sanitizeStatus != 200)
 		return ;
 	if (this->_httpVersion != "HTTP/1.0" && this->_httpVersion != "HTTP/1.1")
@@ -338,7 +344,7 @@ void	Request::sanitize(ServerInfo server)
 		this->_errmsg = "Unsupported HTTP";
 		return;
 	}
-	if (this->_url.find("..") != std::string::npos)
+	if (this->_url.find("..") != std::string::npos )
 	{
 		this->_sanitizeStatus = 403;
 		this->_errmsg = "Forbidden"; //Forbidden
@@ -399,10 +405,21 @@ std::string	Request::getUrl(void)
 	return this->_url;
 }
 
+std::string	Request::getRoot(void)
+{
+	return this->_root;
+}
+
+std::string	Request::getOrigLocLen(void)
+{
+	return this->_origLoc;
+}
+
 void Request::printRequest(int clientSocket)
 {
 	std::cout << "Client " << clientSocket << " Requested:\n";
 	std::cout << "URL: "<< this->_url << std::endl;
+	std::cout << "queryString: "<< this->_queryString << std::endl;
 	std::cout << "Method: "<< this->_httpVersion << " " << this->_method << std::endl;
 	std::cout << "Type: "<< this-> _type << std::endl;
 	std::cout << "*******" << std::endl;
