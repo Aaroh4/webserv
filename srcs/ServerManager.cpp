@@ -283,8 +283,8 @@ void	ServerManager::receiveRequest(size_t& i)
 		removeConnection(clientSocket, i);
 		return ;
 	}
-	if (this->_clientInfos[clientSocket].requestReceived = true)
-		return;
+	// if (this->_clientInfos[clientSocket].requestReceived = true) segfaults
+	// 	return;
 	if (totalLength != 0 && totalLength == this->_clientInfos[clientSocket].request.length())
 	{
 		this->_clientInfos[clientSocket].requestReceived = true;
