@@ -376,49 +376,49 @@ void	Request::sanitize(ServerInfo server)
 	}
 }
 
-std::string	Request::getHost(void)
+std::string	Request::getHost(void) const
 {
 	return this->_headers["Host"];
 }
 
-std::string	Request::getType(void)
+std::string	Request::getType(void) const
 {
 	return this->_type;
 }
 
-std::string	Request::getContentLength(void)
+std::string	Request::getContentLength(void) const
 {
 	if (this->_headers.find("Content-Length") != this->_headers.end())
 		return this->_headers["Content-Length"];
 	return "";
 }
 
-std::string	Request::getQueryString(void)
+std::string	Request::getQueryString(void) const
 {
 	return this->_queryString;
 }
 
-std::string	Request::getMethod(void)
+std::string	Request::getMethod(void) const
 {
 	return this->_method;
 }
 
-std::string	Request::getUrl(void)
+std::string	Request::getUrl(void) const
 {
 	return this->_url;
 }
 
-std::string	Request::getRoot(void)
+std::string	Request::getRoot(void) const
 {
 	return this->_root;
 }
 
-std::string	Request::getBody(void)
+std::string	Request::getBody(void) const
 {
 	return this->_body;
 }
 
-std::string	Request::getOrigLocLen(void)
+std::string	Request::getOrigLocLen(void) const
 {
 	return this->_origLoc;
 }

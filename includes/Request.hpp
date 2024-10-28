@@ -16,15 +16,15 @@ class Request
 
 		void		parse(void);
 		void		sanitize(ServerInfo server);
-		std::string	getHost(void);
-		std::string	getType(void);
-		std::string	getContentLength(void);
-		std::string	getQueryString(void);
-		std::string	getMethod(void);
-		std::string	getUrl(void);
-		std::string	getRoot(void);
-		std::string	getBody(void);
-		std::string	getOrigLocLen(void);
+		std::string	getHost(void) const;
+		std::string	getType(void) const;
+		std::string	getContentLength(void) const;
+		std::string	getQueryString(void) const;
+		std::string	getMethod(void) const;
+		std::string	getUrl(void) const;
+		std::string	getRoot(void) const;
+		std::string	getBody(void) const;
+		std::string	getOrigLocLen(void) const;
 		void		printRequest(int clientSocket);
 
 	protected:

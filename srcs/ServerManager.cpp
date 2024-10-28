@@ -75,7 +75,7 @@ void	ServerManager::addNewConnection(size_t& i)
 	}
 	catch (std::exception& e)
 	{
-		//500 Error response
+		throw Response::ResponseException();
 	}
 }
 
@@ -84,7 +84,7 @@ void	ServerManager::addPipeFd(int pipeFd)
 	try
 	{
 		if (fcntl(pipeFd, F_SETFL, O_NONBLOCK | FD_CLOEXEC) == -1)
-			perror("fcntl(F_SETFL) failed");
+			throw Response::ResponseException();
 
 		struct pollfd pipe_pollfd;
 
@@ -115,7 +115,7 @@ size_t	ServerManager::findLastChunk(std::string& request, size_t start_pos)
 		}
 		catch(const std::exception& e)
 		{
-			//500 Error response
+			throw Response::ResponseException();
 		}
 		start_pos = pos;
 		start_pos += chunk_size + 4; // \r\n before and after chunk
@@ -152,7 +152,7 @@ size_t	ServerManager::getRequestLength(std::string& request)
 	}
 	catch(const std::exception& e)
 	{
-		//500 Error response
+		throw Response::ResponseException();
 	}
 	return totalLength;
 }
@@ -250,7 +250,7 @@ void ServerManager::removeConnection(int clientSocket, size_t& i)
 	catch(const std::exception& e)
 	{
 		std::cout << "there was an error in remove connection" << std::endl;
-		//500 Error response
+		throw Response::ResponseException();
 	}
 }
 
@@ -274,6 +274,9 @@ void	ServerManager::receiveRequest(size_t& i)
 				this->_clientInfos[clientSocket].request.append(buffer, bytesReceived);
 				if (totalLength == 0)
 					totalLength = getRequestLength(this->_clientInfos[clientSocket].request);
+				std::cout << "Total length " << totalLength << std::endl;
+				std::cout << "request length: " << this->_clientInfos[clientSocket].request.length() << std::endl;
+				std::cout << "request: " << this->_clientInfos[clientSocket].request << std::endl;
 				if ((bytesReceived < 1024 && totalLength == 0)
 					|| (bytesReceived < 1024 && this->_clientInfos[clientSocket].request.length() < totalLength))
 				{
@@ -434,7 +437,8 @@ void	ServerManager::runServers()
 					readFromCgiFd(this->_poll_fds[i].fd);
 					pipeFd = true;
 				}
-				else{
+				else
+				{
 					receiveRequest(i);
 				}
 			}
