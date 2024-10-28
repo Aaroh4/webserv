@@ -295,11 +295,8 @@ void	ServerManager::receiveRequest(size_t& i)
 			}
 		}
 	}
-	catch (const Response::ResponseException & e){
-		Response obj;
-		obj.sendErrorResponse(e.what(), clientSocket, e.responseCode());
-		removeConnection(clientSocket, i);
-		return ;
+	catch (std::exception& e){
+		throw;
 	}
 	if (totalLength != 0 && totalLength == this->_clientInfos[clientSocket].request.length())
 	{
@@ -308,6 +305,8 @@ void	ServerManager::receiveRequest(size_t& i)
 		{
 			Request* request = new Request(this->_clientInfos[clientSocket].request);
 			request->parse();
+			if (request->getBody().length() > this->_info[this->_connections[clientSocket]].getBodylimit())
+				throw Response::ResponseException400();
 			request->sanitize(this->_info[this->_connections[clientSocket]]);
 			request->printRequest(clientSocket);
 			this->_clientInfos[clientSocket].req = request;
@@ -318,7 +317,7 @@ void	ServerManager::receiveRequest(size_t& i)
 		}
 		catch (std::exception& e)
 		{
-			throw Response::ResponseException();
+			throw;
 		}
 	}
 }
