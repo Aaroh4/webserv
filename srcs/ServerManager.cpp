@@ -274,7 +274,8 @@ void	ServerManager::receiveRequest(size_t& i)
 				this->_clientInfos[clientSocket].request.append(buffer, bytesReceived);
 				if (totalLength == 0)
 					totalLength = getRequestLength(this->_clientInfos[clientSocket].request);
-				if (bytesReceived < 1024 && totalLength == 0)
+				if ((bytesReceived < 1024 && totalLength == 0)
+					|| (bytesReceived < 1024 && this->_clientInfos[clientSocket].request.length() < totalLength))
 				{
 					throw Response::ResponseException400();
 				}
