@@ -318,7 +318,7 @@ void	ServerManager::receiveRequest(size_t& i)
 		}
 		catch (std::exception& e)
 		{
-			std::cout << "ERROR\n";
+			throw Response::ResponseException();
 		}
 	}
 }
@@ -378,16 +378,7 @@ int	ServerManager::checkForCgi(Request& req, int& clientSocket)
 		std::string location = std::filesystem::canonical("/proc/self/exe");
 		size_t lastDash = location.find_last_of("/");
 		location.erase(lastDash + 1, location.length() - (lastDash + 1));
-		std::string script = req.getUrl();
-        lastDash = script.find_last_of("/");
-        script = script.substr(lastDash + 1, script.length() - (lastDash + 1));
-        location += "www/cgi-bin/" + script;
-		 /*std::cout << "root " << req.getRoot() << std::endl;
-		 std::cout << "url1: " << req.getUrl() << std::endl;
-		 std::cout << "size: " << req.getOrigLocLen() << std::endl;
-		 std::cout << "url: " << req.getUrl().substr(req.getOrigLocLen().length(), std::string::npos) << std::endl;
-		 location += req.getRoot() + "/" + req.getUrl().substr(req.getOrigLocLen().length(), std::string::npos);*/
-		 std::cout << "location " << location << std::endl;
+		location += req.getRoot() + "/" + req.getUrl().substr(req.getOrigLocLen().length(), std::string::npos);
 		try
 		{
 			runCgi(location, envp, clientSocket);
@@ -429,18 +420,15 @@ void	ServerManager::runServers()
 			bool pipeFd = false;
 			if (this->_poll_fds[i].revents & POLLIN)
 			{
-				if (i < this->get_info().size()){
+				if (i < this->get_info().size())
 					addNewConnection(i);
-				}
 				else if (isPipeFd(this->_poll_fds[i].fd))
 				{
 					readFromCgiFd(this->_poll_fds[i].fd);
 					pipeFd = true;
 				}
 				else
-				{
 					receiveRequest(i);
-				}
 			}
 			if (this->_poll_fds[i].revents & POLLOUT && this->_clientInfos[this->_poll_fds[i].fd].requestReceived == true
 				&& pipeFd == false)
