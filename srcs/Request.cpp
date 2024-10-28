@@ -134,7 +134,8 @@ void	Request::_parseMultipartContent(void)
 
 void	Request::_verifyPath(void)
 {
-	std::filesystem::path file = "./www" + this->_url;
+	std::filesystem::path file = this->_root + "/" + this->_url.substr(this->_origLoc.size(), std::string::npos);
+	//std::filesystem::path file = "./www" + this->_url;
 	if (!std::filesystem::exists(file))
 	{
 		this->_sanitizeStatus = 404;
@@ -170,11 +171,8 @@ void	Request::_getContentType(void)
 			this->_type = "image/" + type;
 		else if (type == "mpeg" || type == "avi" || type == "mp4")
 			this->_type = "video/" + type;
-		else if(type == "py" || type == "php")
-		{
-			this->_verifyPath();
+		else if (type == "py" || type == "php")
 			this->_type = "cgi/" + type;
-		}
     	else if (this->_url != "/")
 		{
 			this->_sanitizeStatus = 415;
@@ -317,17 +315,15 @@ void	Request::sanitize(ServerInfo server)
 	std::string temp;
 	std::string	test = "/" + cutFromTo(this->_url, 1, "/")  + "/";
 
-	std::cout << "asdadsatest: " << test << std::endl;
 	if (!server.getlocationinfo()[test].root.empty())
 		temp = test;
 	while (test.size() + 1 <= this->_url.size())
 	{
 		test += cutFromTo(this->_url, test.size(), "/") + "/";
-		std::cout << "asdasdtest2: " << test << std::endl;
 		if (!server.getlocationinfo()[test].root.empty())
 			temp = test;
 	}
-	std::cout << "asdasdasd: "<< temp << std::endl;
+	std::cout << "asdadstemp: " << temp << std::endl;
 	if (!server.getlocationinfo()[temp].root.empty())
 	{
 		this->_root = server.getlocationinfo()[temp].root;
@@ -339,6 +335,10 @@ void	Request::sanitize(ServerInfo server)
 		this->_origLoc = "/";
 		temp = "/";
 	}
+
+	if (this->_type == "cgi/py" || this->_type == "cgi/php")
+		this->_verifyPath();
+
 	if (this->_sanitizeStatus != 200)
 		return ;
 	if (this->_httpVersion != "HTTP/1.0" && this->_httpVersion != "HTTP/1.1")
