@@ -56,9 +56,9 @@ void	ServerManager::addNewConnection(size_t& i)
 	{
 		int clientSocket = accept(this->_poll_fds[i].fd, nullptr, nullptr);
 		if (clientSocket < 0)
-			perror("Accept failed");
+			throw Response::ResponseException();
 		if (fcntl(clientSocket, F_SETFL, O_NONBLOCK | FD_CLOEXEC) == -1)
-			perror("fcntl(F_SETFL) failed");
+			throw Response::ResponseException();
 		struct pollfd client_pollfd;
 		client_pollfd.fd = clientSocket;
 		client_pollfd.events = POLLIN | POLLOUT;
