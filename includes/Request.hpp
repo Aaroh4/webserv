@@ -16,9 +16,9 @@ class Request
 
 		void		parse(void);
 		void		sanitize(ServerInfo server);
-		std::string	getHost(void) const;
+		std::string	getHost(void);
 		std::string	getType(void) const;
-		std::string	getContentLength(void) const;
+		std::string	getContentLength(void);
 		std::string	getQueryString(void) const;
 		std::string	getMethod(void) const;
 		std::string	getUrl(void) const;

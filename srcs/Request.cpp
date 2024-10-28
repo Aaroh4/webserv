@@ -376,7 +376,7 @@ void	Request::sanitize(ServerInfo server)
 	}
 }
 
-std::string	Request::getHost(void) const
+std::string	Request::getHost(void)
 {
 	return this->_headers["Host"];
 }
@@ -386,7 +386,7 @@ std::string	Request::getType(void) const
 	return this->_type;
 }
 
-std::string	Request::getContentLength(void) const
+std::string	Request::getContentLength(void)
 {
 	if (this->_headers.find("Content-Length") != this->_headers.end())
 		return this->_headers["Content-Length"];
