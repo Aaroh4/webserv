@@ -16,6 +16,7 @@ typedef struct s_clientInfo
 	std::string cgiResponseBody;
 	bool		requestReceived;
 	bool		cgiResponseReady;
+	std::time_t	latestRequest;
 }	t_clientInfo;
 
 class ServerManager
@@ -40,6 +41,7 @@ class ServerManager
 			int		checkForCgi(Request& req, int& clientSocket);
 			bool	isPipeFd(int& fd);
 			void	readFromCgiFd(const int& fd);
+			bool	checkConnectionUptime(int& clientSocket, size_t& i);
 			std::vector<ServerInfo> get_info(void);
 	private:
 			std::unordered_map<int, t_clientInfo>  	_clientInfos; //key = client socket

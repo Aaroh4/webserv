@@ -423,6 +423,11 @@ std::string	Request::getOrigLocLen(void) const
 	return this->_origLoc;
 }
 
+std::string	Request::getConnectionHeader(void)
+{
+	return this->_headers["Connection"];
+}
+
 void Request::printRequest(int clientSocket)
 {
 	std::cout << "Client " << clientSocket << " Requested:\n";

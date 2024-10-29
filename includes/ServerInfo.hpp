@@ -44,7 +44,7 @@ class ServerInfo
 			std::unordered_map<std::string, location>			getlocationinfo() const;
 
 			void												setTimeout(std::string input);
-			std::string											get_timeout() const;
+			unsigned int										get_timeout() const;
 
 			void												setBodylimit(unsigned int input);
 			unsigned int										getBodylimit() const;
@@ -56,7 +56,7 @@ class ServerInfo
 			std::unordered_map<int, std::string>				getErrorPages() const;
 	private:
 			std::string										_serverName;
-			std::string										_timeout;
+			unsigned int									_timeout;
 			unsigned int									_bodylimit;
 			unsigned int									_ip = 0;
 			unsigned int									_port = 0;
