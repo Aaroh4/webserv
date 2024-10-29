@@ -120,14 +120,14 @@ void Response::respondGet(int clientfd, ServerInfo server)
 			return;
 		}
 		response = formatGetResponseMsg(0);
-		send(clientfd, response.c_str(), response.length(), 0);
+		send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL);
 		const std::size_t chunkSize = 8192;
 		char buffer[chunkSize];
 		while (this->_file.read(buffer, chunkSize) || this->_file.gcount() > 0)
 			send(clientfd, buffer, this->_file.gcount(), MSG_NOSIGNAL);
 	}
 	response = formatGetResponseMsg(0);
-	send(clientfd, response.c_str(), response.length(), 0);
+	send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL);
 	std::cout << "Response to client: " << clientfd << std::endl;
 	std::cout << response << std::endl;
 	const std::size_t chunkSize = 8192;
@@ -142,7 +142,7 @@ void	Response::respondPost(int clientfd, ServerInfo server)
 
 	(void) server;
 	response = formatPostResponseMsg(1);
-	send(clientfd, response.c_str(), response.length(), 0);
+	send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL);
 	std::cout << "Response to client: " << clientfd << std::endl;
 	std::cout << response << std::endl;
 
@@ -204,7 +204,7 @@ void	Response::respondDelete(int clientfd)
 	std::string response = "HTTP/1.1 204 No Content\r\n";
 	response += "Connection: close\r\n\r\n";
 
-	send (clientfd, response.c_str(), response.length(), 0);
+	send (clientfd, response.c_str(), response.length(), MSG_NOSIGNAL);
 	std::cout << "Response to client: " << clientfd << std::endl;
 	std::cout << response << std::endl;
 }
@@ -354,7 +354,7 @@ void Response::sendStandardErrorPage(int sanitizeStatus, int clientfd)
 	std::string responseWithoutFile = response;
 	if (this->_method == "GET")
 		response += file;
-	send(clientfd, response.c_str(), response.length(), 0);
+	send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL);
 	std::cout << "Response to client: " << clientfd << std::endl;
 	std::cout << responseWithoutFile << std::endl;
 

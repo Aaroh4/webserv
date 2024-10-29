@@ -240,13 +240,14 @@ void ServerManager::removeConnection(int clientSocket, size_t& i)
 			}
 		}
 		this->_clientPipe.erase(pipeFd);
-		if (this->_clientInfos[clientSocket].req->getConnectionHeader() == "close"
-			|| checkConnectionUptime(clientSocket) == true)
-			closeConnection(clientSocket, i);
 		this->_clientInfos[clientSocket].request = "";
 		this->_clientInfos[clientSocket].requestReceived = false;
 		this->_clientInfos[clientSocket].cgiResponseReady = false;
 		this->_clientInfos[clientSocket].cgiResponseBody = "";
+		std::string connectionStatus = this->_clientInfos[clientSocket].req->getConnectionHeader();
+		if (connectionStatus == "close"
+			|| checkConnectionUptime(clientSocket) == true)
+			closeConnection(clientSocket, i);
 		std::cout << "removeConnection: ClientSocket " << clientSocket << " closed\n\n" << std::endl;
 	}
 	catch(const std::exception& e)
@@ -298,7 +299,7 @@ void	ServerManager::receiveRequest(size_t& i)
 		if (totalLength == 0 || this->_clientInfos[clientSocket].request.length() < totalLength)
 		{
 			bytesReceived = recv(clientSocket, buffer, sizeof(buffer), 0);
-			std::cout << "Bytes received " << bytesReceived << std::endl;
+			//std::cout << "Bytes received " << bytesReceived << std::endl;
 			if (bytesReceived > 0)
 			{
 				this->_clientInfos[clientSocket].request.append(buffer, bytesReceived);
@@ -310,16 +311,15 @@ void	ServerManager::receiveRequest(size_t& i)
 					throw Response::ResponseException400();
 				}
 			}
-			else if (bytesReceived == 0)
+			else if (checkConnectionUptime(clientSocket) == true && bytesReceived == 0)
 			{
-				return ;
+				closeConnection(clientSocket, i);
 				//removeConnection(clientSocket, i);
 			}
-			else
+			else if (bytesReceived == -1)
 			{
-				return ;
-				//std::cout << strerror(errno) << std::endl;
-				//throw Response::ResponseException();
+				std::cout << strerror(errno) << std::endl;
+				throw Response::ResponseException();
 			}
 		}
 	}
@@ -329,8 +329,6 @@ void	ServerManager::receiveRequest(size_t& i)
 	if (totalLength != 0 && totalLength == this->_clientInfos[clientSocket].request.length())
 	{
 		this->_clientInfos[clientSocket].requestReceived = true;
-		if (this->_clientInfos[clientSocket].req->getConnectionHeader() == "keep-alive")
-			this->_clientInfos[clientSocket].latestRequest = std::time(nullptr);
 		try
 		{
 			Request* request = new Request(this->_clientInfos[clientSocket].request);
@@ -338,7 +336,8 @@ void	ServerManager::receiveRequest(size_t& i)
 			if (request->getBody().length() > this->_info[this->_connections[clientSocket]].getBodylimit())
 				throw Response::ResponseException400();
 			request->sanitize(this->_info[this->_connections[clientSocket]]);
-			//request->printRequest(clientSocket);
+			if (request->getConnectionHeader() == "keep-alive")
+				this->_clientInfos[clientSocket].latestRequest = std::time(nullptr);
 			std::cout << "request " << this->_clientInfos[clientSocket].request << std::endl;
 			if (this->_clientInfos[clientSocket].req != nullptr)
 				delete this->_clientInfos[clientSocket].req;
