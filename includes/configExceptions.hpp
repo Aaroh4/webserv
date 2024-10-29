@@ -6,66 +6,45 @@
 class wrongPort : public std::exception
 {
     public:
-    const char* what() const noexcept override
-    {
-        return "Wrong port!";
-    }
+    const char* what() const noexcept override;
 };
 
 class wrongBodyLimit : public std::exception
 {
     public:
-    const char* what() const noexcept override
-    {
-        return "Wrong BodyLimit!";
-    }
+    const char* what() const noexcept override;
 };
 
 class wrongTimeout : public std::exception
 {
     public:
-    const char* what() const noexcept override
-    {
-        return "Wrong Timeout!";
-    }
+    const char* what() const noexcept override;
 };
 
 class wrongIP : public std::exception
 {
     public:
-    const char* what() const noexcept override
-    {
-        return "Wrong IP!";
-    }
+    const char* what() const noexcept override;
 };
 
 class noPermissions : public std::exception
 {
     public:
-    const char* what() const noexcept override
-    {
-        return "No Permissions to open.";
-    }
+    const char* what() const noexcept override;
 
 };
 
 class noServers : public std::exception
 {
     public:
-    const char* what() const noexcept override
-    {
-        return "No servers!";
-    }
+    const char* what() const noexcept override;
 
 };
 
 class serverNotFilled : public std::exception
 {
     public:
-    const char* what() const noexcept override
-    {
-        return "Necessary confs not set!";
-    }
+    const char* what() const noexcept override;
 
 };
 
