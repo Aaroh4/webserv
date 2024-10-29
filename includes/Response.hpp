@@ -5,9 +5,7 @@
 #include "ServerInfo.hpp"
 #include <filesystem>
 #include <cerrno>
-#include <random>
-#include <sstream>
-#include <iomanip>
+
 
 class Response: public Request
 {
@@ -32,6 +30,7 @@ class Response: public Request
 			void 			sendStandardErrorPage(int sanitizeStatus, int clientfd);
 			void			setResponseBody(std::string body);
 			std::string		formatPostResponseMsg(int close);
+			std::string 	formatSessionCookie( void );
 
 			// RESPONSE EXCEPTIONS
 			//base class for 500 internal error
