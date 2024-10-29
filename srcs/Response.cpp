@@ -76,28 +76,12 @@ void	Response::respond(int clientfd, ServerInfo server)
 	}
 }
 
-std::string generateSessionId( void ){
-	//generate a 16 random numbers between 0-255 using mt19937 randomnumber gen.
-	std::random_device randomSeed;
-	std::mt19937 generator(randomSeed());
-	std::uniform_int_distribution<int> dist(0, 255);
 
-	unsigned char buf[16];
-	for (unsigned long i = 0; i < sizeof(buf); i++){
-		buf[i] = dist(generator);
-	}
 
-	//makes the 16 random bytes to hexa values
-	std::stringstream ss;
-	for (unsigned long i = 0; i < sizeof(buf); i++){
-		ss << std::hex << std::setw(2) << std::setfill('0') << (int)buf[i];
-	}
-	return ss.str();
-}
+std::string Response::formatSessionCookie( void ){
 
-std::string formatSessionCookie( void ){
-	std::string response = "Set-Cookie: session_id=" + generateSessionId() + "; HttpOnly; Path=/; Max-Age=60;\r\n";
-	return response;
+	std::string cookie = "Set-Cookie: " + this->_sessionId + "; HttpOnly; Path=/; Max-Age=60;\r\n";
+	return cookie;
 }
 
 void Response::respondGet(int clientfd, ServerInfo server)
@@ -290,7 +274,6 @@ std::string Response::formatGetResponseMsg(int close)
 	response += "Content-Type: " + this->_type + "\r\n";
 
 	response += "Content-Length: " + this->_fileSize + "\r\n";
-
 	response += formatSessionCookie();
 	if (close == 0)
 		response += "Keep-Alive: timeout=" + this->_server.get_timeout() + ", max=100\r\n\r\n";

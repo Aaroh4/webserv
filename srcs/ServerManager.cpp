@@ -50,6 +50,8 @@ ServerManager::~ServerManager()
 	}
 }
 
+
+
 void	ServerManager::addNewConnection(size_t& i)
 {
 	try
