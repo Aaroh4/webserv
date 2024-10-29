@@ -151,7 +151,10 @@ std::string Response::formatPostResponseMsg (int close){
 		response += "Content-Type: " + this->_type + "\r\n";
 	response += formatSessionCookie();
 	if (close == 0)
+	{
+		response += "Connection: Keep-Alive\r\n";
 		response += "Keep-Alive: timeout=" + this->_server.get_timeout() + ", max=100\r\n\r\n";
+	}
 	else
 		response += "Connection: close\r\n\r\n";
 	if (!this->_responseBody.empty())
@@ -201,8 +204,8 @@ void Response::directorylisting(int clientfd, std::string file)
 	std::string responseWithoutFile = response;
 	response += file;
 	send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL);
-	std::cout << "Response to client: " << clientfd << std::endl;
-	std::cout << responseWithoutFile << std::endl;
+	//std::cout << "Response to client: " << clientfd << std::endl;
+	//std::cout << responseWithoutFile << std::endl;
 }
 
 std::string Response::buildDirectorylist(std::string name, int rootsize)
@@ -276,7 +279,10 @@ std::string Response::formatGetResponseMsg(int close)
 	response += "Content-Length: " + this->_fileSize + "\r\n";
 	response += formatSessionCookie();
 	if (close == 0)
-		response += "Keep-Alive: timeout=" + this->_server.get_timeout() + ", max=100\r\n\r\n";
+	{
+		response += "Connection: keep-alive\r\n";
+		response += "keep-alive: timeout=" + this->_server.get_timeout() + ", max=100\r\n\r\n";
+	}
 	else
 		response += "Connection: close\r\n\r\n";
 	return (response);

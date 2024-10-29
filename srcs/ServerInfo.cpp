@@ -80,10 +80,14 @@ std::unordered_map<std::string, location>	ServerInfo::getlocationinfo() const
 
 void ServerInfo::setTimeout(std::string input)
 {
-	this->_timeout = input;
+	try {
+		this->_timeout = std::stoi(input);
+	} catch (std::exception& e) {
+		throw wrongTimeout();
+	}
 }
 
-std::string	ServerInfo::get_timeout() const
+unsigned int	ServerInfo::get_timeout() const
 {
 	return (this->_timeout);
 }

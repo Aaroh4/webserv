@@ -448,6 +448,12 @@ std::string	Request::getOrigLocLen(void) const
 	return this->_origLoc;
 }
 
+
+std::string	Request::getConnectionHeader(void)
+{
+	return this->_headers["Connection"];
+}
+
 std::string	Request::getSessionId(void) const
 {
 	return this->_sessionId;

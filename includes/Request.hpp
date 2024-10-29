@@ -25,6 +25,7 @@ class Request
 		std::string	getRoot(void) const;
 		std::string	getBody(void) const;
 		std::string	getOrigLocLen(void) const;
+		std::string	getConnectionHeader(void);
 		std::string getSessionId (void) const;
 		void 		setSessionId (std::string sessionId);
 		void		printRequest(int clientSocket);

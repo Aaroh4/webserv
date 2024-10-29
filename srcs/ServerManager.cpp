@@ -56,6 +56,7 @@ void	ServerManager::addNewConnection(size_t& i)
 {
 	try
 	{
+		std::cout << "add new connections...\n";
 		int clientSocket = accept(this->_poll_fds[i].fd, nullptr, nullptr);
 		if (clientSocket < 0)
 			throw Response::ResponseException();
@@ -230,9 +231,10 @@ void ServerManager::removeConnection(int clientSocket, size_t& i)
 {
 	try
 	{
+		(void) i;
 		int pipeFd = this->_clientInfos[clientSocket].pipeFd;
-		close(clientSocket);
-		this->_poll_fds.erase(this->_poll_fds.begin() + i);
+		//close(clientSocket);
+		//this->_poll_fds.erase(this->_poll_fds.begin() + i);
 		if (pipeFd){
 			for (auto it = this->_poll_fds.begin(); it != this->_poll_fds.end();){
 				if (it->fd == pipeFd)
@@ -242,16 +244,47 @@ void ServerManager::removeConnection(int clientSocket, size_t& i)
 			}
 		}
 		this->_clientPipe.erase(pipeFd);
-		this->_connections.erase(clientSocket);
+		//this->_connections.erase(clientSocket);
 		delete this->_clientInfos[clientSocket].req;
-		this->_clientInfos.erase(clientSocket);
+		this->_clientInfos[clientSocket].request = "";
+		this->_clientInfos[clientSocket].requestReceived = false;
+		this->_clientInfos[clientSocket].cgiResponseReady = false;
+		this->_clientInfos[clientSocket].cgiResponseBody = "";
+		//this->_clientInfos[clientSocket].pipeFd = 0;
+		//this->_clientInfos.erase(clientSocket);
 
 		std::cout << "removeConnection: ClientSocket " << clientSocket << " closed\n\n" << std::endl;
-		i--;
+		//i--;
 	}
 	catch(const std::exception& e)
 	{
 		std::cout << "there was an error in remove connection" << std::endl;
+		throw Response::ResponseException();
+	}
+}
+
+bool	ServerManager::checkConnectionUptime(int& clientSocket, size_t& i)
+{
+	try {
+		if (this->_clientInfos[clientSocket].latestRequest != 0)
+		{
+			std::time_t currentTime = std::time(nullptr);
+			int diff = currentTime - this->_clientInfos[clientSocket].latestRequest;
+			int keepAliveTime = std::stoi(this->_info[this->_connections[clientSocket]].get_timeout());
+			if (diff >= keepAliveTime)
+			{
+				close(clientSocket);
+				this->_poll_fds.erase(this->_poll_fds.begin() + i);
+				i--;
+				this->_connections.erase(clientSocket);
+				this->_clientInfos.erase(clientSocket);
+				std::cout << "removeConnection: ClientSocket " << clientSocket << " closed\n\n" << std::endl;
+				std::cout << "Client disconnected" << "\n";
+				return true;
+			}
+			return false;
+		}
+	} catch (std::exception& e) {
 		throw Response::ResponseException();
 	}
 }
@@ -265,35 +298,34 @@ void	ServerManager::receiveRequest(size_t& i)
 
 	// Receive data until complete request is sent
 	if (this->_clientInfos[clientSocket].requestReceived == true)
-		return;
+		return;	
 	try
 	{
 		if (totalLength == 0 || this->_clientInfos[clientSocket].request.length() < totalLength)
 		{
 			bytesReceived = recv(clientSocket, buffer, sizeof(buffer), 0);
+			std::cout << "Bytes received " << bytesReceived << std::endl;
 			if (bytesReceived > 0)
 			{
 				this->_clientInfos[clientSocket].request.append(buffer, bytesReceived);
 				if (totalLength == 0)
 					totalLength = getRequestLength(this->_clientInfos[clientSocket].request);
-				std::cout << "Total length " << totalLength << std::endl;
-				std::cout << "request length: " << this->_clientInfos[clientSocket].request.length() << std::endl;
-				std::cout << "request: " << this->_clientInfos[clientSocket].request << std::endl;
 				if ((bytesReceived < 1024 && totalLength == 0)
 					|| (bytesReceived < 1024 && this->_clientInfos[clientSocket].request.length() < totalLength))
 				{
 					throw Response::ResponseException400();
 				}
 			}
-			else if (bytesReceived == 0)
+			else if (checkConnectionUptime(clientSocket) == false && bytesReceived == 0)
 			{
-				removeConnection(clientSocket, i);
-				std::cout << "Client disconnected" << "\n";
+				return ;
+				//removeConnection(clientSocket, i);
 			}
 			else
 			{
-				std::cout << strerror(errno) << std::endl;
-				throw Response::ResponseException();
+				return ;
+				//std::cout << strerror(errno) << std::endl;
+				//throw Response::ResponseException();
 			}
 		}
 	}
@@ -310,7 +342,10 @@ void	ServerManager::receiveRequest(size_t& i)
 			if (request->getBody().length() > this->_info[this->_connections[clientSocket]].getBodylimit())
 				throw Response::ResponseException400();
 			request->sanitize(this->_info[this->_connections[clientSocket]]);
-			request->printRequest(clientSocket);
+			if (request->getConnectionHeader() == "keep-alive")
+				this->_clientInfos[clientSocket].latestRequest = std::time(nullptr);
+			//request->printRequest(clientSocket);
+			std::cout << "request " << this->_clientInfos[clientSocket].request << std::endl;
 			this->_clientInfos[clientSocket].req = request;
 			if (checkForCgi(*request, clientSocket) == 1)
 			{
@@ -408,7 +443,7 @@ void	ServerManager::runServers()
 	signal(SIGINT, sigint_handler);
 	while (sigint_sent == false)
 	{
-		int pollcount = poll(this->_poll_fds.data(), this->_poll_fds.size(), 0);
+		int pollcount = poll(this->_poll_fds.data(), this->_poll_fds.size(), 5000);
 
 		if (pollcount < 0)
 		{
@@ -428,7 +463,7 @@ void	ServerManager::runServers()
 					readFromCgiFd(this->_poll_fds[i].fd);
 					pipeFd = true;
 				}
-				else
+				else	
 					receiveRequest(i);
 			}
 			if (this->_poll_fds[i].revents & POLLOUT && this->_clientInfos[this->_poll_fds[i].fd].requestReceived == true
@@ -471,7 +506,7 @@ int	ServerManager::startServers()
 		}
 		struct pollfd temp_s_pollfd;
 		temp_s_pollfd.fd = this->get_info()[i].getsocketfd();
-		temp_s_pollfd.events = POLLIN | POLLOUT;
+		temp_s_pollfd.events = POLLIN;
 		temp_s_pollfd.revents = 0;
 		this->_poll_fds.push_back(temp_s_pollfd);
 	}
