@@ -1,5 +1,5 @@
 #include "../includes/ServerInfo.hpp"
-#include "../includes/configExceptions.hpp"
+#include "configExceptions.cpp"
 
 ServerInfo::ServerInfo()
 {}
@@ -51,8 +51,8 @@ void	ServerInfo::setnew_port(int port)
 		throw(wrongPort());
 	this->_port = port;
 }
-			
-			
+
+
 int		ServerInfo::get_port() const
 {
 	return(this->_port);
