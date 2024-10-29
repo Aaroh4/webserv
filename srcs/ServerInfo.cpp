@@ -51,8 +51,8 @@ void	ServerInfo::setnew_port(int port)
 		throw(wrongPort());
 	this->_port = port;
 }
-			
-			
+
+
 int		ServerInfo::get_port() const
 {
 	return(this->_port);
