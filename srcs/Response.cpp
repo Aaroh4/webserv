@@ -49,20 +49,20 @@ void	Response::respond(int clientfd, ServerInfo server)
 	this->_server = server;
 	try{
 		switch (this->_sanitizeStatus){
-			//case 404:
-			//	throw ResponseException404();
-			//case 400:
-			//	throw ResponseException400();
+			// case 404:
+			// 	throw ResponseException404();
+			// case 400:
+			// 	throw ResponseException400();
 			case 403:
 				throw ResponseException403();
-			//case 501:
-			//	throw ResponseException501();
-			//case 505:
-			//	throw ResponseException505();
-			//case 515:
-			//	throw ResponseException515();
-			//case 500:
-			//	throw ResponseException();
+			// case 501:
+			// 	throw ResponseException501();
+			// case 505:
+			// 	throw ResponseException505();
+			// case 515:
+			// 	throw ResponseException515();
+			// case 500:
+			// 	throw ResponseException();
 		}
 	} catch(const ResponseException& e) {
 		sendErrorResponse(e.what(), clientfd, e.responseCode());

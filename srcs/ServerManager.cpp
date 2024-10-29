@@ -282,7 +282,7 @@ void	ServerManager::receiveRequest(size_t& i)
 				if ((bytesReceived < 1024 && totalLength == 0)
 					|| (bytesReceived < 1024 && this->_clientInfos[clientSocket].request.length() < totalLength))
 				{
-					throw Response::ResponseException400();
+					throw Response::ResponseException400(); //causes crash!
 				}
 			}
 			else if (bytesReceived == 0)
