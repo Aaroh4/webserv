@@ -12,5 +12,8 @@
 #include <fcntl.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
+#include <random>
+#include <sstream>
+#include <iomanip>
 
 #endif

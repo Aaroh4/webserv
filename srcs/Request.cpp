@@ -30,6 +30,7 @@ Request::Request(Request const& src)
 	this->_queryString = src._queryString;
 	this->_root = src._root;
 	this->_origLoc = src._origLoc;
+	this->_sessionId = src._sessionId;
 }
 
 Request& Request::operator=(Request const& src)
@@ -47,6 +48,7 @@ Request& Request::operator=(Request const& src)
 		this->_headers.clear();
 		this->_root = src._root;
 		this->_origLoc = src._origLoc;
+		this->_sessionId = src._sessionId;
 		for (const auto& map_content : src._headers)
 		{
 			this->_headers[map_content.first] = map_content.second;
@@ -213,7 +215,7 @@ void	Request::_parseRequestLine(void)
 	{
 		this->_url = this->_request.substr(0, i);
 		this->_request.erase(0, this->_url.length());
-	}	
+	}
 	else
 	{
 		this->_url = this->_request.substr(0, index);
@@ -302,6 +304,25 @@ void	Request::_decodeChunks(void)
 	this->_body = decodedBody;
 }
 
+std::string generateSessionId( void ){
+	//generate a 16 random numbers between 0-255 using mt19937 randomnumber gen.
+	std::random_device randomSeed;
+	std::mt19937 generator(randomSeed());
+	std::uniform_int_distribution<int> dist(0, 255);
+
+	unsigned char buf[16];
+	for (unsigned long i = 0; i < sizeof(buf); i++){
+		buf[i] = dist(generator);
+	}
+
+	//makes the 16 random bytes to hexa values
+	std::stringstream ss;
+	for (unsigned long i = 0; i < sizeof(buf); i++){
+		ss << std::hex << std::setw(2) << std::setfill('0') << (int)buf[i];
+	}
+	return ("session_id=" + ss.str());
+}
+
 void	Request::parse(void)
 {
 	this->_parseRequestLine();
@@ -310,6 +331,10 @@ void	Request::parse(void)
 		this->_decodeChunks();
 	if (this->_headers["Content-Type"].find("multipart/form-data") != std::string::npos)
 		this->_parseMultipartContent();
+	if (this->_headers.find("Cookie") != this->_headers.end())
+		this->setSessionId(this->_headers["Cookie"]);
+	else
+		this->setSessionId(generateSessionId());
 }
 
 void	Request::sanitize(ServerInfo server)
@@ -423,6 +448,15 @@ std::string	Request::getOrigLocLen(void) const
 	return this->_origLoc;
 }
 
+std::string	Request::getSessionId(void) const
+{
+	return this->_sessionId;
+}
+
+void Request::setSessionId (std::string sessionId){
+	this->_sessionId = sessionId;
+}
+
 void Request::printRequest(int clientSocket)
 {
 	std::cout << "Client " << clientSocket << " Requested:\n";
@@ -430,5 +464,6 @@ void Request::printRequest(int clientSocket)
 	std::cout << "queryString: "<< this->_queryString << std::endl;
 	std::cout << "Method: "<< this->_httpVersion << " " << this->_method << std::endl;
 	std::cout << "Type: "<< this-> _type << std::endl;
+	std::cout << "Session ID: " << this->_sessionId << std::endl;
 	std::cout << "*******" << std::endl;
 }
