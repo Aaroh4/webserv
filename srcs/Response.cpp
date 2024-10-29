@@ -76,28 +76,12 @@ void	Response::respond(int clientfd, ServerInfo server)
 	}
 }
 
-std::string generateSessionId( void ){
-	//generate a 16 random numbers between 0-255 using mt19937 randomnumber gen.
-	std::random_device randomSeed;
-	std::mt19937 generator(randomSeed());
-	std::uniform_int_distribution<int> dist(0, 255);
 
-	unsigned char buf[16];
-	for (unsigned long i = 0; i < sizeof(buf); i++){
-		buf[i] = dist(generator);
-	}
 
-	//makes the 16 random bytes to hexa values
-	std::stringstream ss;
-	for (unsigned long i = 0; i < sizeof(buf); i++){
-		ss << std::hex << std::setw(2) << std::setfill('0') << (int)buf[i];
-	}
-	return ss.str();
-}
+std::string Response::formatSessionCookie( void ){
 
-std::string formatSessionCookie( void ){
-	std::string response = "Set-Cookie: session_id=" + generateSessionId() + "; HttpOnly; Path=/; Max-Age=60;\r\n";
-	return response;
+	std::string cookie = "Set-Cookie: " + this->_sessionId + "; HttpOnly; Path=/; Max-Age=60;\r\n";
+	return cookie;
 }
 
 void Response::respondGet(int clientfd, ServerInfo server)
@@ -120,14 +104,14 @@ void Response::respondGet(int clientfd, ServerInfo server)
 			return;
 		}
 		response = formatGetResponseMsg(0);
-		send(clientfd, response.c_str(), response.length(), 0);
+		send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL);
 		const std::size_t chunkSize = 8192;
 		char buffer[chunkSize];
 		while (this->_file.read(buffer, chunkSize) || this->_file.gcount() > 0)
 			send(clientfd, buffer, this->_file.gcount(), MSG_NOSIGNAL);
 	}
 	response = formatGetResponseMsg(0);
-	send(clientfd, response.c_str(), response.length(), 0);
+	send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL);
 	std::cout << "Response to client: " << clientfd << std::endl;
 	std::cout << response << std::endl;
 	const std::size_t chunkSize = 8192;
@@ -142,7 +126,7 @@ void	Response::respondPost(int clientfd, ServerInfo server)
 
 	(void) server;
 	response = formatPostResponseMsg(1);
-	send(clientfd, response.c_str(), response.length(), 0);
+	send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL);
 	std::cout << "Response to client: " << clientfd << std::endl;
 	std::cout << response << std::endl;
 
@@ -204,7 +188,7 @@ void	Response::respondDelete(int clientfd)
 	std::string response = "HTTP/1.1 204 No Content\r\n";
 	response += "Connection: close\r\n\r\n";
 
-	send (clientfd, response.c_str(), response.length(), 0);
+	send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL);
 	std::cout << "Response to client: " << clientfd << std::endl;
 	std::cout << response << std::endl;
 }
@@ -293,7 +277,6 @@ std::string Response::formatGetResponseMsg(int close)
 	response += "Content-Type: " + this->_type + "\r\n";
 
 	response += "Content-Length: " + this->_fileSize + "\r\n";
-
 	response += formatSessionCookie();
 	if (close == 0)
 	{
@@ -354,7 +337,7 @@ void Response::sendStandardErrorPage(int sanitizeStatus, int clientfd)
 	std::string responseWithoutFile = response;
 	if (this->_method == "GET")
 		response += file;
-	send(clientfd, response.c_str(), response.length(), 0);
+	send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL);
 	std::cout << "Response to client: " << clientfd << std::endl;
 	std::cout << responseWithoutFile << std::endl;
 

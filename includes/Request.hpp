@@ -26,6 +26,8 @@ class Request
 		std::string	getBody(void) const;
 		std::string	getOrigLocLen(void) const;
 		std::string	getConnectionHeader(void);
+		std::string getSessionId (void) const;
+		void 		setSessionId (std::string sessionId);
 		void		printRequest(int clientSocket);
 
 	protected:
@@ -40,6 +42,7 @@ class Request
 		std::string _httpVersion;
 		std::string _queryString;
 		std::string _errmsg;
+		std::string _sessionId;
 		std::unordered_map<std::string, std::string> _headers;
 	private:
 		void		_parseRequestLine(void);
