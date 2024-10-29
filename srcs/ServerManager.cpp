@@ -186,6 +186,12 @@ void	ServerManager::runCgi(std::string path, char** envp, int& clientSocket)
 		{
 			throw std::runtime_error("execve() failed");
 		}
+		/*for (auto& it: this->_clientInfos)
+		{
+			close(it.first);
+			close(it.second.pipeFd);
+			delete it.second.req;
+		}*/
 	}
 	else
 	{

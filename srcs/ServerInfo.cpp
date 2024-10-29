@@ -1,5 +1,5 @@
 #include "../includes/ServerInfo.hpp"
-#include "../includes/configExceptions.hpp"
+#include "configExceptions.cpp"
 
 ServerInfo::ServerInfo()
 {}
@@ -83,7 +83,7 @@ void ServerInfo::setTimeout(std::string input)
 	try {
 		this->_timeout = std::stoi(input);
 	} catch (std::exception& e) {
-		throw wrongTimeout();
+		throw(wrongTimeout());
 	}
 }
 
