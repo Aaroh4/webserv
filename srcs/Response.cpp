@@ -153,7 +153,7 @@ std::string Response::formatPostResponseMsg (int close){
 	if (close == 0)
 	{
 		response += "Connection: Keep-Alive\r\n";
-		response += "Keep-Alive: timeout=" + this->_server.get_timeout() + ", max=100\r\n\r\n";
+		response += "Keep-Alive: timeout=5, max=100\r\n\r\n"; //this->_server.get_timeout()
 	}
 	else
 		response += "Connection: close\r\n\r\n";
@@ -281,7 +281,7 @@ std::string Response::formatGetResponseMsg(int close)
 	if (close == 0)
 	{
 		response += "Connection: keep-alive\r\n";
-		response += "keep-alive: timeout=" + this->_server.get_timeout() + ", max=100\r\n\r\n";
+		response += "keep-alive: timeout=5, max=100\r\n\r\n"; //this->_server.get_timeout()
 	}
 	else
 		response += "Connection: close\r\n\r\n";
