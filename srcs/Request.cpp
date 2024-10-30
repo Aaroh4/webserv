@@ -246,16 +246,12 @@ void	Request::_parseHeaders(void)
 {
 	//Parses headers line by line and adds the header(before :) and value (after :) to map container attribute _headers
 	std::string line;
-
-	size_t	lineEnd = 0;
 	std::stringstream request(this->_request);
 	size_t	i = 0;
 
 	while (line != "\r\n\r\n")
 	{
 		std::getline(request, line);
-		lineEnd = line.find_first_of("\n");
-		//line = this->_request.substr(0, lineEnd + 1);
 		if (line == "\r\n")
 		{
 			//this->_request.erase(0, 2);
@@ -268,9 +264,7 @@ void	Request::_parseHeaders(void)
 			//this->_errmsg = "Bad Request";
 			break;
 		}
-		std::cout << "key " << line.substr(0, i) << " value: " << line.substr(i + 2, lineEnd - (i + 3)) << std::endl;
-		this->_headers[line.substr(0, i)] = line.substr(i + 2, lineEnd - (i + 3));
-		this->_request.erase(0, lineEnd + 1);
+		this->_headers[line.substr(0, i)] = line.substr(i + 2, (line.length() - (i + 3)));
 	}
 	size_t bodyStart = this->_request.find("\r\n\r\n") + 4;
 	size_t bodyEnd = this->_request.find_last_of("\r\n\r\n") + 4;

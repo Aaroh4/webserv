@@ -223,11 +223,11 @@ void	ServerManager::sendResponse(size_t& i)
 			Response respond(*this->_clientInfos[clientSocket].req);
 			respond.respond(clientSocket, this->_info[this->_connections.at(clientSocket)]);
 		}
-		removeConnection(clientSocket, i);
+		cleanPreviousRequestData(clientSocket, i);
 	}
 }
 
-void ServerManager::removeConnection(int clientSocket, size_t& i)
+void ServerManager::cleanPreviousRequestData(int clientSocket, size_t& i)
 {
 	try
 	{
@@ -247,7 +247,7 @@ void ServerManager::removeConnection(int clientSocket, size_t& i)
 		this->_clientInfos[clientSocket].cgiResponseReady = false;
 		this->_clientInfos[clientSocket].cgiResponseBody = "";
 		std::string connectionStatus = this->_clientInfos[clientSocket].req->getConnectionHeader();
-		if (connectionStatus == "close")
+		if (connectionStatus == "close" || checkConnectionUptime(clientSocket) == true)
 			closeConnection(clientSocket, i);
 	}
 	catch(const std::exception& e)
@@ -263,6 +263,8 @@ void	ServerManager::closeConnection(int& clientSocket, size_t& i)
 	this->_poll_fds.erase(this->_poll_fds.begin() + i);
 	i--;
 	this->_connections.erase(clientSocket);
+	if (this->_clientInfos[clientSocket].req != nullptr)
+		delete this->_clientInfos[clientSocket].req;
 	this->_clientInfos.erase(clientSocket);
 	std::cout << "removeConnection: ClientSocket " << clientSocket << " closed\n\n" << std::endl;
 	std::cout << "Client disconnected" << "\n";
@@ -275,7 +277,6 @@ bool	ServerManager::checkConnectionUptime(int& clientSocket)
 		{
 			std::time_t currentTime = std::time(nullptr);
 			unsigned int diff = currentTime - this->_clientInfos[clientSocket].latestRequest;
-			std::cout << "connection uptime " << diff << std::endl;
 			if (diff >= this->_info[this->_connections[clientSocket]].get_timeout())
 				return true;
 		}
@@ -336,15 +337,10 @@ void	ServerManager::receiveRequest(size_t& i)
 			this->_clientInfos[clientSocket].req->parse();
 			this->_clientInfos[clientSocket].req->sanitize(this->_info[this->_connections[clientSocket]]);
 			if (this->_clientInfos[clientSocket].req->getConnectionHeader() == "keep-alive")
-			{
-				std::cout << "helloo o o o o \n\n\n\n";
 				this->_clientInfos[clientSocket].latestRequest = std::time(nullptr);
-			}
 			std::cout << "request " << this->_clientInfos[clientSocket].request << std::endl;
 			if (checkForCgi(*this->_clientInfos[clientSocket].req, clientSocket) == 1)
-			{
 				addPipeFd(this->_clientInfos[clientSocket].pipeFd);
-			}
 		}
 		catch (std::exception& e)
 		{
@@ -463,9 +459,6 @@ void	ServerManager::runServers()
 			if (this->_poll_fds[i].revents & POLLOUT && this->_clientInfos[this->_poll_fds[i].fd].requestReceived == true
 				&& pipeFd == false)
 				sendResponse(i);
-			if (pipeFd == false)
-				if (checkConnectionUptime(this->_poll_fds[i].fd) == true)
-					closeConnection(this->_poll_fds[i].fd, i);
 		}
 	}
 }
