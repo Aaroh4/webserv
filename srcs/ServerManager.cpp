@@ -270,7 +270,6 @@ void	ServerManager::closeConnection(int& clientSocket, size_t& i)
 
 bool	ServerManager::checkConnectionUptime(int& clientSocket)
 {
-	std::cout << "latest request time  " << this->_clientInfos[clientSocket].latestRequest << std::endl;
 	try {
 		if (this->_clientInfos[clientSocket].latestRequest != 0)
 		{
@@ -337,7 +336,10 @@ void	ServerManager::receiveRequest(size_t& i)
 			this->_clientInfos[clientSocket].req->parse();
 			this->_clientInfos[clientSocket].req->sanitize(this->_info[this->_connections[clientSocket]]);
 			if (this->_clientInfos[clientSocket].req->getConnectionHeader() == "keep-alive")
+			{
+				std::cout << "helloo o o o o \n\n\n\n";
 				this->_clientInfos[clientSocket].latestRequest = std::time(nullptr);
+			}
 			std::cout << "request " << this->_clientInfos[clientSocket].request << std::endl;
 			if (checkForCgi(*this->_clientInfos[clientSocket].req, clientSocket) == 1)
 			{
