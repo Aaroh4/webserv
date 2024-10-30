@@ -54,10 +54,11 @@ ServerManager::~ServerManager()
 
 void	ServerManager::addNewConnection(size_t& i)
 {
+	int clientSocket;
 	try
 	{
 		std::cout << "add new connections...\n";
-		int clientSocket = accept(this->_poll_fds[i].fd, nullptr, nullptr);
+		clientSocket = accept(this->_poll_fds[i].fd, nullptr, nullptr);
 		if (clientSocket < 0)
 			throw Response::ResponseException();
 		if (fcntl(clientSocket, F_SETFL, O_NONBLOCK | FD_CLOEXEC) == -1)
@@ -76,9 +77,12 @@ void	ServerManager::addNewConnection(size_t& i)
 		std::cout << "New client connected on server " << i << "\n";
 		std::cout << "Client got clientSocket " << clientSocket << std::endl;
 	}
-	catch (std::exception& e)
+	catch (Response::ResponseException &e)
 	{
-		throw Response::ResponseException();
+		std::cerr << e.what() << std::endl;
+		this->_clientInfos[clientSocket].responseStatus = 500;
+		this->_clientInfos[clientSocket].requestReceived = true;
+		throw ;
 	}
 }
 
@@ -96,9 +100,10 @@ void	ServerManager::addPipeFd(int pipeFd)
 		pipe_pollfd.revents = 0;
 		this->_poll_fds.push_back(pipe_pollfd);
 	}
-	catch (std::exception& e)
+	catch (Response::ResponseException &e)
 	{
-		throw;
+		std::cerr << e.what() << std::endl;
+		throw ;
 	}
 }
 
@@ -182,10 +187,8 @@ void	ServerManager::runCgi(std::string path, char** envp, int& clientSocket)
 		}
 		close(pipeFd[1]);
 		char *argv[] = { (char*)path.c_str(), nullptr };
-		if (execve(path.c_str(), argv, envp) == -1)
-		{
-			throw std::runtime_error("execve() failed");
-		}
+		execve(path.c_str(), argv, envp);
+		std::terminate();
 	}
 	else
 	{
@@ -218,12 +221,19 @@ void	ServerManager::sendResponse(size_t& i)
 			respond.setResponseBody(this->_clientInfos[clientSocket].cgiResponseBody);
 			respond.respond(clientSocket, this->_info[this->_connections.at(clientSocket)]);
 		}
+		else if (this->_clientInfos[clientSocket].responseStatus != 0)
+		{
+			Response::sendErrorPage(this->_clientInfos[clientSocket].responseStatus, clientSocket);
+		}
 		else
 		{
 			Response respond(*this->_clientInfos[clientSocket].req);
 			respond.respond(clientSocket, this->_info[this->_connections.at(clientSocket)]);
 		}
-		removeConnection(clientSocket, i);
+		try {
+			removeConnection(clientSocket, i);
+		} catch (...){
+		}
 	}
 }
 
@@ -281,7 +291,7 @@ bool	ServerManager::checkConnectionUptime(int& clientSocket)
 				return true;
 		}
 	} catch (std::exception& e) {
-		throw Response::ResponseException();
+		std::cerr << e.what() << std::endl;
 	}
 	return false;
 }
@@ -295,7 +305,7 @@ void	ServerManager::receiveRequest(size_t& i)
 
 	// Receive data until complete request is sent
 	if (this->_clientInfos[clientSocket].requestReceived == true)
-		return;	
+		return;
 	try
 	{
 		if (totalLength == 0 || this->_clientInfos[clientSocket].request.length() < totalLength)
@@ -319,20 +329,19 @@ void	ServerManager::receiveRequest(size_t& i)
 				//removeConnection(clientSocket, i);
 			}
 			else if (bytesReceived == -1)
-			{
-				std::cout << strerror(errno) << std::endl;
 				throw Response::ResponseException();
-			}
 		}
-	}
-	catch (std::exception& e){
-		throw;
-	}
-	if (totalLength != 0 && totalLength == this->_clientInfos[clientSocket].request.length())
-	{
+	} catch (Response::ResponseException &e){
+		std::cerr << e.what() << std::endl;
+		this->_clientInfos[clientSocket].responseStatus = e.responseCode();
 		this->_clientInfos[clientSocket].requestReceived = true;
-		try
+	} catch (std::exception &e){
+		throw ;
+	}
+	try {
+		if (totalLength != 0 && totalLength == this->_clientInfos[clientSocket].request.length())
 		{
+			this->_clientInfos[clientSocket].requestReceived = true;
 			Request* request = new Request(this->_clientInfos[clientSocket].request);
 			request->parse();
 			if (request->getBody().length() > this->_info[this->_connections[clientSocket]].getBodylimit())
@@ -349,10 +358,12 @@ void	ServerManager::receiveRequest(size_t& i)
 				addPipeFd(this->_clientInfos[clientSocket].pipeFd);
 			}
 		}
-		catch (std::exception& e)
-		{
-			throw;
-		}
+	} catch (Response::ResponseException &e){
+		std::cerr << e.what() << std::endl;
+		this->_clientInfos[clientSocket].responseStatus = e.responseCode();
+		this->_clientInfos[clientSocket].requestReceived = true;
+	} catch (Request::RequestException &e){
+	} catch (...){
 	}
 }
 
@@ -460,7 +471,7 @@ void	ServerManager::runServers()
 					readFromCgiFd(this->_poll_fds[i].fd);
 					pipeFd = true;
 				}
-				else	
+				else
 					receiveRequest(i);
 			}
 			if (this->_poll_fds[i].revents & POLLOUT && this->_clientInfos[this->_poll_fds[i].fd].requestReceived == true

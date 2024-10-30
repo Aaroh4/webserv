@@ -29,6 +29,16 @@ class Request
 		std::string getSessionId (void) const;
 		void 		setSessionId (std::string sessionId);
 		void		printRequest(int clientSocket);
+		void		setStatusAndThrow(int statusCode, std::string errmsg);
+
+		class RequestException : public std::exception
+		{
+    		public:
+				RequestException(std::string msg) : message(msg) {};
+    			virtual const char* what() const noexcept;
+			private:
+				std::string message;
+		};
 
 	protected:
 		int	_sanitizeStatus;

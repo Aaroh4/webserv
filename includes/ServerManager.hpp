@@ -16,6 +16,7 @@ typedef struct s_clientInfo
 	std::string cgiResponseBody;
 	bool		requestReceived;
 	bool		cgiResponseReady;
+	int			responseStatus;
 	std::time_t	latestRequest;
 }	t_clientInfo;
 
