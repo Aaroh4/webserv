@@ -41,3 +41,31 @@ input=l
 input=l
 input=ffff
 input=ffff
+Host: 127.0.0.1:8080
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:131.0) Gecko/20100101 Firefox/131.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/png,image/svg+xml,*/*;q=0.8
+Accept-Language: en-US,en;q=0.5
+Accept-Encoding: gzip, deflate, br, zstd
+Content-Type: application/x-www-form-urlencoded
+Content-Length: 11
+Origin: http://127.0.0.1:8080
+Connection: keep-alive
+Referer: http://127.0.0.1:8080/html/index.html
+Cookie: session_id=0cf87b481b3d5683553e7c4bd331d4e7
+Upgrade-Insecure-Requests: 1
+Sec-Fetch-Dest: document
+Sec-Fetch-Mode: navigate
+Sec-Fetch-Site: same-origin
+Sec-Fetch-User: ?1
+Priority: u=0, i
+
+input=dssds
+input=hggfgfg
+input=kjkjkjk
+input=dggfgfd
+input=dggfgfdfd
+input=dggfgfdfdfd
+input=dggfgfdfdfddf
+input=dggfgfdfdfddffd
+input=dggfgfdfdfddffddf
+input=

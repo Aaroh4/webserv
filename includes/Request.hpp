@@ -9,7 +9,7 @@ class Request
 {
 	public:
 		Request(void);
-		Request(std::string request);
+		Request(std::string request, int bodyLimit);
 		virtual ~Request(void);
 		Request(Request const& src);
 		Request& operator=(Request const& src);
@@ -54,6 +54,7 @@ class Request
 		void		_decodeChunks(void);
 		std::string	_splitMultiFormParts(std::string& boundary);
 		std::string	_parseFileName(std::string& line);
+		int			_bodyLimit;
 };
 
 #endif

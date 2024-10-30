@@ -2,12 +2,13 @@
 #include <iostream>
 #include <climits>
 #include <filesystem>
+#include "../includes/Response.hpp"
 
 Request::Request(void) : _sanitizeStatus(0)
 {
 }
 
-Request::Request(std::string request) :  _sanitizeStatus(200), _request(request)
+Request::Request(std::string request, int bodyLimit) :  _sanitizeStatus(200), _request(request), _bodyLimit(bodyLimit)
 {
 	return;
 }
@@ -31,6 +32,7 @@ Request::Request(Request const& src)
 	this->_root = src._root;
 	this->_origLoc = src._origLoc;
 	this->_sessionId = src._sessionId;
+	this->_bodyLimit = src._bodyLimit;
 }
 
 Request& Request::operator=(Request const& src)
@@ -49,6 +51,7 @@ Request& Request::operator=(Request const& src)
 		this->_root = src._root;
 		this->_origLoc = src._origLoc;
 		this->_sessionId = src._sessionId;
+		this->_bodyLimit = src._bodyLimit;
 		for (const auto& map_content : src._headers)
 		{
 			this->_headers[map_content.first] = map_content.second;
@@ -61,8 +64,9 @@ std::string Request::_splitMultiFormParts(std::string& boundary)
 {
 	size_t		i = this->_body.find(boundary);
 	std::string part = this->_body.substr(0, i - 1);
+
 	this->_body.erase(0, i + boundary.length() + 2);
-	return part;
+	return part; 
 }
 
 std::string	Request::_parseFileName(std::string& line)
@@ -125,7 +129,7 @@ void	Request::_parseMultipartContent(void)
 	for (int i = 0; ind != std::string::npos; i++)
 	{
 		ind = this->_body.find(boundary, ind + 1);
-		blockCount = i;
+		blockCount = i + 1;
 	}
 	for (int i = 0; i < blockCount; i++)
 	{
@@ -244,28 +248,35 @@ void	Request::_parseHeaders(void)
 	std::string line;
 
 	size_t	lineEnd = 0;
+	std::stringstream request(this->_request);
 	size_t	i = 0;
 
 	while (line != "\r\n\r\n")
 	{
-		lineEnd = this->_request.find_first_of("\n");
-		line = this->_request.substr(0, lineEnd + 1);
+		std::getline(request, line);
+		lineEnd = line.find_first_of("\n");
+		//line = this->_request.substr(0, lineEnd + 1);
 		if (line == "\r\n")
 		{
-			this->_request.erase(0, 2);
+			//this->_request.erase(0, 2);
 			break;
 		}
 		i = line.find_first_of(":");
 		if (i == std::string::npos)
 		{
-			this->_sanitizeStatus = 400;
-			this->_errmsg = "Bad Request";
+			//this->_sanitizeStatus = 400;
+			//this->_errmsg = "Bad Request";
 			break;
 		}
+		std::cout << "key " << line.substr(0, i) << " value: " << line.substr(i + 2, lineEnd - (i + 3)) << std::endl;
 		this->_headers[line.substr(0, i)] = line.substr(i + 2, lineEnd - (i + 3));
 		this->_request.erase(0, lineEnd + 1);
 	}
-	this->_body = this->_request;
+	size_t bodyStart = this->_request.find("\r\n\r\n") + 4;
+	size_t bodyEnd = this->_request.find_last_of("\r\n\r\n") + 4;
+	this->_body = this->_request.substr(bodyStart, bodyEnd);
+	if (static_cast<int> (this->_body.length()) > this->_bodyLimit)
+		throw Response::ResponseException400();
 }
 
 void	Request::_decodeChunks(void)
@@ -298,7 +309,11 @@ void	Request::_decodeChunks(void)
 		this->_body.erase(0, chunkSize + 2);
 	}
 	if (totalSize != static_cast<int>(decodedBody.length()))
-		std::cout << "paha\n";
+	{
+		this->_sanitizeStatus = 400;
+		this->_errmsg = "Bad request";
+		return;
+	}
 	this->_body = decodedBody;
 }
 
@@ -348,7 +363,6 @@ void	Request::sanitize(ServerInfo server)
 		if (!server.getlocationinfo()[test].root.empty())
 			temp = test;
 	}
-	std::cout << "asdadstemp: " << temp << std::endl;
 	if (!server.getlocationinfo()[temp].root.empty())
 	{
 		this->_root = server.getlocationinfo()[temp].root;
@@ -379,10 +393,13 @@ void	Request::sanitize(ServerInfo server)
 		return;
 	}
  	int i = this->_url.find_last_of("/");
-	while (this->_url[i - 1] == '/')
+	if (i > 0)
 	{
-		this->_url.pop_back();
-		i--;
+		while (this->_url[i - 1] == '/')
+		{
+			this->_url.pop_back();
+			i--;
+		}
 	}
 	if (this->_queryString.find_first_of(";|`<>") != std::string::npos)
 	{

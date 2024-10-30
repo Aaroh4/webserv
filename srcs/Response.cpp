@@ -129,8 +129,6 @@ void	Response::respondPost(int clientfd, ServerInfo server)
 	send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL);
 	std::cout << "Response to client: " << clientfd << std::endl;
 	std::cout << response << std::endl;
-
-	std::cout << "this should be the responsebody: " << this->_responseBody << std::endl;
 }
 
 std::string Response::formatPostResponseMsg (int close){

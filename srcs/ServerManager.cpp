@@ -186,12 +186,6 @@ void	ServerManager::runCgi(std::string path, char** envp, int& clientSocket)
 		{
 			throw std::runtime_error("execve() failed");
 		}
-		/*for (auto& it: this->_clientInfos)
-		{
-			close(it.first);
-			close(it.second.pipeFd);
-			delete it.second.req;
-		}*/
 	}
 	else
 	{
@@ -339,18 +333,15 @@ void	ServerManager::receiveRequest(size_t& i)
 		this->_clientInfos[clientSocket].requestReceived = true;
 		try
 		{
-			Request* request = new Request(this->_clientInfos[clientSocket].request);
-			request->parse();
-			if (request->getBody().length() > this->_info[this->_connections[clientSocket]].getBodylimit())
-				throw Response::ResponseException400();
-			request->sanitize(this->_info[this->_connections[clientSocket]]);
-			if (request->getConnectionHeader() == "keep-alive")
-				this->_clientInfos[clientSocket].latestRequest = std::time(nullptr);
-			std::cout << "request " << this->_clientInfos[clientSocket].request << std::endl;
 			if (this->_clientInfos[clientSocket].req != nullptr)
 				delete this->_clientInfos[clientSocket].req;
-			this->_clientInfos[clientSocket].req = request;
-			if (checkForCgi(*request, clientSocket) == 1)
+			this->_clientInfos[clientSocket].req = new Request(this->_clientInfos[clientSocket].request, this->_info[this->_connections[clientSocket]].getBodylimit());
+			this->_clientInfos[clientSocket].req->parse();
+			this->_clientInfos[clientSocket].req->sanitize(this->_info[this->_connections[clientSocket]]);
+			if (this->_clientInfos[clientSocket].req->getConnectionHeader() == "keep-alive")
+				this->_clientInfos[clientSocket].latestRequest = std::time(nullptr);
+			std::cout << "request " << this->_clientInfos[clientSocket].request << std::endl;
+			if (checkForCgi(*this->_clientInfos[clientSocket].req, clientSocket) == 1)
 			{
 				addPipeFd(this->_clientInfos[clientSocket].pipeFd);
 			}
