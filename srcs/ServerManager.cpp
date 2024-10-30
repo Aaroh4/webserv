@@ -247,10 +247,8 @@ void ServerManager::removeConnection(int clientSocket, size_t& i)
 		this->_clientInfos[clientSocket].cgiResponseReady = false;
 		this->_clientInfos[clientSocket].cgiResponseBody = "";
 		std::string connectionStatus = this->_clientInfos[clientSocket].req->getConnectionHeader();
-		if (connectionStatus == "close"
-			|| checkConnectionUptime(clientSocket) == true)
+		if (connectionStatus == "close")
 			closeConnection(clientSocket, i);
-		std::cout << "removeConnection: ClientSocket " << clientSocket << " closed\n\n" << std::endl;
 	}
 	catch(const std::exception& e)
 	{
@@ -272,11 +270,13 @@ void	ServerManager::closeConnection(int& clientSocket, size_t& i)
 
 bool	ServerManager::checkConnectionUptime(int& clientSocket)
 {
+	std::cout << "latest request time  " << this->_clientInfos[clientSocket].latestRequest << std::endl;
 	try {
 		if (this->_clientInfos[clientSocket].latestRequest != 0)
 		{
 			std::time_t currentTime = std::time(nullptr);
 			unsigned int diff = currentTime - this->_clientInfos[clientSocket].latestRequest;
+			std::cout << "connection uptime " << diff << std::endl;
 			if (diff >= this->_info[this->_connections[clientSocket]].get_timeout())
 				return true;
 		}
@@ -301,7 +301,6 @@ void	ServerManager::receiveRequest(size_t& i)
 		if (totalLength == 0 || this->_clientInfos[clientSocket].request.length() < totalLength)
 		{
 			bytesReceived = recv(clientSocket, buffer, sizeof(buffer), 0);
-			//std::cout << "Bytes received " << bytesReceived << std::endl;
 			if (bytesReceived > 0)
 			{
 				this->_clientInfos[clientSocket].request.append(buffer, bytesReceived);
@@ -316,7 +315,6 @@ void	ServerManager::receiveRequest(size_t& i)
 			else if (checkConnectionUptime(clientSocket) == true && bytesReceived == 0)
 			{
 				closeConnection(clientSocket, i);
-				//removeConnection(clientSocket, i);
 			}
 			else if (bytesReceived == -1)
 			{
@@ -463,6 +461,9 @@ void	ServerManager::runServers()
 			if (this->_poll_fds[i].revents & POLLOUT && this->_clientInfos[this->_poll_fds[i].fd].requestReceived == true
 				&& pipeFd == false)
 				sendResponse(i);
+			if (pipeFd == false)
+				if (checkConnectionUptime(this->_poll_fds[i].fd) == true)
+					closeConnection(this->_poll_fds[i].fd, i);
 		}
 	}
 }
