@@ -264,7 +264,10 @@ void	ServerManager::closeConnection(int& clientSocket, size_t& i)
 	i--;
 	this->_connections.erase(clientSocket);
 	if (this->_clientInfos[clientSocket].req != nullptr)
+	{
 		delete this->_clientInfos[clientSocket].req;
+		this->_clientInfos[clientSocket].req = nullptr;
+	}
 	this->_clientInfos.erase(clientSocket);
 	std::cout << "removeConnection: ClientSocket " << clientSocket << " closed\n\n" << std::endl;
 	std::cout << "Client disconnected" << "\n";
@@ -332,7 +335,10 @@ void	ServerManager::receiveRequest(size_t& i)
 		try
 		{
 			if (this->_clientInfos[clientSocket].req != nullptr)
+			{
 				delete this->_clientInfos[clientSocket].req;
+				this->_clientInfos[clientSocket].req = nullptr;
+			}
 			this->_clientInfos[clientSocket].req = new Request(this->_clientInfos[clientSocket].request, this->_info[this->_connections[clientSocket]].getBodylimit());
 			this->_clientInfos[clientSocket].req->parse();
 			this->_clientInfos[clientSocket].req->sanitize(this->_info[this->_connections[clientSocket]]);
