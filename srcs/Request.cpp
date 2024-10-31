@@ -253,7 +253,7 @@ void	Request::_parseHeaders(void)
 	size_t bodyEnd = this->_request.find_last_of("\r\n\r\n") + 4;
 	this->_body = this->_request.substr(bodyStart, bodyEnd);
 	if (static_cast<int> (this->_body.length()) > this->_bodyLimit)
-		throw Response::ResponseException400();
+		setStatusAndThrow(400, "Bad Request");
 }
 
 void	Request::_decodeChunks(void)
