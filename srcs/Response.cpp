@@ -39,39 +39,43 @@ void Response::handleCRUD(int clientfd, ServerInfo server)
 			respondDelete(clientfd);
 		else
 			throw ResponseException405();
-	} catch (const ResponseException &e){
-		sendErrorResponse(e.what(), clientfd, e.responseCode());
+	} catch (ResponseException &e){
+		std::cerr << e.what() << " in handleCRUD" << std::endl;
+		sendErrorResponse(e.what(), clientfd, e.responseCode(), server);
 	}
 }
 
 void	Response::respond(int clientfd, ServerInfo server)
 {
 	this->_server = server;
+	std::cout << this->_sanitizeStatus << std::endl;
 	try{
 		switch (this->_sanitizeStatus){
-			//case 404:
-			//	throw ResponseException404();
-			//case 400:
-			//	throw ResponseException400();
+			case 404:
+				throw ResponseException404();
+			case 400:
+				throw ResponseException400();
 			case 403:
 				throw ResponseException403();
-			//case 501:
-			//	throw ResponseException501();
-			//case 505:
-			//	throw ResponseException505();
-			//case 515:
-			//	throw ResponseException515();
-			//case 500:
-			//	throw ResponseException();
+			case 501:
+				throw ResponseException501();
+			case 505:
+				throw ResponseException505();
+			case 515:
+				throw ResponseException515();
+			case 500:
+				throw ResponseException();
 		}
-	} catch(const ResponseException& e) {
-		sendErrorResponse(e.what(), clientfd, e.responseCode());
+	} catch(ResponseException& e) {
+		std::cerr << e.what() << " in respond" << std::endl;
+		sendErrorResponse(e.what(), clientfd, e.responseCode(), server);
 		return ;
 	}
 	try{
 		handleCRUD(clientfd, server);
-	} catch(const ResponseException& e){
-		sendErrorResponse(e.what(), clientfd, e.responseCode());
+	} catch(ResponseException& e){
+		std::cerr << e.what() << " in respond" << std::endl;
+		sendErrorResponse(e.what(), clientfd, e.responseCode(), server);
 		return ;
 	}
 }
@@ -88,7 +92,17 @@ void Response::respondGet(int clientfd, ServerInfo server)
 {
 	std::string response;
 
-	if (server.getlocationinfo()[this->_url].dirList != false && server.getlocationinfo()[this->_url].index.empty())
+	if (!server.getlocationinfo()[this->_origLoc].redirection.empty() || !server.getlocationinfo()[this->_url].redirection.empty())
+	{
+		this->_fileSize = "66";
+		this->_sanitizeStatus = 302;
+		this->_errorMessage = "Found";
+		if (!server.getlocationinfo()[this->_url].redirection.empty())
+			this->_redirectplace = server.getlocationinfo()[this->_url].redirection;
+		else
+			this->_redirectplace = server.getlocationinfo()[this->_origLoc].redirection;
+	}
+	else if (server.getlocationinfo()[this->_url].dirList != false && server.getlocationinfo()[this->_url].index.empty())
 	{
 		this->directorylisting(clientfd, this->buildDirectorylist(server.getlocationinfo()[this->_url].root, server.getlocationinfo()[this->_url].root.size() + 1));
 	}
@@ -100,7 +114,8 @@ void Response::respondGet(int clientfd, ServerInfo server)
 		}
 		catch(ResponseException &e)
 		{
-			sendErrorResponse(e.what(), clientfd, e.responseCode());
+			std::cerr << e.what() << " in respondGet" << std::endl;
+			sendErrorResponse(e.what(), clientfd, e.responseCode(), server);
 			return;
 		}
 		response = formatGetResponseMsg(0);
@@ -109,8 +124,9 @@ void Response::respondGet(int clientfd, ServerInfo server)
 		char buffer[chunkSize];
 		while (this->_file.read(buffer, chunkSize) || this->_file.gcount() > 0)
 			send(clientfd, buffer, this->_file.gcount(), MSG_NOSIGNAL);
+		return ;
 	}
-	response = formatGetResponseMsg(0);
+	response += formatGetResponseMsg(0);
 	send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL);
 	std::cout << "Response to client: " << clientfd << std::endl;
 	std::cout << response << std::endl;
@@ -147,7 +163,8 @@ std::string Response::formatPostResponseMsg (int close){
 	this->_type = "text/html";
 	if (this->_sanitizeStatus == 200)
 		response += "Content-Type: " + this->_type + "\r\n";
-	response += formatSessionCookie();
+	if (!this->_sessionId.empty())
+		response += formatSessionCookie();
 	if (close == 0)
 	{
 		response += "Connection: Keep-Alive\r\n";
@@ -200,10 +217,8 @@ void Response::directorylisting(int clientfd, std::string file)
 	this->_fileSize = std::to_string(file.size());
 	response = formatGetResponseMsg(0);
 	std::string responseWithoutFile = response;
-	response += file;
 	send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL);
-	//std::cout << "Response to client: " << clientfd << std::endl;
-	//std::cout << responseWithoutFile << std::endl;
+	send(clientfd, file.c_str(), file.length(), MSG_NOSIGNAL);
 }
 
 std::string Response::buildDirectorylist(std::string name, int rootsize)
@@ -275,6 +290,7 @@ std::string Response::formatGetResponseMsg(int close)
 	response += "Content-Type: " + this->_type + "\r\n";
 
 	response += "Content-Length: " + this->_fileSize + "\r\n";
+	response += "Location: " + this->_redirectplace + "\r\n";
 	response += formatSessionCookie();
 	if (close == 0)
 	{
@@ -283,10 +299,22 @@ std::string Response::formatGetResponseMsg(int close)
 	}
 	else
 		response += "Connection: close\r\n\r\n";
+	if (this->_sanitizeStatus == 302)
+	{
+		response += "<!DOCTYPE html>" \
+			"<html>" \
+			"<head>" \
+			"<title>Redirecting...</title>" \
+			"</head>" \
+			"<body>" \
+			"<p>This page has been moved</p>" \
+			"</body>" \
+			"</html>";
+	}
 	return (response);
 }
 
-void Response::sendStandardErrorPage(int sanitizeStatus, int clientfd)
+void Response::sendStandardErrorPage(int sanitizeStatus, int clientfd, ServerInfo server)
 {
 	std::string response;
 	std::string file;
@@ -294,36 +322,52 @@ void Response::sendStandardErrorPage(int sanitizeStatus, int clientfd)
 	switch (sanitizeStatus)
 	{
 		case 400:
-			this->_file.open("./www/400.html");
-			this->_url = "/400.html";
+			if (server.getErrorPages()[400].empty())
+				this->_file.open("./www/400.html");
+			else
+				this->_file.open(server.getErrorPages()[400]);
 			break ;
 		case 403:
-			this->_file.open("./www/403.html");
-			this->_url = "/403.html";
+			if (server.getErrorPages()[403].empty())
+				this->_file.open("./www/403.html");
+			else
+				this->_file.open(server.getErrorPages()[403]);
 			break ;
 		case 405:
-			this->_file.open("./www/405.html");
-			this->_url = "/405.html";
+			if (server.getErrorPages()[405].empty())
+				this->_file.open("./www/405.html");
+			else
+				this->_file.open(server.getErrorPages()[405]);
 			break ;
 		case 404:
-			this->_file.open("./www/404.html");
-			this->_url = "/404.html";
+			if (server.getErrorPages()[404].empty())
+				this->_file.open("./www/404.html");
+			else
+				this->_file.open(server.getErrorPages()[404]);
 			break ;
 		case 501:
-			this->_file.open("./www/501.html");
-			this->_url = "/501.html";
+			if (server.getErrorPages()[501].empty())
+				this->_file.open("./www/501.html");
+			else
+				this->_file.open(server.getErrorPages()[501]);
 			break ;
 		case 505:
-			this->_file.open("./www/505.html");
-			this->_url = "/505.html";
+			if (server.getErrorPages()[505].empty())
+				this->_file.open("./www/505.html");
+			else
+				this->_file.open(server.getErrorPages()[505]);
 			break ;
 		case 515:
-			this->_file.open("./www/515.html");
-			this->_url = "/515.html";
+			if (server.getErrorPages()[515].empty())
+				this->_file.open("./www/515.html");
+			else
+				this->_file.open(server.getErrorPages()[515]);
 			break ;
 		default:
-			this->_file.open("./www/500.html");
-			this->_url = "/500.html";
+			if (server.getErrorPages()[500].empty())
+				this->_file.open("./www/500.html");
+			else
+				this->_file.open(server.getErrorPages()[500]);
 			break ;
 	}
 	for (std::string line; std::getline(this->_file, line);)
@@ -366,7 +410,7 @@ void Response::sendCustomErrorPage(int clientfd)
 	std::cout << response << std::endl;
 }
 
-void Response::sendErrorResponse(std::string errorMessage, int clientfd, int errorCode)
+void Response::sendErrorResponse(std::string errorMessage, int clientfd, int errorCode, ServerInfo server)
 {
 	this->_errorMessage = errorMessage;
 	this->_sanitizeStatus = errorCode;
@@ -379,7 +423,7 @@ void Response::sendErrorResponse(std::string errorMessage, int clientfd, int err
 		this->_sanitizeStatus == 501 ||
 		this->_sanitizeStatus == 515)
 	{
-		sendStandardErrorPage(this->_sanitizeStatus, clientfd);
+		sendStandardErrorPage(this->_sanitizeStatus, clientfd, server);
 		return ;
 	}
 	else
@@ -453,4 +497,36 @@ const char* Response::ResponseException515::what() const noexcept{
 
 int Response::ResponseException515::responseCode () const{
 	return (515);
+}
+
+
+void Response::sendErrorPage(int statusCode, int clientfd)
+{
+	std::string response;
+	std::string fileSize;
+
+	std::string message;
+	if (statusCode == 400)
+		message = "Bad Request";
+	else
+		message = "Internal Server Error";
+	std::string body = "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<title>";
+	body += std::to_string(statusCode) + " " + message + "</title>\n<style>\n";
+	body += "body {background-color: powderblue;}\n";
+	body += "h1 {color: blue; font-style: italic; text-align: center;}\n</style>\n</head>\n<body>\n<h1>";
+	body += std::to_string(statusCode) + " " + message + "</h1>\n</body>\n</html>\n";
+
+	fileSize = std::to_string(body.length());
+
+	response = "HTTP/1.1 " + std::to_string(statusCode) + " " + message + "\r\n";
+	response += "Content-Type: text/html\r\n";
+	response += "Content-Length: " + fileSize + "\r\n";
+	response += "Connection: close\r\n\r\n";
+
+	std::string responseWithoutBody = response;
+	response += body;
+
+	send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL);
+	std::cout << "Response to client: " << clientfd << std::endl;
+	std::cout << responseWithoutBody << std::endl;
 }

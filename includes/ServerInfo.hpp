@@ -16,6 +16,7 @@ inline std::string cutFromTo(std::string input, int start, std::string last)
 struct	location
 {
 	std::string									name;
+	std::string									redirection;
 	std::string									root;
 	std::string									index;
 	std::string									upload;

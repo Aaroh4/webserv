@@ -17,7 +17,7 @@ class Response: public Request
 			Response operator=(const Response &);
 
 			std::string 	formatGetResponseMsg(int code);
-			void			sendErrorResponse(std::string errorMessage, int clientfd, int errorCode);
+			void			sendErrorResponse(std::string errorMessage, int clientfd, int errorCode, ServerInfo);
 			void			openFile(ServerInfo server);
 			void			sendCustomErrorPage(int clientfd);
       		std::string		buildDirectorylist(std::string name, int rootsize);
@@ -27,10 +27,11 @@ class Response: public Request
 			void			respondPost(int clientfd, ServerInfo server);
 			void			respondDelete(int clientfd);
 			void			handleCRUD(int clientfd, ServerInfo server);
-			void 			sendStandardErrorPage(int sanitizeStatus, int clientfd);
+			void 			sendStandardErrorPage(int sanitizeStatus, int clientfd, ServerInfo server);
 			void			setResponseBody(std::string body);
 			std::string		formatPostResponseMsg(int close);
 			std::string 	formatSessionCookie( void );
+			static void     sendErrorPage(int statusCode, int clientfd);
 
 			// RESPONSE EXCEPTIONS
 			//base class for 500 internal error
@@ -100,7 +101,8 @@ class Response: public Request
 
 	private:
 			ServerInfo	_server;
-			std::string _fileSize;
+			std::string _fileSize = "0";
+			std::string _redirectplace;
 			std::string _contentType;
 			std::string _response;
 			std::string _responseBody;
