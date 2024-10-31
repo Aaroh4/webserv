@@ -352,7 +352,7 @@ void	Request::sanitize(ServerInfo server)
 		if (this->_type == "cgi/py" || this->_type == "cgi/php")
 			this->_verifyPath();
 
-		if (this->_sanitizeStatus != 200)
+		if (this->_sanitizeStatus != 0)
 			return ;
 		if (this->_httpVersion != "HTTP/1.0" && this->_httpVersion != "HTTP/1.1")
 		{
