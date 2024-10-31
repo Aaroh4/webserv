@@ -22,7 +22,8 @@ std::string toLowerCase(const std::string str)
 void locations(std::string temp, ServerInfo &server)
 {
 	std::vector<std::string> location_configs =
-	{"root:", "dir-listing:", "allowed-methods:", "upload:", "index:"};
+	{"root:", "dir-listing:", "allowed-methods:", "upload:", "index:", 
+		"redirect:"};
 	std::unordered_set<std::string> all_methods =
 	{"GET", "POST", "DELETE", "HEAD"};
 
@@ -59,6 +60,9 @@ void locations(std::string temp, ServerInfo &server)
 						break;
 				case 4:
 						temploc.index = value;
+						break;
+				case 5:
+						temploc.redirection = value;
 						break;
 			}
 		}

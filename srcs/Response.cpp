@@ -65,8 +65,6 @@ void	Response::respond(int clientfd, ServerInfo server)
 				throw ResponseException515();
 			case 500:
 				throw ResponseException();
-			default:
-				break ;
 		}
 	} catch(ResponseException& e) {
 		std::cerr << e.what() << " in respond" << std::endl;
@@ -94,7 +92,17 @@ void Response::respondGet(int clientfd, ServerInfo server)
 {
 	std::string response;
 
-	if (server.getlocationinfo()[this->_url].dirList != false && server.getlocationinfo()[this->_url].index.empty())
+	if (!server.getlocationinfo()[this->_origLoc].redirection.empty() || !server.getlocationinfo()[this->_url].redirection.empty())
+	{
+		this->_fileSize = "66";
+		this->_sanitizeStatus = 302;
+		this->_errorMessage = "Found";
+		if (!server.getlocationinfo()[this->_url].redirection.empty())
+			this->_redirectplace = server.getlocationinfo()[this->_url].redirection;
+		else
+			this->_redirectplace = server.getlocationinfo()[this->_origLoc].redirection;
+	}
+	else if (server.getlocationinfo()[this->_url].dirList != false && server.getlocationinfo()[this->_url].index.empty())
 	{
 		this->directorylisting(clientfd, this->buildDirectorylist(server.getlocationinfo()[this->_url].root, server.getlocationinfo()[this->_url].root.size() + 1));
 	}
@@ -116,8 +124,9 @@ void Response::respondGet(int clientfd, ServerInfo server)
 		char buffer[chunkSize];
 		while (this->_file.read(buffer, chunkSize) || this->_file.gcount() > 0)
 			send(clientfd, buffer, this->_file.gcount(), MSG_NOSIGNAL);
+		return ;
 	}
-	response = formatGetResponseMsg(0);
+	response += formatGetResponseMsg(0);
 	send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL);
 	std::cout << "Response to client: " << clientfd << std::endl;
 	std::cout << response << std::endl;
@@ -154,7 +163,8 @@ std::string Response::formatPostResponseMsg (int close){
 	this->_type = "text/html";
 	if (this->_sanitizeStatus == 200)
 		response += "Content-Type: " + this->_type + "\r\n";
-	response += formatSessionCookie();
+	if (!this->_sessionId.empty())
+		response += formatSessionCookie();
 	if (close == 0)
 	{
 		response += "Connection: Keep-Alive\r\n";
@@ -207,10 +217,8 @@ void Response::directorylisting(int clientfd, std::string file)
 	this->_fileSize = std::to_string(file.size());
 	response = formatGetResponseMsg(0);
 	std::string responseWithoutFile = response;
-	response += file;
 	send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL);
-	//std::cout << "Response to client: " << clientfd << std::endl;
-	//std::cout << responseWithoutFile << std::endl;
+	send(clientfd, file.c_str(), file.length(), MSG_NOSIGNAL);
 }
 
 std::string Response::buildDirectorylist(std::string name, int rootsize)
@@ -282,6 +290,7 @@ std::string Response::formatGetResponseMsg(int close)
 	response += "Content-Type: " + this->_type + "\r\n";
 
 	response += "Content-Length: " + this->_fileSize + "\r\n";
+	response += "Location: " + this->_redirectplace + "\r\n";
 	response += formatSessionCookie();
 	if (close == 0)
 	{
@@ -290,6 +299,18 @@ std::string Response::formatGetResponseMsg(int close)
 	}
 	else
 		response += "Connection: close\r\n\r\n";
+	if (this->_sanitizeStatus == 302)
+	{
+		response += "<!DOCTYPE html>" \
+			"<html>" \
+			"<head>" \
+			"<title>Redirecting...</title>" \
+			"</head>" \
+			"<body>" \
+			"<p>This page has been moved</p>" \
+			"</body>" \
+			"</html>";
+	}
 	return (response);
 }
 
@@ -476,4 +497,36 @@ const char* Response::ResponseException515::what() const noexcept{
 
 int Response::ResponseException515::responseCode () const{
 	return (515);
+}
+
+
+void Response::sendErrorPage(int statusCode, int clientfd)
+{
+	std::string response;
+	std::string fileSize;
+
+	std::string message;
+	if (statusCode == 400)
+		message = "Bad Request";
+	else
+		message = "Internal Server Error";
+	std::string body = "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<title>";
+	body += std::to_string(statusCode) + " " + message + "</title>\n<style>\n";
+	body += "body {background-color: powderblue;}\n";
+	body += "h1 {color: blue; font-style: italic; text-align: center;}\n</style>\n</head>\n<body>\n<h1>";
+	body += std::to_string(statusCode) + " " + message + "</h1>\n</body>\n</html>\n";
+
+	fileSize = std::to_string(body.length());
+
+	response = "HTTP/1.1 " + std::to_string(statusCode) + " " + message + "\r\n";
+	response += "Content-Type: text/html\r\n";
+	response += "Content-Length: " + fileSize + "\r\n";
+	response += "Connection: close\r\n\r\n";
+
+	std::string responseWithoutBody = response;
+	response += body;
+
+	send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL);
+	std::cout << "Response to client: " << clientfd << std::endl;
+	std::cout << responseWithoutBody << std::endl;
 }

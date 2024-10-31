@@ -144,22 +144,16 @@ void	Request::_verifyPath(void)
 	//std::filesystem::path file = "./www" + this->_url;
 	if (!std::filesystem::exists(file))
 	{
-		this->_sanitizeStatus = 404;
-		this->_errmsg = "Not Found"; //Not Found
-		return;
+		setStatusAndThrow(404, "Not Found");
 	}
 	else if (!std::filesystem::is_regular_file(file))
 	{
-		this->_sanitizeStatus = 403;
-		this->_errmsg = "Forbidden"; //Forbidden
-		return;
+		setStatusAndThrow(403, "Forbidden");
 	}
 	int permissions = access(file.c_str(), X_OK);
 	if (permissions != 0)
 	{
-		this->_sanitizeStatus = 403;
-		this->_errmsg = "Forbidden"; //Forbidden
-		return;
+		setStatusAndThrow(403, "Forbidden");
 	}
 }
 
@@ -181,8 +175,7 @@ void	Request::_getContentType(void)
 			this->_type = "cgi/" + type;
     	else if (this->_url != "/")
 		{
-			this->_sanitizeStatus = 415;
-			this->_errmsg = "Unsupported Media Type"; // Error: Unsupported Media Type
+			setStatusAndThrow(415, "Unsupported Media Type");
 		}
 	}
 }
@@ -204,8 +197,7 @@ void	Request::_parseRequestLine(void)
 	}
 	if (index == 3)
 	{
-		this->_sanitizeStatus = 501;
-		this->_errmsg = "Unsupported method";
+		setStatusAndThrow(501, "Unsupported method");
 	}
 	this->_request.erase(0, this->_method.length() + 1);
 
@@ -252,25 +244,16 @@ void	Request::_parseHeaders(void)
 	while (line != "\r\n\r\n")
 	{
 		std::getline(request, line);
-		if (line == "\r\n")
-		{
-			//this->_request.erase(0, 2);
-			break;
-		}
 		i = line.find_first_of(":");
 		if (i == std::string::npos)
-		{
-			//this->_sanitizeStatus = 400;
-			//this->_errmsg = "Bad Request";
-			break;
-		}
+			break ;
 		this->_headers[line.substr(0, i)] = line.substr(i + 2, (line.length() - (i + 3)));
 	}
 	size_t bodyStart = this->_request.find("\r\n\r\n") + 4;
 	size_t bodyEnd = this->_request.find_last_of("\r\n\r\n") + 4;
 	this->_body = this->_request.substr(bodyStart, bodyEnd);
 	if (static_cast<int> (this->_body.length()) > this->_bodyLimit)
-		throw Response::ResponseException400();
+		setStatusAndThrow(400, "Bad Request");
 }
 
 void	Request::_decodeChunks(void)
@@ -295,20 +278,17 @@ void	Request::_decodeChunks(void)
 		}
 		catch(const std::exception& e)
 		{
-			this->_sanitizeStatus = 500;
-			this->_errmsg = "Internal Server Error";
-			return;
+			setStatusAndThrow(500, "Internal Server Error");
 		}
 		decodedBody += this->_body.substr(0, chunkSize);
 		this->_body.erase(0, chunkSize + 2);
 	}
 	if (totalSize != static_cast<int>(decodedBody.length()))
 	{
-		this->_sanitizeStatus = 400;
-		this->_errmsg = "Bad request";
-		return;
+
+		setStatusAndThrow(500, "Internal Server Error");
+	  this->_body = decodedBody;
 	}
-	this->_body = decodedBody;
 }
 
 std::string generateSessionId( void ){
@@ -349,67 +329,61 @@ void	Request::sanitize(ServerInfo server)
 	std::string temp;
 	std::string	test = "/" + cutFromTo(this->_url, 1, "/")  + "/";
 
-	if (!server.getlocationinfo()[test].root.empty())
-		temp = test;
-	while (test.size() + 1 <= this->_url.size())
-	{
-		test += cutFromTo(this->_url, test.size(), "/") + "/";
+	try{
 		if (!server.getlocationinfo()[test].root.empty())
 			temp = test;
-	}
-	if (!server.getlocationinfo()[temp].root.empty())
-	{
-		this->_root = server.getlocationinfo()[temp].root;
-		this->_origLoc = temp;
-	}
-	else
-	{
-		this->_root = server.getlocationinfo()["/"].root;
-		this->_origLoc = "/";
-		temp = "/";
-	}
 
-	if (this->_type == "cgi/py" || this->_type == "cgi/php")
-		this->_verifyPath();
+		while (test.size() + 1 <= this->_url.size()){
+			test += cutFromTo(this->_url, test.size(), "/") + "/";
+			if (!server.getlocationinfo()[test].root.empty())
+				temp = test;
+		}
 
-	if (this->_sanitizeStatus != 200)
-		return ;
-	if (this->_httpVersion != "HTTP/1.0" && this->_httpVersion != "HTTP/1.1")
-	{
-		this->_sanitizeStatus = 505;
-		this->_errmsg = "Unsupported HTTP";
-		return;
-	}
-	if (this->_url.find("..") != std::string::npos )
-	{
-		this->_sanitizeStatus = 403;
-		this->_errmsg = "Forbidden"; //Forbidden
-		return;
-	}
- 	int i = this->_url.find_last_of("/");
-	if (i > 0)
-	{
+		if (!server.getlocationinfo()[temp].root.empty()){
+			this->_root = server.getlocationinfo()[temp].root;
+			this->_origLoc = temp;
+		}
+		else{
+			this->_root = server.getlocationinfo()["/"].root;
+			this->_origLoc = "/";
+			temp = "/";
+		}
+
+		if (this->_type == "cgi/py" || this->_type == "cgi/php")
+			this->_verifyPath();
+
+		if (this->_sanitizeStatus != 200)
+			return ;
+		if (this->_httpVersion != "HTTP/1.0" && this->_httpVersion != "HTTP/1.1")
+		{
+			setStatusAndThrow(505, "Unsupported HTTP");
+		}
+		if (this->_url.find("..") != std::string::npos )
+		{
+			setStatusAndThrow(403, "Forbidden");
+		}
+		int i = this->_url.find_last_of("/");
+
 		while (this->_url[i - 1] == '/')
 		{
 			this->_url.pop_back();
 			i--;
 		}
-	}
-	if (this->_queryString.find_first_of(";|`<>") != std::string::npos)
-	{
-		this->_sanitizeStatus = 400;
-		this->_errmsg = "Bad Request"; //Bad request
-		return;
-	}
-	for (const auto& map_content : this->_headers)
-	{
-		if (map_content.first.find_first_of("&;|`<>()#") != std::string::npos || map_content.first.length() > INT_MAX)
+		if (this->_queryString.find_first_of(";|`<>") != std::string::npos)
 		{
-			this->_sanitizeStatus = 400;
-			this->_errmsg = "Bad Request"; //Bad request
-			break;
+			setStatusAndThrow(400, "Bad Request");
 		}
-	}
+		for (const auto& map_content : this->_headers)
+		{
+			if (map_content.first.find_first_of("&;|`<>()#") != std::string::npos || map_content.first.length() > INT_MAX)
+			{
+				setStatusAndThrow(400, "Bad Request");
+			}
+		}
+	} catch (Request::RequestException &e){
+			std::cerr << e.what() << " in sanitize"<< std::endl;
+			throw ;
+		}
 }
 
 std::string	Request::getHost(void)
@@ -483,4 +457,15 @@ void Request::printRequest(int clientSocket)
 	std::cout << "Type: "<< this-> _type << std::endl;
 	std::cout << "Session ID: " << this->_sessionId << std::endl;
 	std::cout << "*******" << std::endl;
+}
+
+const char* Request::RequestException::what() const noexcept
+{
+	 return this->message.c_str();
+}
+
+void		Request::setStatusAndThrow(int statusCode, std::string errmsg){
+	this->_sanitizeStatus = statusCode;
+	this->_errmsg = errmsg;
+	throw RequestException(errmsg);
 }
