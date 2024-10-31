@@ -244,16 +244,9 @@ void	Request::_parseHeaders(void)
 	while (line != "\r\n\r\n")
 	{
 		std::getline(request, line);
-		if (line == "\r\n")
-		{
-			//this->_request.erase(0, 2);
-			break;
-		}
 		i = line.find_first_of(":");
 		if (i == std::string::npos)
-		{
-			setStatusAndThrow(400, "Bad Request");
-		}
+			break ;
 		this->_headers[line.substr(0, i)] = line.substr(i + 2, (line.length() - (i + 3)));
 	}
 	size_t bodyStart = this->_request.find("\r\n\r\n") + 4;
