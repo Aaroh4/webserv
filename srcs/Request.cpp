@@ -282,9 +282,8 @@ void	Request::_decodeChunks(void)
 	}
 	if (totalSize != static_cast<int>(decodedBody.length()))
 	{
-
 		setStatusAndThrow(500, "Internal Server Error");
-	  this->_body = decodedBody;
+	  	this->_body = decodedBody;
 	}
 }
 
@@ -309,16 +308,23 @@ std::string generateSessionId( void ){
 
 void	Request::parse(void)
 {
-	this->_parseRequestLine();
-	this->_parseHeaders();
-	if (this->_headers["Transfer-Encoding"] == "chunked")
-		this->_decodeChunks();
-	if (this->_headers["Content-Type"].find("multipart/form-data") != std::string::npos)
-		this->_parseMultipartContent();
-	if (this->_headers.find("Cookie") != this->_headers.end())
-		this->setSessionId(this->_headers["Cookie"]);
-	else
-		this->setSessionId(generateSessionId());
+	try
+	{
+		this->_parseRequestLine();
+		this->_parseHeaders();
+		if (this->_headers["Transfer-Encoding"] == "chunked")
+			this->_decodeChunks();
+		if (this->_headers["Content-Type"].find("multipart/form-data") != std::string::npos)
+			this->_parseMultipartContent();
+		if (this->_headers.find("Cookie") != this->_headers.end())
+			this->setSessionId(this->_headers["Cookie"]);
+		else
+			this->setSessionId(generateSessionId());
+	}
+	catch(const std::exception& e)
+	{
+		throw RequestException(e.what());
+	}
 }
 
 void	Request::sanitize(ServerInfo server)

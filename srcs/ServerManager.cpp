@@ -331,6 +331,7 @@ void	ServerManager::receiveRequest(size_t& i)
 		std::cerr << e.what() << " in receiveRequest"<< std::endl;
 		this->_clientInfos[clientSocket].responseStatus = e.responseCode();
 		this->_clientInfos[clientSocket].requestReceived = true;
+		throw;
 	} catch (std::exception &e){
 		throw ;
 	}
@@ -352,14 +353,15 @@ void	ServerManager::receiveRequest(size_t& i)
 			std::cout << "request " << this->_clientInfos[clientSocket].request << std::endl;
 			if (checkForCgi(*this->_clientInfos[clientSocket].req, clientSocket) == 1)
 				addPipeFd(this->_clientInfos[clientSocket].pipeFd);
-		} catch (Response::ResponseException &e){
-		std::cerr << e.what()<< " in receiveRequest" << std::endl;
-		this->_clientInfos[clientSocket].responseStatus = e.responseCode();
-		this->_clientInfos[clientSocket].requestReceived = true;
-	} catch (Request::RequestException &e){
-	} catch (...){
+		} catch (Request::RequestException &e){
+			std::cerr << e.what()<< " in receiveRequest" << std::endl;
+			this->_clientInfos[clientSocket].responseStatus = 500;//e.responseCode();
+			this->_clientInfos[clientSocket].requestReceived = true;
+			throw;
+		} catch (std::exception &e){
+			throw ;
+		}
 	}
-}
 }
 
 void	ServerManager::readFromCgiFd(const int& fd)
