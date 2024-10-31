@@ -2,10 +2,16 @@
 #define SERVERMANAGER_HPP
 
 #include "ServerInfo.hpp"
-#include "libraries.hpp"
 #include <algorithm>
 #include <unordered_map>
 #include "Request.hpp"
+#include <vector>
+#include <iostream>
+#include <sys/socket.h>
+#include <poll.h>
+#include <fstream>
+#include <arpa/inet.h>
+#include <fcntl.h>
 #define DEFAULT "test1.cfg"
 
 typedef struct s_clientInfo

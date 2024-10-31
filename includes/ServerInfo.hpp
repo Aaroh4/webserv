@@ -1,10 +1,12 @@
 #ifndef SERVERINFO_HPP
 #define SERVERINFO_HPP
 
-#include "libraries.hpp"
 #include <unordered_map>
 #include <unordered_set>
 #include <filesystem>
+#include <vector>
+#include <poll.h>
+
 
 // Function for simplifying cutting string without having to mess around with substr
 inline std::string cutFromTo(std::string input, int start, std::string last)
@@ -59,8 +61,8 @@ class ServerInfo
 			std::string										_serverName;
 			unsigned int									_timeout;
 			int												_bodylimit;
-			unsigned int									_ip = 0;
-			unsigned int									_port = 0;
+			unsigned int									_ip;
+			unsigned int									_port;
 			std::unordered_map<std::string, location>		_locationinfo;
 			int												_socketfd;
 			std::string 									_locations;

@@ -1,9 +1,10 @@
 #ifndef REQUEST_HPP
 # define REQUEST_HPP
 
-#include "libraries.hpp"
 #include <unordered_map>
 #include "ServerInfo.hpp"
+#include <unistd.h>
+#include <random>  
 
 class Request
 {

@@ -1,7 +1,5 @@
 #include "../includes/Request.hpp"
-#include <iostream>
 #include <climits>
-#include <filesystem>
 #include "../includes/Response.hpp"
 
 Request::Request(void) : _sanitizeStatus(200)

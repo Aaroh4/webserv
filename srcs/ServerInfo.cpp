@@ -2,7 +2,10 @@
 #include "configExceptions.cpp"
 
 ServerInfo::ServerInfo() : _bodylimit(-1)
-{}
+{
+	this->_port = 0;
+	this->_ip = 0;
+}
 
 ServerInfo::ServerInfo(const ServerInfo &input)
 {
