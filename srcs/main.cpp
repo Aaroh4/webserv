@@ -1,11 +1,6 @@
 #include "../includes/ServerInfo.hpp"
 #include "../includes/ServerManager.hpp"
 #include "../includes/configExceptions.hpp"
-#include <iostream>
-#include <sys/socket.h>
-#include <unistd.h>
-#include <filesystem>
-#include <signal.h>
 
 int	readconfig(std::string name, ServerManager &manager);
 

@@ -1,10 +1,6 @@
 #include "../includes/ServerInfo.hpp"
 #include "../includes/ServerManager.hpp"
 #include "../includes/configExceptions.hpp"
-#include <fstream>
-#include <unordered_map>
-#include <sstream>
-#include <filesystem>
 
 ServerInfo	config_server(std::string temp, ServerInfo &server);
 int bracketfinder(std::string configfile, std::string type, ServerInfo &server);

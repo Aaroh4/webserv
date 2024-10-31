@@ -5,7 +5,9 @@
 #include "ServerInfo.hpp"
 #include <filesystem>
 #include <cerrno>
-
+#include <fstream>
+#include <iostream>
+#include <sys/socket.h>
 
 class Response: public Request
 {

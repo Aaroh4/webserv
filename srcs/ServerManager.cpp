@@ -3,7 +3,6 @@
 #include "../includes/Request.hpp"
 #include <sys/wait.h>
 #include <cstring>
-#include <signal.h>
 
 bool sigint_sent = false;
 

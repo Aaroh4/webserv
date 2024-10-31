@@ -1,6 +1,4 @@
 #include "../includes/Response.hpp"
-#include <filesystem>
-#include <sys/wait.h>
 
 Response::Response(): Request()
 {
