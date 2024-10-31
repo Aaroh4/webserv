@@ -103,7 +103,7 @@ class Response: public Request
 
 	private:
 			ServerInfo	_server;
-			std::string _fileSize = "0";
+			std::string _fileSize;
 			std::string _redirectplace;
 			std::string _contentType;
 			std::string _response;

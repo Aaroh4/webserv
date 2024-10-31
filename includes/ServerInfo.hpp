@@ -61,8 +61,8 @@ class ServerInfo
 			std::string										_serverName;
 			unsigned int									_timeout;
 			unsigned int									_bodylimit;
-			unsigned int									_ip = 0;
-			unsigned int									_port = 0;
+			unsigned int									_ip;
+			unsigned int									_port;
 			std::unordered_map<std::string, location>		_locationinfo;
 			int												_socketfd;
 			std::string 									_locations;

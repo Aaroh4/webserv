@@ -2,10 +2,12 @@
 
 Response::Response(): Request()
 {
+	this->_fileSize = "0";
 }
 
 Response::Response(Request &request): Request(request)
 {
+	this->_fileSize = "0";
 }
 
 Response::~Response()
