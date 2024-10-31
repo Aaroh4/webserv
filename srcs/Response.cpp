@@ -201,10 +201,8 @@ void Response::directorylisting(int clientfd, std::string file)
 	this->_fileSize = std::to_string(file.size());
 	response = formatGetResponseMsg(0);
 	std::string responseWithoutFile = response;
-	response += file;
 	send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL);
-	//std::cout << "Response to client: " << clientfd << std::endl;
-	//std::cout << responseWithoutFile << std::endl;
+	send(clientfd, file.c_str(), file.length(), MSG_NOSIGNAL);
 }
 
 std::string Response::buildDirectorylist(std::string name, int rootsize)
