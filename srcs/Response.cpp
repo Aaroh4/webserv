@@ -88,7 +88,17 @@ void Response::respondGet(int clientfd, ServerInfo server)
 {
 	std::string response;
 
-	if (server.getlocationinfo()[this->_url].dirList != false && server.getlocationinfo()[this->_url].index.empty())
+	if (!server.getlocationinfo()[this->_origLoc].redirection.empty() || !server.getlocationinfo()[this->_url].redirection.empty())
+	{
+		this->_fileSize = "66";
+		this->_sanitizeStatus = 302;
+		this->_errorMessage = "Found";
+		if (!server.getlocationinfo()[this->_url].redirection.empty())
+			this->_redirectplace = server.getlocationinfo()[this->_url].redirection;
+		else
+			this->_redirectplace = server.getlocationinfo()[this->_origLoc].redirection;
+	}
+	else if (server.getlocationinfo()[this->_url].dirList != false && server.getlocationinfo()[this->_url].index.empty())
 	{
 		this->directorylisting(clientfd, this->buildDirectorylist(server.getlocationinfo()[this->_url].root, server.getlocationinfo()[this->_url].root.size() + 1));
 	}
@@ -109,8 +119,9 @@ void Response::respondGet(int clientfd, ServerInfo server)
 		char buffer[chunkSize];
 		while (this->_file.read(buffer, chunkSize) || this->_file.gcount() > 0)
 			send(clientfd, buffer, this->_file.gcount(), MSG_NOSIGNAL);
+		return ;
 	}
-	response = formatGetResponseMsg(0);
+	response += formatGetResponseMsg(0);
 	send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL);
 	std::cout << "Response to client: " << clientfd << std::endl;
 	std::cout << response << std::endl;
@@ -274,6 +285,7 @@ std::string Response::formatGetResponseMsg(int close)
 	response += "Content-Type: " + this->_type + "\r\n";
 
 	response += "Content-Length: " + this->_fileSize + "\r\n";
+	response += "Location: " + this->_redirectplace + "\r\n";
 	response += formatSessionCookie();
 	if (close == 0)
 	{
@@ -282,6 +294,18 @@ std::string Response::formatGetResponseMsg(int close)
 	}
 	else
 		response += "Connection: close\r\n\r\n";
+	if (this->_sanitizeStatus == 302)
+	{
+		response += "<!DOCTYPE html>" \
+			"<html>" \
+			"<head>" \
+			"<title>Redirecting...</title>" \
+			"</head>" \
+			"<body>" \
+			"<p>This page has been moved</p>" \
+			"</body>" \
+			"</html>";
+	}
 	return (response);
 }
 
