@@ -66,7 +66,7 @@ std::string Request::_splitMultiFormParts(std::string& boundary)
 	std::string part = this->_body.substr(0, i - 1);
 
 	this->_body.erase(0, i + boundary.length() + 2);
-	return part; 
+	return part;
 }
 
 std::string	Request::_parseFileName(std::string& line)
@@ -295,6 +295,7 @@ void	Request::_decodeChunks(void)
 
 		setStatusAndThrow(500, "Internal Server Error");
 	  this->_body = decodedBody;
+	}
 }
 
 std::string generateSessionId( void ){
@@ -332,64 +333,64 @@ void	Request::parse(void)
 
 void	Request::sanitize(ServerInfo server)
 {
+	std::string temp;
+	std::string	test = "/" + cutFromTo(this->_url, 1, "/")  + "/";
+
 	try{
-    std::string temp;
-    std::string	test = "/" + cutFromTo(this->_url, 1, "/")  + "/";
+		if (!server.getlocationinfo()[test].root.empty())
+			temp = test;
 
-    if (!server.getlocationinfo()[test].root.empty())
-      temp = test;
-    while (test.size() + 1 <= this->_url.size())
-    {
-      test += cutFromTo(this->_url, test.size(), "/") + "/";
-      if (!server.getlocationinfo()[test].root.empty())
-        temp = test;
-    }
-    if (!server.getlocationinfo()[temp].root.empty())
-    {
-      this->_root = server.getlocationinfo()[temp].root;
-      this->_origLoc = temp;
-    }
-    else
-    {
-      this->_root = server.getlocationinfo()["/"].root;
-      this->_origLoc = "/";
-      temp = "/";
-    }
+		while (test.size() + 1 <= this->_url.size()){
+			test += cutFromTo(this->_url, test.size(), "/") + "/";
+			if (!server.getlocationinfo()[test].root.empty())
+				temp = test;
+		}
 
-    if (this->_type == "cgi/py" || this->_type == "cgi/php")
-      this->_verifyPath();
+		if (!server.getlocationinfo()[temp].root.empty()){
+			this->_root = server.getlocationinfo()[temp].root;
+			this->_origLoc = temp;
+		}
+		else{
+			this->_root = server.getlocationinfo()["/"].root;
+			this->_origLoc = "/";
+			temp = "/";
+		}
 
-    if (this->_sanitizeStatus != 200)
-      return ;
-      if (this->_httpVersion != "HTTP/1.0" && this->_httpVersion != "HTTP/1.1")
-      {
-        setStatusAndThrow(505, "Unsupported HTTP");
-      }
-      if (this->_url.find("..") != std::string::npos )
-      {
-        setStatusAndThrow(403, "Forbidden");
-      }
-      int i = this->_url.find_last_of("/");
-      while (this->_url[i - 1] == '/')
-      {
-        this->_url.pop_back();
-        i--;
-      }
-      if (this->_queryString.find_first_of(";|`<>") != std::string::npos)
-      {
-        setStatusAndThrow(400, "Bad Request");
-      }
-      for (const auto& map_content : this->_headers)
-      {
-        if (map_content.first.find_first_of("&;|`<>()#") != std::string::npos || map_content.first.length() > INT_MAX)
-        {
-          setStatusAndThrow(400, "Bad Request");
-        }
+		if (this->_type == "cgi/py" || this->_type == "cgi/php")
+			this->_verifyPath();
+
+		if (this->_sanitizeStatus != 200)
+			return ;
+		if (this->_httpVersion != "HTTP/1.0" && this->_httpVersion != "HTTP/1.1")
+		{
+			setStatusAndThrow(505, "Unsupported HTTP");
+		}
+		if (this->_url.find("..") != std::string::npos )
+		{
+			setStatusAndThrow(403, "Forbidden");
+		}
+		int i = this->_url.find_last_of("/");
+
+		while (this->_url[i - 1] == '/')
+		{
+			this->_url.pop_back();
+			i--;
+		}
+		if (this->_queryString.find_first_of(";|`<>") != std::string::npos)
+		{
+			setStatusAndThrow(400, "Bad Request");
+		}
+		for (const auto& map_content : this->_headers)
+		{
+			if (map_content.first.find_first_of("&;|`<>()#") != std::string::npos || map_content.first.length() > INT_MAX)
+			{
+				setStatusAndThrow(400, "Bad Request");
+			}
 		}
 	} catch (Request::RequestException &e){
-		std::cerr << e.what() << " in sanitize"<< std::endl;
-		throw ;
-	}
+			std::cerr << e.what() << " in sanitize"<< std::endl;
+			throw ;
+		}
 }
 
 std::string	Request::getHost(void)
