@@ -8,6 +8,7 @@
 class Request
 {
 	public:
+		Request(void);
 		Request(std::string request, int bodyLimit);
 		virtual ~Request(void);
 		Request(Request const& src);

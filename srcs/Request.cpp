@@ -4,6 +4,10 @@
 #include <filesystem>
 #include "../includes/Response.hpp"
 
+Request::Request(void) : _sanitizeStatus(0)
+{
+}
+
 Request::Request(std::string request, int bodyLimit) :  _sanitizeStatus(200), _request(request), _bodyLimit(bodyLimit)
 {
 	return;
