@@ -381,7 +381,7 @@ void	Request::sanitize(ServerInfo server)
 			}
 		}
 	} catch (Request::RequestException &e){
-		std::cerr << e.what() << std::endl;
+		std::cerr << e.what() << " in sanitize"<< std::endl;
 		throw ;
 	}
 }
