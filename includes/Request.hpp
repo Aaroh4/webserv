@@ -8,7 +8,6 @@
 class Request
 {
 	public:
-		Request(void);
 		Request(std::string request, int bodyLimit);
 		virtual ~Request(void);
 		Request(Request const& src);
@@ -44,6 +43,7 @@ class Request
 		std::string _errmsg;
 		std::string _sessionId;
 		std::unordered_map<std::string, std::string> _headers;
+	
 	private:
 		void		_parseRequestLine(void);
 		void 		_parseHeaders(void);
