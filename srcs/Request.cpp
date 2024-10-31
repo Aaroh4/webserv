@@ -4,7 +4,7 @@
 #include <filesystem>
 #include "../includes/Response.hpp"
 
-Request::Request(void) : _sanitizeStatus(0)
+Request::Request(void) : _sanitizeStatus(200)
 {
 }
 
@@ -66,7 +66,7 @@ std::string Request::_splitMultiFormParts(std::string& boundary)
 	std::string part = this->_body.substr(0, i - 1);
 
 	this->_body.erase(0, i + boundary.length() + 2);
-	return part; 
+	return part;
 }
 
 std::string	Request::_parseFileName(std::string& line)

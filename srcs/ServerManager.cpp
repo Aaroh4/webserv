@@ -295,7 +295,7 @@ void	ServerManager::receiveRequest(size_t& i)
 
 	// Receive data until complete request is sent
 	if (this->_clientInfos[clientSocket].requestReceived == true)
-		return;	
+		return;
 	try
 	{
 		if (totalLength == 0 || this->_clientInfos[clientSocket].request.length() < totalLength)
@@ -318,8 +318,7 @@ void	ServerManager::receiveRequest(size_t& i)
 			}
 			else if (bytesReceived == -1)
 			{
-				std::cout << strerror(errno) << std::endl;
-				throw Response::ResponseException();
+				return ;
 			}
 		}
 	}
@@ -453,7 +452,7 @@ void	ServerManager::runServers()
 					readFromCgiFd(this->_poll_fds[i].fd);
 					pipeFd = true;
 				}
-				else	
+				else
 					receiveRequest(i);
 			}
 			if (this->_poll_fds[i].revents & POLLOUT && this->_clientInfos[this->_poll_fds[i].fd].requestReceived == true
