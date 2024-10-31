@@ -39,14 +39,16 @@ void Response::handleCRUD(int clientfd, ServerInfo server)
 			respondDelete(clientfd);
 		else
 			throw ResponseException405();
-	} catch (const ResponseException &e){
-		sendErrorResponse(e.what(), clientfd, e.responseCode());
+	} catch (ResponseException &e){
+		std::cerr << e.what() << " in handleCRUD" << std::endl;
+		sendErrorResponse(e.what(), clientfd, e.responseCode(), server);
 	}
 }
 
 void	Response::respond(int clientfd, ServerInfo server)
 {
 	this->_server = server;
+	std::cout << this->_sanitizeStatus << std::endl;
 	try{
 		switch (this->_sanitizeStatus){
 			case 404:
@@ -64,14 +66,16 @@ void	Response::respond(int clientfd, ServerInfo server)
 			case 500:
 				throw ResponseException();
 		}
-	} catch(const ResponseException& e) {
-		sendErrorResponse(e.what(), clientfd, e.responseCode());
+	} catch(ResponseException& e) {
+		std::cerr << e.what() << " in respond" << std::endl;
+		sendErrorResponse(e.what(), clientfd, e.responseCode(), server);
 		return ;
 	}
 	try{
 		handleCRUD(clientfd, server);
-	} catch(const ResponseException& e){
-		sendErrorResponse(e.what(), clientfd, e.responseCode());
+	} catch(ResponseException& e){
+		std::cerr << e.what() << " in respond" << std::endl;
+		sendErrorResponse(e.what(), clientfd, e.responseCode(), server);
 		return ;
 	}
 }
@@ -110,7 +114,8 @@ void Response::respondGet(int clientfd, ServerInfo server)
 		}
 		catch(ResponseException &e)
 		{
-			sendErrorResponse(e.what(), clientfd, e.responseCode());
+			std::cerr << e.what() << " in respondGet" << std::endl;
+			sendErrorResponse(e.what(), clientfd, e.responseCode(), server);
 			return;
 		}
 		response = formatGetResponseMsg(0);
@@ -309,7 +314,7 @@ std::string Response::formatGetResponseMsg(int close)
 	return (response);
 }
 
-void Response::sendStandardErrorPage(int sanitizeStatus, int clientfd)
+void Response::sendStandardErrorPage(int sanitizeStatus, int clientfd, ServerInfo server)
 {
 	std::string response;
 	std::string file;
@@ -317,36 +322,52 @@ void Response::sendStandardErrorPage(int sanitizeStatus, int clientfd)
 	switch (sanitizeStatus)
 	{
 		case 400:
-			this->_file.open("./www/400.html");
-			this->_url = "/400.html";
+			if (server.getErrorPages()[400].empty())
+				this->_file.open("./www/400.html");
+			else
+				this->_file.open(server.getErrorPages()[400]);
 			break ;
 		case 403:
-			this->_file.open("./www/403.html");
-			this->_url = "/403.html";
+			if (server.getErrorPages()[403].empty())
+				this->_file.open("./www/403.html");
+			else
+				this->_file.open(server.getErrorPages()[403]);
 			break ;
 		case 405:
-			this->_file.open("./www/405.html");
-			this->_url = "/405.html";
+			if (server.getErrorPages()[405].empty())
+				this->_file.open("./www/405.html");
+			else
+				this->_file.open(server.getErrorPages()[405]);
 			break ;
 		case 404:
-			this->_file.open("./www/404.html");
-			this->_url = "/404.html";
+			if (server.getErrorPages()[404].empty())
+				this->_file.open("./www/404.html");
+			else
+				this->_file.open(server.getErrorPages()[404]);
 			break ;
 		case 501:
-			this->_file.open("./www/501.html");
-			this->_url = "/501.html";
+			if (server.getErrorPages()[501].empty())
+				this->_file.open("./www/501.html");
+			else
+				this->_file.open(server.getErrorPages()[501]);
 			break ;
 		case 505:
-			this->_file.open("./www/505.html");
-			this->_url = "/505.html";
+			if (server.getErrorPages()[505].empty())
+				this->_file.open("./www/505.html");
+			else
+				this->_file.open(server.getErrorPages()[505]);
 			break ;
 		case 515:
-			this->_file.open("./www/515.html");
-			this->_url = "/515.html";
+			if (server.getErrorPages()[515].empty())
+				this->_file.open("./www/515.html");
+			else
+				this->_file.open(server.getErrorPages()[515]);
 			break ;
 		default:
-			this->_file.open("./www/500.html");
-			this->_url = "/500.html";
+			if (server.getErrorPages()[500].empty())
+				this->_file.open("./www/500.html");
+			else
+				this->_file.open(server.getErrorPages()[500]);
 			break ;
 	}
 	for (std::string line; std::getline(this->_file, line);)
@@ -389,7 +410,7 @@ void Response::sendCustomErrorPage(int clientfd)
 	std::cout << response << std::endl;
 }
 
-void Response::sendErrorResponse(std::string errorMessage, int clientfd, int errorCode)
+void Response::sendErrorResponse(std::string errorMessage, int clientfd, int errorCode, ServerInfo server)
 {
 	this->_errorMessage = errorMessage;
 	this->_sanitizeStatus = errorCode;
@@ -402,7 +423,7 @@ void Response::sendErrorResponse(std::string errorMessage, int clientfd, int err
 		this->_sanitizeStatus == 501 ||
 		this->_sanitizeStatus == 515)
 	{
-		sendStandardErrorPage(this->_sanitizeStatus, clientfd);
+		sendStandardErrorPage(this->_sanitizeStatus, clientfd, server);
 		return ;
 	}
 	else
