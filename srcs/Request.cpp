@@ -109,8 +109,7 @@ void	Request::_parsePart(std::string& part)
 		end = part.find_first_of("\n");
 		part.erase(0, end + 1);
 		start = part.find_first_not_of("\r\n");
-		end = part.find_last_of("\n");
-		newFile << part.substr(start, end - (start + 1));
+		newFile << part.substr(start, std::string::npos);
 	}
 }
 
@@ -252,7 +251,7 @@ void	Request::_parseHeaders(void)
 	size_t bodyStart = this->_request.find("\r\n\r\n") + 4;
 	size_t bodyEnd = this->_request.find_last_of("\r\n\r\n") + 4;
 	this->_body = this->_request.substr(bodyStart, bodyEnd);
-	if (static_cast<int> (this->_body.length()) > this->_bodyLimit)
+	if (this->_bodyLimit > 0 && static_cast<int> (this->_body.length()) > this->_bodyLimit)
 		setStatusAndThrow(400, "Bad Request");
 }
 

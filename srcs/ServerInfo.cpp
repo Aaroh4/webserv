@@ -1,7 +1,7 @@
 #include "../includes/ServerInfo.hpp"
 #include "configExceptions.cpp"
 
-ServerInfo::ServerInfo()
+ServerInfo::ServerInfo() : _bodylimit(-1)
 {}
 
 ServerInfo::ServerInfo(const ServerInfo &input)
