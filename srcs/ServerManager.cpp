@@ -502,7 +502,7 @@ int	ServerManager::startServers()
 		}
 		struct pollfd temp_s_pollfd;
 		temp_s_pollfd.fd = this->get_info()[i].getsocketfd();
-		temp_s_pollfd.events = POLLIN;
+		temp_s_pollfd.events = POLLIN | POLLOUT;
 		temp_s_pollfd.revents = 0;
 		this->_poll_fds.push_back(temp_s_pollfd);
 	}
