@@ -31,6 +31,7 @@ class Response: public Request
 			void			setResponseBody(std::string body);
 			std::string		formatPostResponseMsg(int close);
 			std::string 	formatSessionCookie( void );
+			static void     sendErrorPage(int statusCode, int clientfd);
 
 			// RESPONSE EXCEPTIONS
 			//base class for 500 internal error

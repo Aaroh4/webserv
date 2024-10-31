@@ -49,20 +49,20 @@ void	Response::respond(int clientfd, ServerInfo server)
 	this->_server = server;
 	try{
 		switch (this->_sanitizeStatus){
-			//case 404:
-			//	throw ResponseException404();
-			//case 400:
-			//	throw ResponseException400();
+			case 404:
+				throw ResponseException404();
+			case 400:
+				throw ResponseException400();
 			case 403:
 				throw ResponseException403();
-			//case 501:
-			//	throw ResponseException501();
-			//case 505:
-			//	throw ResponseException505();
-			//case 515:
-			//	throw ResponseException515();
-			//case 500:
-			//	throw ResponseException();
+			case 501:
+				throw ResponseException501();
+			case 505:
+				throw ResponseException505();
+			case 515:
+				throw ResponseException515();
+			case 500:
+				throw ResponseException();
 		}
 	} catch(const ResponseException& e) {
 		sendErrorResponse(e.what(), clientfd, e.responseCode());
@@ -147,7 +147,8 @@ std::string Response::formatPostResponseMsg (int close){
 	this->_type = "text/html";
 	if (this->_sanitizeStatus == 200)
 		response += "Content-Type: " + this->_type + "\r\n";
-	response += formatSessionCookie();
+	if (!this->_sessionId.empty())
+		response += formatSessionCookie();
 	if (close == 0)
 	{
 		response += "Connection: Keep-Alive\r\n";
@@ -453,4 +454,36 @@ const char* Response::ResponseException515::what() const noexcept{
 
 int Response::ResponseException515::responseCode () const{
 	return (515);
+}
+
+
+void Response::sendErrorPage(int statusCode, int clientfd)
+{
+	std::string response;
+	std::string fileSize;
+
+	std::string message;
+	if (statusCode == 400)
+		message = "Bad Request";
+	else
+		message = "Internal Server Error";
+	std::string body = "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<title>";
+	body += std::to_string(statusCode) + " " + message + "</title>\n<style>\n";
+	body += "body {background-color: powderblue;}\n";
+	body += "h1 {color: blue; font-style: italic; text-align: center;}\n</style>\n</head>\n<body>\n<h1>";
+	body += std::to_string(statusCode) + " " + message + "</h1>\n</body>\n</html>\n";
+
+	fileSize = std::to_string(body.length());
+
+	response = "HTTP/1.1 " + std::to_string(statusCode) + " " + message + "\r\n";
+	response += "Content-Type: text/html\r\n";
+	response += "Content-Length: " + fileSize + "\r\n";
+	response += "Connection: close\r\n\r\n";
+
+	std::string responseWithoutBody = response;
+	response += body;
+
+	send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL);
+	std::cout << "Response to client: " << clientfd << std::endl;
+	std::cout << responseWithoutBody << std::endl;
 }
