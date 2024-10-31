@@ -40,6 +40,7 @@ void ServerInfo::set_ip(std::string ip)
 {
 	this->_ip = convertip(ip);
 }
+
 unsigned int		ServerInfo::get_ip() const
 {
 	return (this->_ip);
@@ -51,7 +52,6 @@ void	ServerInfo::setnew_port(int port)
 		throw(wrongPort());
 	this->_port = port;
 }
-
 
 int		ServerInfo::get_port() const
 {
@@ -83,7 +83,7 @@ void ServerInfo::setTimeout(std::string input)
 	try {
 		this->_timeout = std::stoi(input);
 	} catch (std::exception& e) {
-		throw wrongTimeout();
+		throw(wrongTimeout());
 	}
 }
 

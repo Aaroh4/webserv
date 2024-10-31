@@ -37,7 +37,7 @@ class ServerManager
 			size_t	getRequestLength(std::string& request);
 			size_t	findLastChunk(std::string& request, size_t start_pos);
 			void	sendResponse(size_t& i);
-			void	removeConnection(int clientSocket, size_t& i);
+			void	cleanPreviousRequestData(int clientSocket, size_t& i);
 			void	addPipeFd(int pipeFd);
 			int		checkForCgi(Request& req, int& clientSocket);
 			bool	isPipeFd(int& fd);

@@ -2,12 +2,13 @@
 #include <iostream>
 #include <climits>
 #include <filesystem>
+#include "../includes/Response.hpp"
 
 Request::Request(void) : _sanitizeStatus(200)
 {
 }
 
-Request::Request(std::string request) :  _sanitizeStatus(200), _request(request)
+Request::Request(std::string request, int bodyLimit) :  _sanitizeStatus(200), _request(request), _bodyLimit(bodyLimit)
 {
 	return;
 }
@@ -31,6 +32,7 @@ Request::Request(Request const& src)
 	this->_root = src._root;
 	this->_origLoc = src._origLoc;
 	this->_sessionId = src._sessionId;
+	this->_bodyLimit = src._bodyLimit;
 }
 
 Request& Request::operator=(Request const& src)
@@ -49,6 +51,7 @@ Request& Request::operator=(Request const& src)
 		this->_root = src._root;
 		this->_origLoc = src._origLoc;
 		this->_sessionId = src._sessionId;
+		this->_bodyLimit = src._bodyLimit;
 		for (const auto& map_content : src._headers)
 		{
 			this->_headers[map_content.first] = map_content.second;
@@ -61,8 +64,9 @@ std::string Request::_splitMultiFormParts(std::string& boundary)
 {
 	size_t		i = this->_body.find(boundary);
 	std::string part = this->_body.substr(0, i - 1);
+
 	this->_body.erase(0, i + boundary.length() + 2);
-	return part;
+	return part; 
 }
 
 std::string	Request::_parseFileName(std::string& line)
@@ -125,7 +129,7 @@ void	Request::_parseMultipartContent(void)
 	for (int i = 0; ind != std::string::npos; i++)
 	{
 		ind = this->_body.find(boundary, ind + 1);
-		blockCount = i;
+		blockCount = i + 1;
 	}
 	for (int i = 0; i < blockCount; i++)
 	{
@@ -234,17 +238,15 @@ void	Request::_parseHeaders(void)
 {
 	//Parses headers line by line and adds the header(before :) and value (after :) to map container attribute _headers
 	std::string line;
-
-	size_t	lineEnd = 0;
+	std::stringstream request(this->_request);
 	size_t	i = 0;
 
 	while (line != "\r\n\r\n")
 	{
-		lineEnd = this->_request.find_first_of("\n");
-		line = this->_request.substr(0, lineEnd + 1);
+		std::getline(request, line);
 		if (line == "\r\n")
 		{
-			this->_request.erase(0, 2);
+			//this->_request.erase(0, 2);
 			break;
 		}
 		i = line.find_first_of(":");
@@ -252,10 +254,13 @@ void	Request::_parseHeaders(void)
 		{
 			setStatusAndThrow(400, "Bad Request");
 		}
-		this->_headers[line.substr(0, i)] = line.substr(i + 2, lineEnd - (i + 3));
-		this->_request.erase(0, lineEnd + 1);
+		this->_headers[line.substr(0, i)] = line.substr(i + 2, (line.length() - (i + 3)));
 	}
-	this->_body = this->_request;
+	size_t bodyStart = this->_request.find("\r\n\r\n") + 4;
+	size_t bodyEnd = this->_request.find_last_of("\r\n\r\n") + 4;
+	this->_body = this->_request.substr(bodyStart, bodyEnd);
+	if (static_cast<int> (this->_body.length()) > this->_bodyLimit)
+		throw Response::ResponseException400();
 }
 
 void	Request::_decodeChunks(void)
@@ -286,8 +291,10 @@ void	Request::_decodeChunks(void)
 		this->_body.erase(0, chunkSize + 2);
 	}
 	if (totalSize != static_cast<int>(decodedBody.length()))
+	{
+
 		setStatusAndThrow(500, "Internal Server Error");
-	this->_body = decodedBody;
+	  this->_body = decodedBody;
 }
 
 std::string generateSessionId( void ){
@@ -326,59 +333,58 @@ void	Request::parse(void)
 void	Request::sanitize(ServerInfo server)
 {
 	try{
-		std::string temp;
-		std::string	test = "/" + cutFromTo(this->_url, 1, "/")  + "/";
+    std::string temp;
+    std::string	test = "/" + cutFromTo(this->_url, 1, "/")  + "/";
 
-		if (!server.getlocationinfo()[test].root.empty())
-			temp = test;
-		while (test.size() + 1 <= this->_url.size())
-		{
-			test += cutFromTo(this->_url, test.size(), "/") + "/";
-			if (!server.getlocationinfo()[test].root.empty())
-				temp = test;
-		}
-		std::cout << "asdadstemp: " << temp << std::endl;
-		if (!server.getlocationinfo()[temp].root.empty())
-		{
-			this->_root = server.getlocationinfo()[temp].root;
-			this->_origLoc = temp;
-		}
-		else
-		{
-			this->_root = server.getlocationinfo()["/"].root;
-			this->_origLoc = "/";
-			temp = "/";
-		}
+    if (!server.getlocationinfo()[test].root.empty())
+      temp = test;
+    while (test.size() + 1 <= this->_url.size())
+    {
+      test += cutFromTo(this->_url, test.size(), "/") + "/";
+      if (!server.getlocationinfo()[test].root.empty())
+        temp = test;
+    }
+    if (!server.getlocationinfo()[temp].root.empty())
+    {
+      this->_root = server.getlocationinfo()[temp].root;
+      this->_origLoc = temp;
+    }
+    else
+    {
+      this->_root = server.getlocationinfo()["/"].root;
+      this->_origLoc = "/";
+      temp = "/";
+    }
 
-		if (this->_type == "cgi/py" || this->_type == "cgi/php")
-			this->_verifyPath();
+    if (this->_type == "cgi/py" || this->_type == "cgi/php")
+      this->_verifyPath();
 
-		if (this->_sanitizeStatus != 200)
-			return ;
-		if (this->_httpVersion != "HTTP/1.0" && this->_httpVersion != "HTTP/1.1")
-		{
-			setStatusAndThrow(505, "Unsupported HTTP");
-		}
-		if (this->_url.find("..") != std::string::npos )
-		{
-			setStatusAndThrow(403, "Forbidden");
-		}
-		int i = this->_url.find_last_of("/");
-		while (this->_url[i - 1] == '/')
-		{
-			this->_url.pop_back();
-			i--;
-		}
-		if (this->_queryString.find_first_of(";|`<>") != std::string::npos)
-		{
-			setStatusAndThrow(400, "Bad Request");
-		}
-		for (const auto& map_content : this->_headers)
-		{
-			if (map_content.first.find_first_of("&;|`<>()#") != std::string::npos || map_content.first.length() > INT_MAX)
-			{
-				setStatusAndThrow(400, "Bad Request");
-			}
+    if (this->_sanitizeStatus != 200)
+      return ;
+      if (this->_httpVersion != "HTTP/1.0" && this->_httpVersion != "HTTP/1.1")
+      {
+        setStatusAndThrow(505, "Unsupported HTTP");
+      }
+      if (this->_url.find("..") != std::string::npos )
+      {
+        setStatusAndThrow(403, "Forbidden");
+      }
+      int i = this->_url.find_last_of("/");
+      while (this->_url[i - 1] == '/')
+      {
+        this->_url.pop_back();
+        i--;
+      }
+      if (this->_queryString.find_first_of(";|`<>") != std::string::npos)
+      {
+        setStatusAndThrow(400, "Bad Request");
+      }
+      for (const auto& map_content : this->_headers)
+      {
+        if (map_content.first.find_first_of("&;|`<>()#") != std::string::npos || map_content.first.length() > INT_MAX)
+        {
+          setStatusAndThrow(400, "Bad Request");
+        }
 		}
 	} catch (Request::RequestException &e){
 		std::cerr << e.what() << " in sanitize"<< std::endl;
