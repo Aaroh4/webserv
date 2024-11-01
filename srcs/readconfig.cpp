@@ -138,7 +138,7 @@ ServerInfo	config_server(std::string temp, ServerInfo &server)
 		{"500:"},
 		{"501:"},
 		{"505:"},
-		{"515:"}
+		{"415:"}
 
 	};
 
@@ -226,7 +226,7 @@ ServerInfo	config_server(std::string temp, ServerInfo &server)
 						server.setErrorPage(505, value);
 						break;
 				case 14:
-						server.setErrorPage(515, value);
+						server.setErrorPage(415, value);
 						break;
 				default:
 						break;
