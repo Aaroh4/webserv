@@ -142,16 +142,18 @@ void	Request::_verifyPath(void)
 	std::filesystem::path file = this->_root + "/" + this->_url.substr(this->_origLoc.size(), std::string::npos);
 	if (!std::filesystem::exists(file))
 	{
-		setStatusAndThrow(404, "Not Found");
+		throw Response::ResponseException404();
 	}
 	else if (!std::filesystem::is_regular_file(file))
 	{
-		setStatusAndThrow(403, "Forbidden");
+		this->_sanitizeStatus = 403;
+		throw Response::ResponseException403();
 	}
 	int permissions = access(file.c_str(), X_OK);
 	if (permissions != 0)
 	{
-		setStatusAndThrow(403, "Forbidden");
+		this->_sanitizeStatus = 403;
+		throw Response::ResponseException403();
 	}
 }
 
@@ -173,7 +175,8 @@ void	Request::_getContentType(void)
 			this->_type = "cgi/" + type;
     	else if (this->_url != "/")
 		{
-			setStatusAndThrow(415, "Unsupported Media Type");
+			this->_sanitizeStatus = 415;
+			throw Response::ResponseException415();
 		}
 	}
 }
@@ -195,7 +198,8 @@ void	Request::_parseRequestLine(void)
 	}
 	if (index == 3)
 	{
-		setStatusAndThrow(501, "Unsupported method");
+		this->_sanitizeStatus = 501;
+		throw Response::ResponseException501();
 	}
 	this->_request.erase(0, this->_method.length() + 1);
 
@@ -251,7 +255,7 @@ void	Request::_parseHeaders(void)
 	size_t bodyEnd = this->_request.find_last_of("\r\n\r\n") + 4;
 	this->_body = this->_request.substr(bodyStart, bodyEnd);
 	if (this->_bodyLimit > 0 && static_cast<int> (this->_body.length()) > this->_bodyLimit)
-		throw Response::ResponseException400();//setStatusAndThrow(400, "Bad Request");
+		throw Response::ResponseException400();
 }
 
 void	Request::_decodeChunks(void)
@@ -276,15 +280,18 @@ void	Request::_decodeChunks(void)
 		}
 		catch(const std::exception& e)
 		{
-			setStatusAndThrow(500, "Internal Server Error");
+			std::cerr << e.what() << " stoi failed in _decodeChunks" << std::endl;
+			this->_sanitizeStatus = 500;
+			throw Response::ResponseException();
 		}
 		decodedBody += this->_body.substr(0, chunkSize);
 		this->_body.erase(0, chunkSize + 2);
 	}
 	if (totalSize != static_cast<int>(decodedBody.length()))
 	{
-		setStatusAndThrow(500, "Internal Server Error");
 	  	this->_body = decodedBody;
+		this->_sanitizeStatus = 500;
+		throw Response::ResponseException();
 	}
 }
 
@@ -360,11 +367,14 @@ void	Request::sanitize(ServerInfo server)
 			return ;
 		if (this->_httpVersion != "HTTP/1.0" && this->_httpVersion != "HTTP/1.1")
 		{
-			setStatusAndThrow(505, "Unsupported HTTP");
+			this->_sanitizeStatus = 505;
+			throw Response::ResponseException505();
 		}
 		if (this->_url.find("..") != std::string::npos )
 		{
-			setStatusAndThrow(403, "Forbidden");
+
+			this->_sanitizeStatus = 403;
+			throw Response::ResponseException403();
 		}
 		int i = this->_url.find_last_of("/");
 
@@ -375,16 +385,18 @@ void	Request::sanitize(ServerInfo server)
 		}
 		if (this->_queryString.find_first_of(";|`<>") != std::string::npos)
 		{
-			setStatusAndThrow(400, "Bad Request");
+			this->_sanitizeStatus = 400;
+			throw Response::ResponseException400();
 		}
 		for (const auto& map_content : this->_headers)
 		{
 			if (map_content.first.find_first_of("&;|`<>()#") != std::string::npos || map_content.first.length() > INT_MAX)
 			{
-				setStatusAndThrow(400, "Bad Request");
+				this->_sanitizeStatus = 400;
+				throw Response::ResponseException400();
 			}
 		}
-	} catch (Request::RequestException &e){
+	} catch (Response::ResponseException &e){
 			std::cerr << e.what() << " in sanitize"<< std::endl;
 			throw ;
 		}
@@ -460,15 +472,4 @@ void Request::printRequest(int clientSocket)
 	std::cout << "Type: "<< this-> _type << std::endl;
 	std::cout << "Session ID: " << this->_sessionId << std::endl;
 	std::cout << "*******" << std::endl;
-}
-
-const char* Request::RequestException::what() const noexcept
-{
-	 return this->message.c_str();
-}
-
-void		Request::setStatusAndThrow(int statusCode, std::string errmsg){
-	this->_sanitizeStatus = statusCode;
-	this->_errmsg = errmsg;
-	throw RequestException(errmsg);
 }

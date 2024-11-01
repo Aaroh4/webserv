@@ -122,6 +122,7 @@ size_t	ServerManager::findLastChunk(std::string& request, size_t start_pos)
 		}
 		catch(const std::exception& e)
 		{
+			std::cerr << e.what() << " stoi failed in findLastChunk" << std::endl;
 			throw Response::ResponseException();
 		}
 		start_pos = pos;
@@ -207,7 +208,7 @@ void	ServerManager::sendResponse(size_t& i)
 	int	clientSocket = this->_poll_fds[i].fd;
 	int	pipeFd = this->_clientInfos[clientSocket].pipeFd;
 	std::cout << "SendResponse has responseStatus "<< this->_clientInfos[clientSocket].responseStatus << std::endl;
-	
+
 	if (this->_clientInfos[clientSocket].responseStatus != 0)
 	{
 		Response::sendErrorPage(this->_clientInfos[clientSocket].responseStatus, clientSocket);
@@ -260,7 +261,7 @@ void ServerManager::cleanPreviousRequestData(int clientSocket, size_t& i)
 			|| this->_clientInfos[clientSocket].responseStatus != 0)
 			closeConnection(clientSocket, i);
 	} catch(const std::exception& e) {
-		std::cout << "there was an error in request cleanup" << std::endl;
+		std::cout << e.what() <<" in request cleanup" << std::endl;
 	}
 }
 
