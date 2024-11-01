@@ -139,7 +139,7 @@ void	Response::respondPost(int clientfd, ServerInfo server)
 	std::string response;
 
 	(void) server;
-	response = formatPostResponseMsg(1);
+	response = formatPostResponseMsg(0);
 	send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL);
 	std::cout << "Response to client: " << clientfd << std::endl;
 	std::cout << response << std::endl;
@@ -163,7 +163,7 @@ std::string Response::formatPostResponseMsg (int close){
 		response += "Content-Type: " + this->_type + "\r\n";
 	if (!this->_sessionId.empty())
 		response += formatSessionCookie();
-	if (close == 0 || this->_sanitizeStatus == 200 || this->_sanitizeStatus == 204)
+	if (close == 0 || this->_sanitizeStatus == 200)
 	{
 		response += "Connection: Keep-Alive\r\n";
 		response += "Keep-Alive: timeout=5, max=100\r\n\r\n"; //this->_server.get_timeout()
@@ -171,7 +171,11 @@ std::string Response::formatPostResponseMsg (int close){
 	else
 		response += "Connection: close\r\n\r\n";
 	if (!this->_responseBody.empty())
+	{
 		response += this->_responseBody;
+		response += "\r\n\r\n";
+
+	}
 	return (response);
 
 }

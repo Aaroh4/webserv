@@ -383,6 +383,8 @@ void	ServerManager::readFromCgiFd(const int& fd)
 	else if (nbytes == 0 || nbytes < 1024)
 	{
 		int clientSocket = this->_clientPipe[fd];
+		if (nbytes > 0)
+			this->_clientInfos[clientSocket].cgiResponseBody.append(buffer, nbytes);
 		this->_clientInfos[clientSocket].cgiResponseReady = true;
 		close(fd);
 		this->_clientPipe.erase(fd);
