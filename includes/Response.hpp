@@ -20,13 +20,12 @@ class Response: public Request
 
 			std::string 	formatGetResponseMsg(int code);
 			void			sendErrorResponse(std::string errorMessage, int clientfd, int errorCode, ServerInfo);
-			void			openFile(ServerInfo server);
 			void			sendCustomErrorPage(int clientfd);
       		std::string		buildDirectorylist(std::string name, int rootsize);
 			void			directorylisting(int clientfd, std::string file);
 			void			respond(int clientfd, ServerInfo server);
 			void			respondGet(int clientfd, ServerInfo server);
-			void			respondPost(int clientfd, ServerInfo server);
+			void			respondPost(int clientfd);
 			void			respondDelete(int clientfd);
 			void			handleCRUD(int clientfd, ServerInfo server);
 			void 			sendStandardErrorPage(int sanitizeStatus, int clientfd, ServerInfo server);
@@ -102,14 +101,12 @@ class Response: public Request
 
 	private:
 			ServerInfo	_server;
-			std::string _fileSize;
 			std::string _redirectplace;
 			std::string _contentType;
 			std::string _response;
 			std::string _responseBody;
 			std::string _errorMessage;
-			std::fstream _file;
-			std::streampos _fsize;
+			std::string _fileSize;
 };
 
 

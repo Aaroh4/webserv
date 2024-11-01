@@ -19,9 +19,9 @@ typedef struct s_clientInfo
 	Request*	req;
 	int			pipeFd;
 	std::string	request;
-	std::string cgiResponseBody;
+	std::string ResponseBody;
 	bool		requestReceived;
-	bool		cgiResponseReady;
+	bool		ResponseReady;
 	int			responseStatus;
 	std::time_t	latestRequest;
 }	t_clientInfo;
@@ -44,10 +44,10 @@ class ServerManager
 			size_t	findLastChunk(std::string& request, size_t start_pos);
 			void	sendResponse(size_t& i);
 			void	cleanPreviousRequestData(int clientSocket, size_t& i);
-			void	addPipeFd(int pipeFd);
+			void	addPollFd(int pipeFd);
 			int		checkForCgi(Request& req, int& clientSocket);
 			bool	isPipeFd(int& fd);
-			void	readFromCgiFd(const int& fd);
+			void	readFromFd(const int& fd);
 			bool	checkConnectionUptime(int& clientSocket);
 			void	closeConnection(int& clientSocket, size_t& i);
 			std::vector<ServerInfo> get_info(void);

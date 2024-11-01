@@ -1,13 +1,16 @@
 #include "../includes/Request.hpp"
 #include <climits>
 #include "../includes/Response.hpp"
+#include <fcntl.h>
 
 Request::Request(void) : _sanitizeStatus(200)
 {
+	this->_filefd =  0;
 }
 
 Request::Request(std::string request, int bodyLimit) :  _sanitizeStatus(200), _request(request), _bodyLimit(bodyLimit)
 {
+	this->_filefd =  0;
 	return;
 }
 
@@ -31,6 +34,7 @@ Request::Request(Request const& src)
 	this->_origLoc = src._origLoc;
 	this->_sessionId = src._sessionId;
 	this->_bodyLimit = src._bodyLimit;
+	this->_filefd = src._filefd;
 }
 
 Request& Request::operator=(Request const& src)
@@ -50,6 +54,7 @@ Request& Request::operator=(Request const& src)
 		this->_origLoc = src._origLoc;
 		this->_sessionId = src._sessionId;
 		this->_bodyLimit = src._bodyLimit;
+		this->_filefd = src._filefd;
 		for (const auto& map_content : src._headers)
 		{
 			this->_headers[map_content.first] = map_content.second;
@@ -404,6 +409,39 @@ void	Request::sanitize(ServerInfo server)
 		}
 }
 
+void Request::openFile(ServerInfo server)
+{
+	if (!(!server.getlocationinfo()[this->_origLoc].redirection.empty() || !server.getlocationinfo()[this->_url].redirection.empty())
+	 && !(server.getlocationinfo()[this->_origLoc].dirList != false && server.getlocationinfo()[this->_origLoc].index.empty()
+        && std::filesystem::is_directory(this->_root + "/" + this->_url.substr(this->_origLoc.size(), std::string::npos))))
+	{
+		if (!server.getlocationinfo()[this->_url].index.empty())
+			this->_filefd = open((server.getlocationinfo()[this->_url].root + "/" + server.getlocationinfo()[this->_url].index).c_str(), O_RDONLY);
+		else if (!this->_root.empty())
+			this->_filefd = open((this->_root + "/" + this->_url.substr(this->_origLoc.size() - 1, std::string::npos)).c_str(), O_RDONLY);
+		else
+			this->_filefd = open((server.getlocationinfo()["/"].root + "/" + this->_url).c_str(), O_RDONLY);
+
+		if (this->_filefd < 0)
+		{
+			switch errno
+			{
+				case ENOTDIR:
+				case ENOENT:
+				case 21:
+						this->_sanitizeStatus = 404;
+						throw Response::ResponseException404();
+				case EACCES:
+						this->_sanitizeStatus = 403;
+						throw Response::ResponseException403();
+				default:
+						this->_sanitizeStatus = 500;
+						throw Response::ResponseException();		
+			}
+		}
+	}
+}
+
 std::string	Request::getHost(void)
 {
 	return this->_headers["Host"];
@@ -474,4 +512,9 @@ void Request::printRequest(int clientSocket)
 	std::cout << "Type: "<< this-> _type << std::endl;
 	std::cout << "Session ID: " << this->_sessionId << std::endl;
 	std::cout << "*******" << std::endl;
+}
+
+int	Request::getFileFD()
+{
+	return (this->_filefd);
 }
