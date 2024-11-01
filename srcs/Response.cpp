@@ -244,11 +244,11 @@ void Response::openFile(ServerInfo server)
 	if (!server.getlocationinfo()[this->_url].index.empty())
 		this->_file.open(server.getlocationinfo()[this->_url].root + "/" + server.getlocationinfo()[this->_url].index);
 	else if (!this->_root.empty())
-		this->_file.open(this->_root + "/" + this->_url.substr(this->_origLoc.size(), std::string::npos));
+		this->_file.open(this->_root + "/" + this->_url.substr(this->_origLoc.size() - 1, std::string::npos));
 	else
 		this->_file.open(server.getlocationinfo()["/"].root + "/" + this->_url);
 
-
+	std:: cout << "errno " << errno << std::endl;
 	if (this->_file.is_open() == false)
 	{
 		switch errno
