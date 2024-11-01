@@ -4,7 +4,7 @@
 #include <unordered_map>
 #include "ServerInfo.hpp"
 #include <unistd.h>
-#include <random>  
+#include <random>
 
 class Request
 {
@@ -30,16 +30,6 @@ class Request
 		std::string getSessionId (void) const;
 		void 		setSessionId (std::string sessionId);
 		void		printRequest(int clientSocket);
-		void		setStatusAndThrow(int statusCode, std::string errmsg);
-
-		class RequestException : public std::exception
-		{
-    		public:
-				RequestException(std::string msg) : message(msg) {};
-    			virtual const char* what() const noexcept;
-			private:
-				std::string message;
-		};
 
 	protected:
 		int	_sanitizeStatus;
@@ -55,7 +45,7 @@ class Request
 		std::string _errmsg;
 		std::string _sessionId;
 		std::unordered_map<std::string, std::string> _headers;
-	
+
 	private:
 		void		_parseRequestLine(void);
 		void 		_parseHeaders(void);
