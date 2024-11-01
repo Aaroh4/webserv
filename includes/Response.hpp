@@ -77,7 +77,7 @@ class Response: public Request
 			};
 
 			//Unsupported media type
-			class ResponseException515: public ResponseException
+			class ResponseException415: public ResponseException
 			{
 				public:
 					const char *what() const noexcept override;
@@ -99,7 +99,6 @@ class Response: public Request
 					const char *what() const noexcept override;
 					int responseCode () const override;
 			};
-
 
 	private:
 			ServerInfo	_server;

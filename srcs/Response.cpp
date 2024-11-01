@@ -61,8 +61,8 @@ void	Response::respond(int clientfd, ServerInfo server)
 				throw ResponseException501();
 			case 505:
 				throw ResponseException505();
-			case 515:
-				throw ResponseException515();
+			case 415:
+				throw ResponseException415();
 			case 500:
 				throw ResponseException();
 		}
@@ -240,25 +240,20 @@ std::string Response::buildDirectorylist(std::string name, int rootsize)
 void Response::openFile(ServerInfo server)
 {
 	this->_fsize = 0;
-
-	if (!server.getlocationinfo()[this->_url].index.empty())
-		this->_file.open(server.getlocationinfo()[this->_url].root + "/" + server.getlocationinfo()[this->_url].index);
-	else if (!this->_root.empty())
-		this->_file.open(this->_root + "/" + this->_url.substr(this->_origLoc.size(), std::string::npos));
-	else
-		this->_file.open(server.getlocationinfo()["/"].root + "/" + this->_url);
-
+		if (!server.getlocationinfo()[this->_url].index.empty())
+			this->_file.open(server.getlocationinfo()[this->_url].root + "/" + server.getlocationinfo()[this->_url].index);
+		else if (!this->_root.empty())
+			this->_file.open(this->_root + "/" + this->_url.substr(this->_origLoc.size() - 1, std::string::npos));
+		else
+			this->_file.open(server.getlocationinfo()["/"].root + "/" + this->_url);
 
 	if (this->_file.is_open() == false)
 	{
 		switch errno
 		{
-			case EIO:
-			case ENOMEM:
-					this->_sanitizeStatus = 500;
-					throw ResponseException(); //internal error when I/O problem or no memory might need some logging;
 			case ENOTDIR:
 			case ENOENT:
+			case 21:
 					this->_sanitizeStatus = 404;
 					throw ResponseException404();
 			case EACCES:
@@ -357,11 +352,11 @@ void Response::sendStandardErrorPage(int sanitizeStatus, int clientfd, ServerInf
 			else
 				this->_file.open(server.getErrorPages()[505]);
 			break ;
-		case 515:
-			if (server.getErrorPages()[515].empty())
-				this->_file.open("./www/515.html");
+		case 415:
+			if (server.getErrorPages()[415].empty())
+				this->_file.open("./www/415.html");
 			else
-				this->_file.open(server.getErrorPages()[515]);
+				this->_file.open(server.getErrorPages()[415]);
 			break ;
 		default:
 			if (server.getErrorPages()[500].empty())
@@ -421,7 +416,7 @@ void Response::sendErrorResponse(std::string errorMessage, int clientfd, int err
 		this->_sanitizeStatus == 404 ||
 		this->_sanitizeStatus == 505 ||
 		this->_sanitizeStatus == 501 ||
-		this->_sanitizeStatus == 515)
+		this->_sanitizeStatus == 415)
 	{
 		sendStandardErrorPage(this->_sanitizeStatus, clientfd, server);
 		return ;
@@ -491,12 +486,12 @@ int Response::ResponseException505::responseCode () const{
 	return (505);
 }
 
-const char* Response::ResponseException515::what() const noexcept{
+const char* Response::ResponseException415::what() const noexcept{
 	return "Unsupported Media Type";
 }
 
-int Response::ResponseException515::responseCode () const{
-	return (515);
+int Response::ResponseException415::responseCode () const{
+	return (415);
 }
 
 
