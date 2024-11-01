@@ -102,10 +102,12 @@ void Response::respondGet(int clientfd, ServerInfo server)
 		else
 			this->_redirectplace = server.getlocationinfo()[this->_origLoc].redirection;
 	}
-	else if (server.getlocationinfo()[this->_url].dirList != false && server.getlocationinfo()[this->_url].index.empty())
-	{
-		this->directorylisting(clientfd, this->buildDirectorylist(server.getlocationinfo()[this->_url].root, server.getlocationinfo()[this->_url].root.size() + 1));
-	}
+	else if (server.getlocationinfo()[this->_origLoc].dirList != false && server.getlocationinfo()[this->_origLoc].index.empty()
+        && std::filesystem::is_directory(this->_root + "/" + this->_url.substr(this->_origLoc.size(), std::string::npos)))
+    {
+        std::string tempdir = this->_root + "/" + this->_url.substr(this->_origLoc.size(), std::string::npos);
+        this->directorylisting(clientfd, this->buildDirectorylist(tempdir, tempdir.size()));
+    }
 	else
 	{
 		try
