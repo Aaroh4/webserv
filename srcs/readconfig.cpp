@@ -19,9 +19,11 @@ void locations(std::string temp, ServerInfo &server)
 {
 	std::vector<std::string> location_configs =
 	{"root:", "dir-listing:", "allowed-methods:", "upload:", "index:", 
-		"redirect:"};
+		"redirect:", "allowed-cgis:"};
 	std::unordered_set<std::string> all_methods =
 	{"GET", "POST", "DELETE", "HEAD"};
+	std::unordered_set<std::string> all_cgis =
+	{".py", ".php"};
 
 	location temploc;
 	temploc.name = temp.substr(0, temp.find(" "));
@@ -48,8 +50,6 @@ void locations(std::string temp, ServerInfo &server)
 						for (std::string method : all_methods)
 							if (value.find(method) != std::string::npos)
 								temploc.methods.insert(method);
-						if (temploc.methods.find("GET") == temploc.methods.end())
-							std::cout << "asdasdasda" << std::endl;
 						break;
 				case 3:
 						temploc.upload = value;
@@ -59,6 +59,11 @@ void locations(std::string temp, ServerInfo &server)
 						break;
 				case 5:
 						temploc.redirection = value;
+						break;
+				case 6:
+						for (std::string cgi : all_cgis)
+							if (value.find(cgi) != std::string::npos)
+								temploc.cgis.insert(cgi);
 						break;
 			}
 		}

@@ -23,6 +23,7 @@ struct	location
 	std::string									index;
 	std::string									upload;
 	bool										dirList = false;
+	std::unordered_set<std::string>				cgis;
 	std::unordered_set<std::string>				methods;
 };
 
