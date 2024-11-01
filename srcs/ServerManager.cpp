@@ -207,9 +207,12 @@ void	ServerManager::sendResponse(size_t& i)
 	int	clientSocket = this->_poll_fds[i].fd;
 	int	pipeFd = this->_clientInfos[clientSocket].pipeFd;
 	std::cout << "SendResponse has responseStatus "<< this->_clientInfos[clientSocket].responseStatus << std::endl;
+	
 	if (this->_clientInfos[clientSocket].responseStatus != 0)
 	{
 		Response::sendErrorPage(this->_clientInfos[clientSocket].responseStatus, clientSocket);
+		cleanPreviousRequestData(clientSocket, i);
+		return ;
 	}
 
 	if (this->_clientInfos[clientSocket].req->getHost() == this->_info[this->_connections.at(clientSocket)].getServerName()
@@ -238,7 +241,6 @@ void ServerManager::cleanPreviousRequestData(int clientSocket, size_t& i)
 {
 	try
 	{
-		(void) i;
 		int pipeFd = this->_clientInfos[clientSocket].pipeFd;
 		if (pipeFd){
 			for (auto it = this->_poll_fds.begin(); it != this->_poll_fds.end();){
@@ -254,10 +256,11 @@ void ServerManager::cleanPreviousRequestData(int clientSocket, size_t& i)
 		this->_clientInfos[clientSocket].cgiResponseReady = false;
 		this->_clientInfos[clientSocket].cgiResponseBody = "";
 		std::string connectionStatus = this->_clientInfos[clientSocket].req->getConnectionHeader();
-		if (connectionStatus == "close" || checkConnectionUptime(clientSocket) == true)
+		if (connectionStatus == "close" || checkConnectionUptime(clientSocket) == true
+			|| this->_clientInfos[clientSocket].responseStatus != 0)
 			closeConnection(clientSocket, i);
 	} catch(const std::exception& e) {
-		std::cout << "there was an error in remove connection" << std::endl;
+		std::cout << "there was an error in request cleanup" << std::endl;
 	}
 }
 
@@ -300,7 +303,7 @@ void	ServerManager::receiveRequest(size_t& i)
 	int 		bytesReceived = 0;
 	size_t		totalLength = 0;
 
-	// Receive data until complete request is sent
+	// Receive data until complete request is received
 	if (this->_clientInfos[clientSocket].requestReceived == true)
 		return;
 	try
@@ -476,7 +479,7 @@ void	ServerManager::runServers()
 					sendResponse(i);
 			}
 		} catch (std::exception &e){
-			std::cerr << "Mainloop catched an error" << std::endl;
+			std::cerr << "Mainloop catched an error " << e.what() << std::endl;
 		}
 	}
 }

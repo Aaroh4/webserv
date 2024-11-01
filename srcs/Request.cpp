@@ -84,6 +84,7 @@ void	Request::_parsePart(std::string& part)
 	size_t	end = 0;
 	std::ofstream newFile;
 
+	std::cout << "part is " << part << std::endl;
 	if (part.find("filename") == std::string::npos) //If not a file build key - value pairs
 	{
 		if (this->_queryString.empty() == false)
@@ -95,6 +96,7 @@ void	Request::_parsePart(std::string& part)
 		part.erase(0, end + 2);
 		start = part.find_first_not_of("\r\n");
 		end = part.find_last_of("\n");
+		std::cout << "end here is " << end << std::endl;
 		this->_queryString += part.substr(start, end - (start + 1));
 	}
 	else	//Create newfile
@@ -126,7 +128,7 @@ void	Request::_parseMultipartContent(void)
 	for (int i = 0; ind != std::string::npos; i++)
 	{
 		ind = this->_body.find(boundary, ind + 1);
-		blockCount = i + 1;
+		blockCount = i;
 	}
 	for (int i = 0; i < blockCount; i++)
 	{
@@ -138,7 +140,6 @@ void	Request::_parseMultipartContent(void)
 void	Request::_verifyPath(void)
 {
 	std::filesystem::path file = this->_root + "/" + this->_url.substr(this->_origLoc.size(), std::string::npos);
-	//std::filesystem::path file = "./www" + this->_url;
 	if (!std::filesystem::exists(file))
 	{
 		setStatusAndThrow(404, "Not Found");
@@ -435,7 +436,6 @@ std::string	Request::getOrigLocLen(void) const
 {
 	return this->_origLoc;
 }
-
 
 std::string	Request::getConnectionHeader(void)
 {
