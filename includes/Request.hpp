@@ -30,6 +30,8 @@ class Request
 		std::string getSessionId (void) const;
 		void 		setSessionId (std::string sessionId);
 		void		printRequest(int clientSocket);
+		int			getSanitizeStatus( void ) const;
+		void		setSanitizeStatus (int sanitizeStatus);
 
 	protected:
 		int	_sanitizeStatus;
