@@ -128,6 +128,8 @@ void Response::respondGet(int clientfd, ServerInfo server)
 		char buffer[chunkSize];
 		while (this->_file.read(buffer, chunkSize) || this->_file.gcount() > 0)
 			send(clientfd, buffer, this->_file.gcount(), MSG_NOSIGNAL);
+		std::cout << "Response to client: " << clientfd << std::endl;
+		std::cout << response << std::endl;
 		return ;
 	}
 }
@@ -161,7 +163,7 @@ std::string Response::formatPostResponseMsg (int close){
 		response += "Content-Type: " + this->_type + "\r\n";
 	if (!this->_sessionId.empty())
 		response += formatSessionCookie();
-	if (close == 0)
+	if (close == 0 || this->_sanitizeStatus == 200 || this->_sanitizeStatus == 204)
 	{
 		response += "Connection: Keep-Alive\r\n";
 		response += "Keep-Alive: timeout=5, max=100\r\n\r\n"; //this->_server.get_timeout()
@@ -283,7 +285,7 @@ std::string Response::formatGetResponseMsg(int close)
 	response += "Content-Length: " + this->_fileSize + "\r\n";
 	response += "Location: " + this->_redirectplace + "\r\n";
 	response += formatSessionCookie();
-	if (close == 0)
+	if (close == 0 || this->_sanitizeStatus == 200 || this->_sanitizeStatus == 204)
 	{
 		response += "Connection: keep-alive\r\n";
 		response += "keep-alive: timeout=5, max=100\r\n\r\n"; //this->_server.get_timeout()
@@ -393,7 +395,7 @@ void Response::sendCustomErrorPage(int clientfd)
 	this->_body = makeErrorContent(this->_sanitizeStatus, this->_errorMessage);
 	this->_fileSize = std::to_string(this->_body.length());
 
-	response = formatGetResponseMsg(0);
+	response = formatGetResponseMsg(1);
 	response += this->_body;
 
 	send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL);
