@@ -382,6 +382,8 @@ void	ServerManager::readFromCgiFd(const int& fd)
 	else if (nbytes == 0 || nbytes < 1024)
 	{
 		int clientSocket = this->_clientPipe[fd];
+		this->_clientInfos[clientSocket].cgiResponseBody.append(buffer, nbytes);
+		std::cout << "response bodyyyy " << this->_clientInfos[clientSocket].cgiResponseBody << std::endl;
 		this->_clientInfos[clientSocket].cgiResponseReady = true;
 		close(fd);
 		this->_clientPipe.erase(fd);

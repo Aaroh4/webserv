@@ -134,6 +134,8 @@ void Response::respondGet(int clientfd, ServerInfo server)
 	char buffer[chunkSize];
 	while (this->_file.read(buffer, chunkSize) || this->_file.gcount() > 0)
 		send(clientfd, buffer, this->_file.gcount(), MSG_NOSIGNAL);
+	if (!this->_responseBody.empty())
+		response += this->_responseBody;
 }
 
 void	Response::respondPost(int clientfd, ServerInfo server)
