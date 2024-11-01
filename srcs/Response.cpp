@@ -128,14 +128,6 @@ void Response::respondGet(int clientfd, ServerInfo server)
 			send(clientfd, buffer, this->_file.gcount(), MSG_NOSIGNAL);
 		return ;
 	}
-	response += formatGetResponseMsg(0);
-	send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL);
-	std::cout << "Response to client: " << clientfd << std::endl;
-	std::cout << response << std::endl;
-	const std::size_t chunkSize = 8192;
-	char buffer[chunkSize];
-	while (this->_file.read(buffer, chunkSize) || this->_file.gcount() > 0)
-		send(clientfd, buffer, this->_file.gcount(), MSG_NOSIGNAL);
 }
 
 void	Response::respondPost(int clientfd, ServerInfo server)
