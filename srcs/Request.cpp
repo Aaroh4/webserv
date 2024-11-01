@@ -250,7 +250,7 @@ void	Request::_parseHeaders(void)
 	size_t bodyEnd = this->_request.find_last_of("\r\n\r\n") + 4;
 	this->_body = this->_request.substr(bodyStart, bodyEnd);
 	if (this->_bodyLimit > 0 && static_cast<int> (this->_body.length()) > this->_bodyLimit)
-		setStatusAndThrow(400, "Bad Request");
+		throw Response::ResponseException400();//setStatusAndThrow(400, "Bad Request");
 }
 
 void	Request::_decodeChunks(void)
@@ -323,7 +323,7 @@ void	Request::parse(void)
 	}
 	catch(const std::exception& e)
 	{
-		throw RequestException(e.what());
+		throw;
 	}
 }
 

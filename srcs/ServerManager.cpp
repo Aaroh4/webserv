@@ -259,7 +259,6 @@ void ServerManager::cleanPreviousRequestData(int clientSocket, size_t& i)
 	} catch(const std::exception& e) {
 		std::cout << "there was an error in remove connection" << std::endl;
 	}
-	std::cout << "removeConnection: ClientSocket " << clientSocket << " closed\n\n" << std::endl;
 }
 
 void	ServerManager::closeConnection(int& clientSocket, size_t& i)
@@ -333,7 +332,7 @@ void	ServerManager::receiveRequest(size_t& i)
 		this->_clientInfos[clientSocket].requestReceived = true;
 		throw;
 	} catch (std::exception &e){
-		throw ;
+		throw;
 	}
 	if (totalLength != 0 && totalLength == this->_clientInfos[clientSocket].request.length())
 	{
@@ -353,13 +352,13 @@ void	ServerManager::receiveRequest(size_t& i)
 			std::cout << "request " << this->_clientInfos[clientSocket].request << std::endl;
 			if (checkForCgi(*this->_clientInfos[clientSocket].req, clientSocket) == 1)
 				addPipeFd(this->_clientInfos[clientSocket].pipeFd);
-		} catch (Request::RequestException &e){
+		} catch (Response::ResponseException &e){
 			std::cerr << e.what()<< " in receiveRequest" << std::endl;
-			this->_clientInfos[clientSocket].responseStatus = 500;//e.responseCode();
+			this->_clientInfos[clientSocket].responseStatus = e.responseCode();
 			this->_clientInfos[clientSocket].requestReceived = true;
 			throw;
 		} catch (std::exception &e){
-			throw ;
+			throw;
 		}
 	}
 }
