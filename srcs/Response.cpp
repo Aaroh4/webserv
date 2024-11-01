@@ -102,10 +102,12 @@ void Response::respondGet(int clientfd, ServerInfo server)
 		else
 			this->_redirectplace = server.getlocationinfo()[this->_origLoc].redirection;
 	}
-	else if (server.getlocationinfo()[this->_url].dirList != false && server.getlocationinfo()[this->_url].index.empty())
-	{
-		this->directorylisting(clientfd, this->buildDirectorylist(server.getlocationinfo()[this->_url].root, server.getlocationinfo()[this->_url].root.size() + 1));
-	}
+	else if (server.getlocationinfo()[this->_origLoc].dirList != false && server.getlocationinfo()[this->_origLoc].index.empty()
+        && std::filesystem::is_directory(this->_root + "/" + this->_url.substr(this->_origLoc.size(), std::string::npos)))
+    {
+        std::string tempdir = this->_root + "/" + this->_url.substr(this->_origLoc.size(), std::string::npos);
+        this->directorylisting(clientfd, this->buildDirectorylist(tempdir, tempdir.size()));
+    }
 	else
 	{
 		try
@@ -503,10 +505,32 @@ void Response::sendErrorPage(int statusCode, int clientfd)
 	std::string fileSize;
 
 	std::string message;
-	if (statusCode == 400)
-		message = "Bad Request";
-	else
-		message = "Internal Server Error";
+
+	switch (statusCode){
+		case 400:
+			message = "Bad Request";
+			break ;
+		case 403:
+			message = "Forbidden";
+			break ;
+		case 405:
+			message = "Method Not Allowed";
+			break ;
+		case 404:
+			message = "Not Found";
+			break ;
+		case 501:
+			message = "Unsupported method";
+			break ;
+		case 505:
+			message = "Unsupported HTTP";
+			break ;
+		case 415:
+			message = "Unsupported Media Type";
+			break ;
+		default:
+			message = "Internal Server Error";
+	}
 	std::string body = "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<title>";
 	body += std::to_string(statusCode) + " " + message + "</title>\n<style>\n";
 	body += "body {background-color: powderblue;}\n";

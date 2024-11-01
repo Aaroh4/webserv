@@ -175,8 +175,10 @@ void	Request::_getContentType(void)
 			this->_type = "cgi/" + type;
     	else if (this->_url != "/")
 		{
-			this->_sanitizeStatus = 415;
-			throw Response::ResponseException415();
+			//std::cerr << "Unsupported Media Type in _getContentType" << std::endl;
+			this->_sanitizeStatus = 404;
+			this->_errmsg = "Not Found";
+			throw Response::ResponseException404();
 		}
 	}
 }
@@ -329,7 +331,7 @@ void	Request::parse(void)
 		else
 			this->setSessionId(generateSessionId());
 	}
-	catch(const std::exception& e)
+	catch(Response::ResponseException& e)
 	{
 		throw;
 	}
