@@ -501,10 +501,32 @@ void Response::sendErrorPage(int statusCode, int clientfd)
 	std::string fileSize;
 
 	std::string message;
-	if (statusCode == 400)
-		message = "Bad Request";
-	else
-		message = "Internal Server Error";
+
+	switch (statusCode){
+		case 400:
+			message = "Bad Request";
+			break ;
+		case 403:
+			message = "Forbidden";
+			break ;
+		case 405:
+			message = "Method Not Allowed";
+			break ;
+		case 404:
+			message = "Not Found";
+			break ;
+		case 501:
+			message = "Unsupported method";
+			break ;
+		case 505:
+			message = "Unsupported HTTP";
+			break ;
+		case 415:
+			message = "Unsupported Media Type";
+			break ;
+		default:
+			message = "Internal Server Error";
+	}
 	std::string body = "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<title>";
 	body += std::to_string(statusCode) + " " + message + "</title>\n<style>\n";
 	body += "body {background-color: powderblue;}\n";

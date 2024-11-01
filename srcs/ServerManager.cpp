@@ -207,7 +207,7 @@ void	ServerManager::sendResponse(size_t& i)
 {
 	int	clientSocket = this->_poll_fds[i].fd;
 	int	pipeFd = this->_clientInfos[clientSocket].pipeFd;
-	std::cout << "SendResponse has responseStatus "<< this->_clientInfos[clientSocket].responseStatus << std::endl;
+	//std::cout << "SendResponse has responseStatus "<< this->_clientInfos[clientSocket].responseStatus << std::endl;
 
 	if (this->_clientInfos[clientSocket].responseStatus != 0)
 	{
