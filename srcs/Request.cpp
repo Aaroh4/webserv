@@ -350,8 +350,6 @@ void	Request::sanitize(ServerInfo server)
 	std::string	test = "/" + cutFromTo(this->_url, 1, "/")  + "/";
 
 	try{
-		if (this->_checkAllowedMethods(server) == false)
-			throw Response::ResponseException400();
 		if (!server.getlocationinfo()[test].root.empty())
 			temp = test;
 
@@ -370,7 +368,8 @@ void	Request::sanitize(ServerInfo server)
 			this->_origLoc = "/";
 			temp = "/";
 		}
-
+		if (this->_checkAllowedMethods(server) == false)
+			throw Response::ResponseException400();
 		if (this->_type == "cgi/py" || this->_type == "cgi/php")
 			this->_verifyPath();
 
