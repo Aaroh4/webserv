@@ -337,12 +337,21 @@ void	Request::parse(void)
 	}
 }
 
+bool	Request::_checkAllowedMethods(ServerInfo server) const
+{
+	if (server.getlocationinfo()[this->_origLoc].methods.find(this->_method) == server.getlocationinfo()["this->_origloc"].methods.end())
+		return false;
+	return true;
+}
+
 void	Request::sanitize(ServerInfo server)
 {
 	std::string temp;
 	std::string	test = "/" + cutFromTo(this->_url, 1, "/")  + "/";
 
 	try{
+		if (this->_checkAllowedMethods(server) == false)
+			throw Response::ResponseException400();
 		if (!server.getlocationinfo()[test].root.empty())
 			temp = test;
 
