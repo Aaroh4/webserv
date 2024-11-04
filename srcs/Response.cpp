@@ -48,7 +48,7 @@ void Response::handleCRUD(int clientfd, ServerInfo server)
 void	Response::respond(int clientfd, ServerInfo server)
 {
 	this->_server = server;
-	std::cout << this->_sanitizeStatus << std::endl;
+	//std::cout << this->_sanitizeStatus<< " sanitize status in respond" << std::endl;
 	try{
 		switch (this->_sanitizeStatus){
 			case 404:

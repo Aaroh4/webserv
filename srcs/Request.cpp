@@ -147,6 +147,7 @@ void	Request::_verifyPath(void)
 	std::filesystem::path file = this->_root + "/" + this->_url.substr(this->_origLoc.size(), std::string::npos);
 	if (!std::filesystem::exists(file))
 	{
+		this->_sanitizeStatus = 404;
 		throw Response::ResponseException404();
 	}
 	else if (!std::filesystem::is_regular_file(file))
@@ -338,6 +339,7 @@ void	Request::parse(void)
 	}
 	catch(Response::ResponseException& e)
 	{
+		std::cerr << e.what() << " in Parse" << std::endl;
 		throw;
 	}
 }
@@ -410,34 +412,42 @@ void	Request::sanitize(ServerInfo server)
 
 void Request::openFile(ServerInfo server)
 {
-	if (!(!server.getlocationinfo()[this->_origLoc].redirection.empty() || !server.getlocationinfo()[this->_url].redirection.empty())
-	 && !(server.getlocationinfo()[this->_origLoc].dirList != false && server.getlocationinfo()[this->_origLoc].index.empty()
-        && std::filesystem::is_directory(this->_root + "/" + this->_url.substr(this->_origLoc.size(), std::string::npos))))
-	{
-		if (!server.getlocationinfo()[this->_url].index.empty())
-			this->_filefd = open((server.getlocationinfo()[this->_url].root + "/" + server.getlocationinfo()[this->_url].index).c_str(), O_RDONLY);
-		else if (!this->_root.empty())
-			this->_filefd = open((this->_root + "/" + this->_url.substr(this->_origLoc.size() - 1, std::string::npos)).c_str(), O_RDONLY);
-		else
-			this->_filefd = open((server.getlocationinfo()["/"].root + "/" + this->_url).c_str(), O_RDONLY);
-
-		if (this->_filefd < 0)
+	try{
+		if (!(!server.getlocationinfo()[this->_origLoc].redirection.empty() || !server.getlocationinfo()[this->_url].redirection.empty())
+		&& !(server.getlocationinfo()[this->_origLoc].dirList != false && server.getlocationinfo()[this->_origLoc].index.empty()
+			&& std::filesystem::is_directory(this->_root + "/" + this->_url.substr(this->_origLoc.size(), std::string::npos))))
 		{
-			switch errno
+			if (!server.getlocationinfo()[this->_url].index.empty())
+				this->_filefd = open((server.getlocationinfo()[this->_url].root + "/" + server.getlocationinfo()[this->_url].index).c_str(), O_RDONLY);
+			else if (!this->_root.empty())
+				this->_filefd = open((this->_root + "/" + this->_url.substr(this->_origLoc.size() - 1, std::string::npos)).c_str(), O_RDONLY);
+			else
+				this->_filefd = open((server.getlocationinfo()["/"].root + "/" + this->_url).c_str(), O_RDONLY);
+
+			if (this->_filefd < 0)
 			{
-				case ENOTDIR:
-				case ENOENT:
-				case 21:
-						this->_sanitizeStatus = 404;
-						throw Response::ResponseException404();
-				case EACCES:
-						this->_sanitizeStatus = 403;
-						throw Response::ResponseException403();
-				default:
-						this->_sanitizeStatus = 500;
-						throw Response::ResponseException();
+				switch errno
+				{
+					case ENOTDIR:
+					case ENOENT:
+					case 21:
+							this->_sanitizeStatus = 404;
+							throw Response::ResponseException404();
+					case EACCES:
+							this->_sanitizeStatus = 403;
+							throw Response::ResponseException403();
+					default:
+							this->_sanitizeStatus = 500;
+							throw Response::ResponseException();
+				}
 			}
-		}
+	}
+	}catch (Response::ResponseException &e)
+	{
+		throw ;
+	}catch (std::exception &e)
+	{
+		throw Response::ResponseException404();
 	}
 }
 
