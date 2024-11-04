@@ -474,6 +474,14 @@ void Request::setSessionId (std::string sessionId){
 	this->_sessionId = sessionId;
 }
 
+int Request::getSanitizeStatus(void) const{
+	return this->_sanitizeStatus;
+}
+
+void Request::setSanitizeStatus (int sanitizeStatus){
+	this->_sanitizeStatus = sanitizeStatus;
+}
+
 void Request::printRequest(int clientSocket)
 {
 	std::cout << "Client " << clientSocket << " Requested:\n";

@@ -41,6 +41,7 @@ void Response::handleCRUD(int clientfd, ServerInfo server)
 			throw ResponseException405();
 	} catch (ResponseException &e){
 		std::cerr << e.what() << " in handleCRUD" << std::endl;
+		this->_sanitizeStatus = e.responseCode();
 		sendErrorResponse(e.what(), clientfd, e.responseCode(), server);
 	}
 }
@@ -48,7 +49,6 @@ void Response::handleCRUD(int clientfd, ServerInfo server)
 void	Response::respond(int clientfd, ServerInfo server)
 {
 	this->_server = server;
-	std::cout << this->_sanitizeStatus << std::endl;
 	try{
 		switch (this->_sanitizeStatus){
 			case 404:
@@ -68,6 +68,7 @@ void	Response::respond(int clientfd, ServerInfo server)
 		}
 	} catch(ResponseException& e) {
 		std::cerr << e.what() << " in respond" << std::endl;
+		this->_sanitizeStatus = e.responseCode();
 		sendErrorResponse(e.what(), clientfd, e.responseCode(), server);
 		return ;
 	}
@@ -75,6 +76,7 @@ void	Response::respond(int clientfd, ServerInfo server)
 		handleCRUD(clientfd, server);
 	} catch(ResponseException& e){
 		std::cerr << e.what() << " in respond" << std::endl;
+		this->_sanitizeStatus = e.responseCode();
 		sendErrorResponse(e.what(), clientfd, e.responseCode(), server);
 		return ;
 	}
@@ -116,7 +118,7 @@ void Response::respondGet(int clientfd, ServerInfo server)
 		}
 		catch(ResponseException &e)
 		{
-			std::cerr << e.what() << " in respondGet" << std::endl;
+			this->_sanitizeStatus = e.responseCode();
 			sendErrorResponse(e.what(), clientfd, e.responseCode(), server);
 			return;
 		}
@@ -491,6 +493,7 @@ int Response::ResponseException415::responseCode () const{
 
 void Response::sendErrorPage(int statusCode, int clientfd)
 {
+	std::cout << "sending errorPAge" << std::endl;
 	std::string response;
 	std::string fileSize;
 
