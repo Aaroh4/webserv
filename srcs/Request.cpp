@@ -379,7 +379,6 @@ void	Request::sanitize(ServerInfo server)
 		}
 		if (this->_url.find("..") != std::string::npos )
 		{
-
 			this->_sanitizeStatus = 403;
 			throw Response::ResponseException403();
 		}
@@ -436,9 +435,66 @@ void Request::openFile(ServerInfo server)
 						throw Response::ResponseException403();
 				default:
 						this->_sanitizeStatus = 500;
-						throw Response::ResponseException();		
+						throw Response::ResponseException();
 			}
 		}
+	}
+}
+
+void Request::openErrorFile(ServerInfo server, int sanitizeStatus)
+{
+	if (this->_filefd == 0)
+		close (this->_filefd);
+	switch (sanitizeStatus)
+	{
+		case 400:
+			if (server.getErrorPages()[400].empty())
+				this->_filefd = open("./www/400.html", O_RDONLY);
+			else
+				this->_filefd = open(server.getErrorPages()[400].c_str(), O_RDONLY);
+			break ;
+		case 403:
+			if (server.getErrorPages()[403].empty())
+				this->_filefd = open("./www/403.html", O_RDONLY);
+			else
+				this->_filefd = open(server.getErrorPages()[403].c_str(), O_RDONLY);
+			break ;
+		case 405:
+			if (server.getErrorPages()[405].empty())
+				this->_filefd = open("./www/405.html", O_RDONLY);
+			else
+				this->_filefd = open(server.getErrorPages()[405].c_str(), O_RDONLY);
+			break ;
+		case 404:
+			if (server.getErrorPages()[404].empty())
+				this->_filefd = open("./www/404.html", O_RDONLY);
+			else
+				this->_filefd = open(server.getErrorPages()[404].c_str(), O_RDONLY);
+			break ;
+		case 501:
+			if (server.getErrorPages()[501].empty())
+				this->_filefd = open("./www/501.html", O_RDONLY);
+			else
+				this->_filefd = open(server.getErrorPages()[501].c_str(), O_RDONLY);
+			break ;
+		case 505:
+			if (server.getErrorPages()[505].empty())
+				this->_filefd = open("./www/505.html", O_RDONLY);
+			else
+				this->_filefd = open(server.getErrorPages()[505].c_str(), O_RDONLY);
+			break ;
+		case 415:
+			if (server.getErrorPages()[415].empty())
+				this->_filefd = open("./www/415.html", O_RDONLY);
+			else
+				this->_filefd = open(server.getErrorPages()[415].c_str(), O_RDONLY);
+			break ;
+		default:
+			if (server.getErrorPages()[500].empty())
+				this->_filefd = open("./www/500.html", O_RDONLY);
+			else
+				this->_filefd = open(server.getErrorPages()[500].c_str(), O_RDONLY);
+			break ;
 	}
 }
 

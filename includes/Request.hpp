@@ -31,6 +31,7 @@ class Request
 		void 		setSessionId (std::string sessionId);
 		void		printRequest(int clientSocket);
 		void		openFile(ServerInfo server);
+		void		openErrorFile(ServerInfo server, int sanitizeStatus);
 		int			getFileFD();
 	protected:
 		int	_sanitizeStatus;

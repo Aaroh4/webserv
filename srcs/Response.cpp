@@ -34,7 +34,7 @@ void Response::handleCRUD(int clientfd, ServerInfo server)
 		if (this->_method == "GET")
 			respondGet(clientfd, server);
 		else if (this->_method == "POST")
-			respondPost(clientfd, server);
+			respondPost(clientfd);
 		else if (this->_method == "DELETE")
 			respondDelete(clientfd);
 		else
@@ -163,7 +163,7 @@ void	Response::respondDelete(int clientfd)
 	std::vector<std::string> supportedPaths = {
 		"./www/uploads/"
 		};
-	std::string fileToDelete = "./www" + this->_url;
+	std::string fileToDelete = this->_root + "/" + this->_url;
 	bool canBeDeleted = false;
 	for (const std::string &path : supportedPaths){
 		if (fileToDelete.rfind(path,0) == 0){
@@ -264,60 +264,6 @@ void Response::sendStandardErrorPage(int sanitizeStatus, int clientfd, ServerInf
 	std::string file;
 	(void) server;
 	(void) sanitizeStatus;
-
-	//switch (sanitizeStatus)
-	//{
-	//	case 400:
-	//		if (server.getErrorPages()[400].empty())
-	//			this->_file.open("./www/400.html");
-	//		else
-	//			this->_file.open(server.getErrorPages()[400]);
-	//		break ;
-	//	case 403:
-	//		if (server.getErrorPages()[403].empty())
-	//			this->_file.open("./www/403.html");
-	//		else
-	//			this->_file.open(server.getErrorPages()[403]);
-	//		break ;
-	//	case 405:
-	//		if (server.getErrorPages()[405].empty())
-	//			this->_file.open("./www/405.html");
-	//		else
-	//			this->_file.open(server.getErrorPages()[405]);
-	//		break ;
-	//	case 404:
-	//		if (server.getErrorPages()[404].empty())
-	//			this->_file.open("./www/404.html");
-	//		else
-	//			this->_file.open(server.getErrorPages()[404]);
-	//		break ;
-	//	case 501:
-	//		if (server.getErrorPages()[501].empty())
-	//			this->_file.open("./www/501.html");
-	//		else
-	//			this->_file.open(server.getErrorPages()[501]);
-	//		break ;
-	//	case 505:
-	//		if (server.getErrorPages()[505].empty())
-	//			this->_file.open("./www/505.html");
-	//		else
-	//			this->_file.open(server.getErrorPages()[505]);
-	//		break ;
-	//	case 415:
-	//		if (server.getErrorPages()[415].empty())
-	//			this->_file.open("./www/415.html");
-	//		else
-	//			this->_file.open(server.getErrorPages()[415]);
-	//		break ;
-	//	default:
-	//		if (server.getErrorPages()[500].empty())
-	//			this->_file.open("./www/500.html");
-	//		else
-	//			this->_file.open(server.getErrorPages()[500]);
-	//		break ;
-	//}
-	//for (std::string line; std::getline(this->_file, line);)
-	//	file += line;
 
 	this->_fileSize = std::to_string(file.length());
 
