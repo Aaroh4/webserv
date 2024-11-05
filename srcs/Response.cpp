@@ -31,7 +31,9 @@ Response Response::operator=(const Response &input)
 void Response::handleCRUD(int clientfd, ServerInfo server)
 {
 	try{
-		if (this->_method == "GET")
+		if (this->_type.rfind("cgi/", 0) == 0 && (this->_method == "GET" || this->_method == "POST"))
+			cgiResponse(clientfd);
+		else if (this->_method == "GET")
 			respondGet(clientfd, server);
 		else if (this->_method == "POST")
 			respondPost(clientfd);
@@ -155,6 +157,32 @@ std::string Response::formatPostResponseMsg (int close){
 	if (!this->_responseBody.empty())
 		response += this->_responseBody;
 	return (response);
+
+}
+
+void Response::cgiResponse(int clientfd)
+{
+	std::string response;
+
+	if (this->_httpVersion.empty())
+		this->_httpVersion = "HTTP/1.1";
+	if (this->_responseBody.empty())
+	{
+		this->_sanitizeStatus = 204;
+		response = this->_httpVersion + " 204 No Content\r\n";
+	}
+		else
+		response = this->_httpVersion + " 200 OK\r\n";
+	response += "Content-Type: text/html\r\n";
+	response += "Content-Length: " + std::to_string(this->_responseBody.length()) + "\r\n";
+	if (!this->_sessionId.empty())
+		response += formatSessionCookie();
+	response += "Connection: Keep-Alive\r\n";
+	response += "Keep-Alive: timeout=5, max=100\r\n\r\n"; //this->_server.get_timeout()
+	response += this->_responseBody;
+	send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL);
+	std::cout << "Response to client: " << clientfd << std::endl;
+	std::cout << response << std::endl;
 
 }
 

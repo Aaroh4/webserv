@@ -33,6 +33,7 @@ class Response: public Request
 			std::string		formatPostResponseMsg(int close);
 			std::string 	formatSessionCookie( void );
 			static void     sendErrorPage(int statusCode, int clientfd);
+			void 			cgiResponse(int clientfd);
 
 			// RESPONSE EXCEPTIONS
 			//base class for 500 internal error
