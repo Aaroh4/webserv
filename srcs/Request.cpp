@@ -171,7 +171,7 @@ void	Request::_getContentType(void)
 	if (i != std::string::npos)
 	{
 		std::string type = this->_url.substr(i + 1, this->_url.length());
-		if (type == "css" || type == "js" || type == "html")
+		if (type == "css" || type == "js" || type == "html" || type == "txt")
 			this->_type = "text/" + type;
 		else if (type == "jpg" || type == "png" || type == "jpeg" || type == "gif")
 			this->_type = "image/" + type;
@@ -417,12 +417,20 @@ void Request::openFile(ServerInfo server)
 		&& !(server.getlocationinfo()[this->_origLoc].dirList != false && server.getlocationinfo()[this->_origLoc].index.empty()
 			&& std::filesystem::is_directory(this->_root + "/" + this->_url.substr(this->_origLoc.size(), std::string::npos))))
 		{
+
 			if (!server.getlocationinfo()[this->_url].index.empty())
 				this->_filefd = open((server.getlocationinfo()[this->_url].root + "/" + server.getlocationinfo()[this->_url].index).c_str(), O_RDONLY);
 			else if (!this->_root.empty())
+			{
+				// std::cout << "ELSE IF " << (this->_root + "/" + this->_url.substr(this->_origLoc.size() - 1, std::string::npos)).c_str() << std::endl;
 				this->_filefd = open((this->_root + "/" + this->_url.substr(this->_origLoc.size() - 1, std::string::npos)).c_str(), O_RDONLY);
+			}
 			else
+			{
+				// std::cout << "ELSE " << (server.getlocationinfo()["/"].root + "/" + this->_url).c_str() << std::endl;
 				this->_filefd = open((server.getlocationinfo()["/"].root + "/" + this->_url).c_str(), O_RDONLY);
+
+			}
 
 			if (this->_filefd < 0)
 			{
@@ -444,9 +452,12 @@ void Request::openFile(ServerInfo server)
 	}
 	}catch (Response::ResponseException &e)
 	{
+		std::cerr << e.what() << " ResponseExeption in OpenFile" << std::endl;
 		throw ;
-	}catch (std::exception &e)
+	}
+	catch (std::exception &e)
 	{
+		std::cerr << e.what() << " exception in OpenFile" << std::endl;
 		throw Response::ResponseException404();
 	}
 }
