@@ -1,14 +1,4 @@
 
-input=Jepa+nepa
-input=Toimiiko+Getti%3F%3F
-input=jeppistaaa
-input=Tomi
-input=nnnnn
-input=jhhjhjjh
-input=hgghghgh
-input=Hello+world
-input=fff
-input=Tomi
-input=Tomi
-input=dd
-input=jouni
+Hello world
+JAUSAA
+keke

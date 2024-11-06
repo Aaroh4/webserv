@@ -337,11 +337,11 @@ void	ServerManager::receiveRequest(size_t& i)
 	} catch (Response::ResponseException &e){
 		std::cerr << e.what() << " in receiveRequest"<< std::endl;
 		this->_clientInfos[clientSocket].req->openErrorFile(this->_info[this->_connections[clientSocket]], e.responseCode());
-			// if (this->_clientInfos[clientSocket].req->getFileFD() != 0)
-			// {
-			// 	this->_clientPipe[this->_clientInfos[clientSocket].req->getFileFD()] = clientSocket;
-			// 	addPollFd(this->_clientInfos[clientSocket].req->getFileFD());
-			// }
+		if (this->_clientInfos[clientSocket].req->getFileFD() != 0)
+		{
+			this->_clientPipe[this->_clientInfos[clientSocket].req->getFileFD()] = clientSocket;
+			addPollFd(this->_clientInfos[clientSocket].req->getFileFD());
+		}
 		this->_clientInfos[clientSocket].responseStatus = e.responseCode();
 		this->_clientInfos[clientSocket].requestReceived = true;
 		throw;
@@ -370,7 +370,7 @@ void	ServerManager::receiveRequest(size_t& i)
 				return;
 			}
 			this->_clientInfos[clientSocket].req->openFile(this->_info[this->_connections[clientSocket]]);
-			if (this->_clientInfos[clientSocket].req->getFileFD() != 0)
+			if (this->_clientInfos[clientSocket].req->getFileFD() > 0)
 			{
 				this->_clientPipe[this->_clientInfos[clientSocket].req->getFileFD()] = clientSocket;
 				addPollFd(this->_clientInfos[clientSocket].req->getFileFD());
@@ -379,11 +379,11 @@ void	ServerManager::receiveRequest(size_t& i)
 			std::cerr << e.what()<< " in receiveRequest" << std::endl;
 			this->_clientInfos[clientSocket].responseStatus = e.responseCode();
 			this->_clientInfos[clientSocket].req->openErrorFile(this->_info[this->_connections[clientSocket]], e.responseCode());
-			// if (this->_clientInfos[clientSocket].req->getFileFD() != 0)
-			// {
-			// 	this->_clientPipe[this->_clientInfos[clientSocket].req->getFileFD()] = clientSocket;
-			// 	addPollFd(this->_clientInfos[clientSocket].req->getFileFD());
-			// }
+			if (this->_clientInfos[clientSocket].req->getFileFD() != 0)
+			{
+				this->_clientPipe[this->_clientInfos[clientSocket].req->getFileFD()] = clientSocket;
+				addPollFd(this->_clientInfos[clientSocket].req->getFileFD());
+			}
 			throw;
 		} catch (std::exception &e){
 			if (this->_clientInfos[clientSocket].responseStatus == 200)

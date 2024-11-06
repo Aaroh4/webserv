@@ -50,6 +50,7 @@ class Request
 		std::unordered_map<std::string, std::string> _headers;
 
 	private:
+		bool		_checkAllowedMethods(ServerInfo server) const;
 		void		_parseRequestLine(void);
 		void 		_parseHeaders(void);
 		void		_getContentType(void);

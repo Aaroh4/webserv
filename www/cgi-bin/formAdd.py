@@ -1,11 +1,18 @@
-import cgi
-import cgitb
-cgitb.enable()
+#!/usr/bin/python3
 
-print("Content-type: text/html\n\n")
-print("<hmtl><body style='text-align:center;'>")
+import cgi
+import os
+
+# File path where the input will be saved
+file_path = "www/data/strings.txt"
+
+print("Content-Type: text/html\n")
+
 form = cgi.FieldStorage()
-if form.getvalue("name"):
-	name = form.getvalue("name")
-    print("<h1 style='color: green;'> Hello, " + name + "!</h1>")
-print("</body></html>")
+
+name = form.getvalue('input', '')
+
+with open(file_path, 'a') as file:
+    file.write(f"{name}\n")
+
+print(f"Added {name}")
