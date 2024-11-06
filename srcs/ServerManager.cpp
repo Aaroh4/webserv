@@ -365,9 +365,11 @@ void	ServerManager::receiveRequest(size_t& i)
 				this->_clientInfos[clientSocket].latestRequest = std::time(nullptr);
 			std::cout << "request " << this->_clientInfos[clientSocket].request << std::endl;
 			if (checkForCgi(*this->_clientInfos[clientSocket].req, clientSocket) == 1)
+			{
 				addPollFd(this->_clientInfos[clientSocket].pipeFd);
+				return;
+			}
 			this->_clientInfos[clientSocket].req->openFile(this->_info[this->_connections[clientSocket]]);
-			//std::cout << "fd after open() " << this->_clientInfos[clientSocket].req->getFileFD() << std::endl;
 			if (this->_clientInfos[clientSocket].req->getFileFD() != 0)
 			{
 				this->_clientPipe[this->_clientInfos[clientSocket].req->getFileFD()] = clientSocket;

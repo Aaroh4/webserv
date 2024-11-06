@@ -173,7 +173,7 @@ void Response::cgiResponse(int clientfd)
 	}
 		else
 		response = this->_httpVersion + " 200 OK\r\n";
-	response += "Content-Type: text/html\r\n";
+	response += "Content-Type: text/plain\r\n";
 	response += "Content-Length: " + std::to_string(this->_responseBody.length()) + "\r\n";
 	if (!this->_sessionId.empty())
 		response += formatSessionCookie();

@@ -464,7 +464,7 @@ void Request::openFile(ServerInfo server)
 
 void Request::openErrorFile(ServerInfo server, int sanitizeStatus)
 {
-	if (this->_filefd == 0)
+	if (this->_filefd != 0)
 		close (this->_filefd);
 	switch (sanitizeStatus)
 	{
