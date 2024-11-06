@@ -422,9 +422,8 @@ int Response::ResponseException415::responseCode () const{
 }
 
 
-void Response::sendErrorPage(int statusCode, int clientfd)
+void Response::sendErrorPage(int statusCode, int clientfd, std::string body)
 {
-	std::cout << "sending errorPAge" << std::endl;
 	std::string response;
 	std::string fileSize;
 
@@ -455,11 +454,14 @@ void Response::sendErrorPage(int statusCode, int clientfd)
 		default:
 			message = "Internal Server Error";
 	}
-	std::string body = "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<title>";
-	body += std::to_string(statusCode) + " " + message + "</title>\n<style>\n";
-	body += "body {background-color: powderblue;}\n";
-	body += "h1 {color: blue; font-style: italic; text-align: center;}\n</style>\n</head>\n<body>\n<h1>";
-	body += std::to_string(statusCode) + " " + message + "</h1>\n</body>\n</html>\n";
+	if (body.empty())
+	{
+		body = "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<title>";
+		body += std::to_string(statusCode) + " " + message + "</title>\n<style>\n";
+		body += "body {background-color: powderblue;}\n";
+		body += "h1 {color: blue; font-style: italic; text-align: center;}\n</style>\n</head>\n<body>\n<h1>";
+		body += std::to_string(statusCode) + " " + message + "</h1>\n</body>\n</html>\n";
+	}
 
 	fileSize = std::to_string(body.length());
 

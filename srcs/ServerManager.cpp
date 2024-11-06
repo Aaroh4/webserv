@@ -211,9 +211,9 @@ void	ServerManager::sendResponse(size_t& i)
 	if (!pipeFd)
 		pipeFd = this->_clientInfos[clientSocket].req->getFileFD();
 
-	if (this->_clientInfos[clientSocket].responseStatus != 0)
+	if (this->_clientInfos[clientSocket].responseStatus != 0 && this->_clientInfos[clientSocket].ResponseReady == true)
 	{
-		Response::sendErrorPage(this->_clientInfos[clientSocket].responseStatus, clientSocket);
+		Response::sendErrorPage(this->_clientInfos[clientSocket].responseStatus, clientSocket, this->_clientInfos[clientSocket].ResponseBody);
 		cleanPreviousRequestData(clientSocket, i);
 		return ;
 	}
@@ -336,7 +336,7 @@ void	ServerManager::receiveRequest(size_t& i)
 				return ;
 		}
 	} catch (Response::ResponseException &e){
-		std::cerr << e.what() << " in receiveRequest"<< std::endl;
+		std::cerr << e.what() << " in first part of receiveRequest"<< std::endl;
 		this->_clientInfos[clientSocket].req->openErrorFile(this->_info[this->_connections[clientSocket]], e.responseCode());
 		if (this->_clientInfos[clientSocket].req->getFileFD() != 0)
 		{
@@ -377,7 +377,7 @@ void	ServerManager::receiveRequest(size_t& i)
 				addPollFd(this->_clientInfos[clientSocket].req->getFileFD());
 			}
 		} catch (Response::ResponseException &e){
-			std::cerr << e.what()<< " in receiveRequest" << std::endl;
+			std::cerr << e.what()<< " in second part of receiveRequest" << std::endl;
 			this->_clientInfos[clientSocket].responseStatus = e.responseCode();
 			this->_clientInfos[clientSocket].req->openErrorFile(this->_info[this->_connections[clientSocket]], e.responseCode());
 			if (this->_clientInfos[clientSocket].req->getFileFD() != 0)
@@ -385,12 +385,13 @@ void	ServerManager::receiveRequest(size_t& i)
 			  this->_clientPipe[this->_clientInfos[clientSocket].req->getFileFD()] = clientSocket;
 			  addPollFd(this->_clientInfos[clientSocket].req->getFileFD());
 			}
-			throw;
+
+			return ;
 		} catch (std::exception &e){
 			if (this->_clientInfos[clientSocket].responseStatus == 200)
 				this->_clientInfos[clientSocket].responseStatus = 400;
 			this->_clientInfos[clientSocket].requestReceived = true;
-			throw;
+			return ;
 		}
 	}
 }
