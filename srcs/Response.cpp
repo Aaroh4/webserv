@@ -31,10 +31,12 @@ Response Response::operator=(const Response &input)
 void Response::handleCRUD(int clientfd, ServerInfo server)
 {
 	try{
-		if (this->_method == "GET")
+		if (this->_type.rfind("cgi/", 0) == 0 && (this->_method == "GET" || this->_method == "POST"))
+			cgiResponse(clientfd);
+		else if (this->_method == "GET")
 			respondGet(clientfd, server);
 		else if (this->_method == "POST")
-			respondPost(clientfd, server);
+			respondPost(clientfd);
 		else if (this->_method == "DELETE")
 			respondDelete(clientfd);
 		else
@@ -112,31 +114,17 @@ void Response::respondGet(int clientfd, ServerInfo server)
     }
 	else
 	{
-		try
-		{
-			openFile(server);
-		}
-		catch(ResponseException &e)
-		{
-			this->_sanitizeStatus = e.responseCode();
-			sendErrorResponse(e.what(), clientfd, e.responseCode(), server);
-			return;
-		}
 		response = formatGetResponseMsg(0);
+		std::cout << "response: " << response << std::endl;
 		send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL);
-		const std::size_t chunkSize = 8192;
-		char buffer[chunkSize];
-		while (this->_file.read(buffer, chunkSize) || this->_file.gcount() > 0)
-			send(clientfd, buffer, this->_file.gcount(), MSG_NOSIGNAL);
-		return ;
+		send(clientfd, this->_responseBody.c_str(), this->_responseBody.length(), MSG_NOSIGNAL);
 	}
 }
 
-void	Response::respondPost(int clientfd, ServerInfo server)
+void	Response::respondPost(int clientfd)
 {
 	std::string response;
 
-	(void) server;
 	response = formatPostResponseMsg(1);
 	send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL);
 	std::cout << "Response to client: " << clientfd << std::endl;
@@ -174,12 +162,38 @@ std::string Response::formatPostResponseMsg (int close){
 
 }
 
+void Response::cgiResponse(int clientfd)
+{
+	std::string response;
+
+	if (this->_httpVersion.empty())
+		this->_httpVersion = "HTTP/1.1";
+	if (this->_responseBody.empty())
+	{
+		this->_sanitizeStatus = 204;
+		response = this->_httpVersion + " 204 No Content\r\n";
+	}
+		else
+		response = this->_httpVersion + " 200 OK\r\n";
+	response += "Content-Type: text/plain\r\n";
+	response += "Content-Length: " + std::to_string(this->_responseBody.length()) + "\r\n";
+	if (!this->_sessionId.empty())
+		response += formatSessionCookie();
+	response += "Connection: Keep-Alive\r\n";
+	response += "Keep-Alive: timeout=5, max=100\r\n\r\n"; //this->_server.get_timeout()
+	response += this->_responseBody;
+	send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL);
+	std::cout << "Response to client: " << clientfd << std::endl;
+	std::cout << response << std::endl;
+
+}
+
 void	Response::respondDelete(int clientfd)
 {
 	std::vector<std::string> supportedPaths = {
 		"./www/uploads/"
 		};
-	std::string fileToDelete = "./www" + this->_url;
+	std::string fileToDelete = this->_root + "/" + this->_url;
 	bool canBeDeleted = false;
 	for (const std::string &path : supportedPaths){
 		if (fileToDelete.rfind(path,0) == 0){
@@ -211,6 +225,7 @@ void Response::directorylisting(int clientfd, std::string file)
 	if (this->_type.empty())
 			this->_type = "text/html";
 	this->_fileSize = std::to_string(file.size());
+	this->_responseBody = file;
 	response = formatGetResponseMsg(0);
 	std::string responseWithoutFile = response;
 	send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL);
@@ -233,38 +248,6 @@ std::string Response::buildDirectorylist(std::string name, int rootsize)
 	return (directory);
 }
 
-void Response::openFile(ServerInfo server)
-{
-	this->_fsize = 0;
-		if (!server.getlocationinfo()[this->_url].index.empty())
-			this->_file.open(server.getlocationinfo()[this->_url].root + "/" + server.getlocationinfo()[this->_url].index);
-		else if (!this->_root.empty())
-			this->_file.open(this->_root + "/" + this->_url.substr(this->_origLoc.size() - 1, std::string::npos));
-		else
-			this->_file.open(server.getlocationinfo()["/"].root + "/" + this->_url);
-
-	if (this->_file.is_open() == false)
-	{
-		switch errno
-		{
-			case ENOTDIR:
-			case ENOENT:
-			case 21:
-					this->_sanitizeStatus = 404;
-					throw ResponseException404();
-			case EACCES:
-					this->_sanitizeStatus = 403;
-					throw ResponseException403();
-			default:
-					this->_sanitizeStatus = 500;
-					throw ResponseException();		}
-	}
-	this->_file.seekg(0, std::ios::end);
-	this->_fsize = this->_file.tellg();
-	this->_fileSize = std::to_string(this->_fsize);
-	this->_file.seekg(0, std::ios::beg);
-}
-
 std::string Response::formatGetResponseMsg(int close)
 {
 	std::string response;
@@ -280,7 +263,7 @@ std::string Response::formatGetResponseMsg(int close)
 		this->_type = "text/html";
 	response += "Content-Type: " + this->_type + "\r\n";
 
-	response += "Content-Length: " + this->_fileSize + "\r\n";
+	response += "Content-Length: " + std::to_string(this->_responseBody.length()) + "\r\n";
 	response += "Location: " + this->_redirectplace + "\r\n";
 	response += formatSessionCookie();
 	if (close == 0)
@@ -309,60 +292,8 @@ void Response::sendStandardErrorPage(int sanitizeStatus, int clientfd, ServerInf
 {
 	std::string response;
 	std::string file;
-
-	switch (sanitizeStatus)
-	{
-		case 400:
-			if (server.getErrorPages()[400].empty())
-				this->_file.open("./www/400.html");
-			else
-				this->_file.open(server.getErrorPages()[400]);
-			break ;
-		case 403:
-			if (server.getErrorPages()[403].empty())
-				this->_file.open("./www/403.html");
-			else
-				this->_file.open(server.getErrorPages()[403]);
-			break ;
-		case 405:
-			if (server.getErrorPages()[405].empty())
-				this->_file.open("./www/405.html");
-			else
-				this->_file.open(server.getErrorPages()[405]);
-			break ;
-		case 404:
-			if (server.getErrorPages()[404].empty())
-				this->_file.open("./www/404.html");
-			else
-				this->_file.open(server.getErrorPages()[404]);
-			break ;
-		case 501:
-			if (server.getErrorPages()[501].empty())
-				this->_file.open("./www/501.html");
-			else
-				this->_file.open(server.getErrorPages()[501]);
-			break ;
-		case 505:
-			if (server.getErrorPages()[505].empty())
-				this->_file.open("./www/505.html");
-			else
-				this->_file.open(server.getErrorPages()[505]);
-			break ;
-		case 415:
-			if (server.getErrorPages()[415].empty())
-				this->_file.open("./www/415.html");
-			else
-				this->_file.open(server.getErrorPages()[415]);
-			break ;
-		default:
-			if (server.getErrorPages()[500].empty())
-				this->_file.open("./www/500.html");
-			else
-				this->_file.open(server.getErrorPages()[500]);
-			break ;
-	}
-	for (std::string line; std::getline(this->_file, line);)
-		file += line;
+	(void) server;
+	(void) sanitizeStatus;
 
 	this->_fileSize = std::to_string(file.length());
 

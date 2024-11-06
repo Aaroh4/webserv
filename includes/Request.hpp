@@ -30,6 +30,9 @@ class Request
 		std::string getSessionId (void) const;
 		void 		setSessionId (std::string sessionId);
 		void		printRequest(int clientSocket);
+		void		openFile(ServerInfo server);
+		void		openErrorFile(ServerInfo server, int sanitizeStatus);
+		int			getFileFD();
 		int			getSanitizeStatus( void ) const;
 		void		setSanitizeStatus (int sanitizeStatus);
 
@@ -46,6 +49,7 @@ class Request
 		std::string _queryString;
 		std::string _errmsg;
 		std::string _sessionId;
+		int			_filefd;
 		std::unordered_map<std::string, std::string> _headers;
 
 	private:

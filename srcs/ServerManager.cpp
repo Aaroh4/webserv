@@ -85,11 +85,11 @@ void	ServerManager::addNewConnection(size_t& i)
 	}
 }
 
-void	ServerManager::addPipeFd(int pipeFd)
+void	ServerManager::addPollFd(int pipeFd)
 {
 	try
 	{
-		if (fcntl(pipeFd, F_SETFL, O_NONBLOCK | FD_CLOEXEC) == -1)
+ 		if (fcntl(pipeFd, F_SETFL, O_NONBLOCK | FD_CLOEXEC) == -1)
 			throw Response::ResponseException();
 
 		struct pollfd pipe_pollfd;
@@ -160,6 +160,7 @@ size_t	ServerManager::getRequestLength(std::string& request)
 	}
 	catch(const std::exception& e)
 	{
+		std::cerr << e.what() << " in getRequestLenght" << std::endl;
 		throw Response::ResponseException();
 	}
 	return totalLength;
@@ -207,7 +208,8 @@ void	ServerManager::sendResponse(size_t& i)
 {
 	int	clientSocket = this->_poll_fds[i].fd;
 	int	pipeFd = this->_clientInfos[clientSocket].pipeFd;
-	//std::cout << "SendResponse has responseStatus "<< this->_clientInfos[clientSocket].responseStatus << std::endl;
+	if (!pipeFd)
+		pipeFd = this->_clientInfos[clientSocket].req->getFileFD();
 
 	if (this->_clientInfos[clientSocket].responseStatus != 0)
 	{
@@ -219,14 +221,14 @@ void	ServerManager::sendResponse(size_t& i)
 	if (this->_clientInfos[clientSocket].req->getHost() == this->_info[this->_connections.at(clientSocket)].getServerName()
 		|| this->_info[this->_connections.at(clientSocket)].getServerName().empty())
 	{
-		if (this->_clientPipe.find(pipeFd) != this->_clientPipe.end() && this->_clientInfos[clientSocket].cgiResponseReady == false)
+		if (this->_clientPipe.find(pipeFd) != this->_clientPipe.end() && this->_clientInfos[clientSocket].ResponseReady == false)
 		{
 			return;
 		}
-		else if (this->_clientInfos[clientSocket].cgiResponseReady == true)
+		else if (this->_clientInfos[clientSocket].ResponseReady == true)
 		{
 			Response respond(*this->_clientInfos[clientSocket].req);
-			respond.setResponseBody(this->_clientInfos[clientSocket].cgiResponseBody);
+			respond.setResponseBody(this->_clientInfos[clientSocket].ResponseBody);
 			respond.respond(clientSocket, this->_info[this->_connections.at(clientSocket)]);
 			this->_clientInfos[clientSocket].req->setSanitizeStatus(respond.getSanitizeStatus());
 		}
@@ -245,6 +247,8 @@ void ServerManager::cleanPreviousRequestData(int clientSocket, size_t& i)
 	try
 	{
 		int pipeFd = this->_clientInfos[clientSocket].pipeFd;
+		if (!pipeFd)
+			pipeFd = this->_clientInfos[clientSocket].req->getFileFD();
 		if (pipeFd){
 			for (auto it = this->_poll_fds.begin(); it != this->_poll_fds.end();){
 				if (it->fd == pipeFd)
@@ -256,8 +260,8 @@ void ServerManager::cleanPreviousRequestData(int clientSocket, size_t& i)
 		this->_clientPipe.erase(pipeFd);
 		this->_clientInfos[clientSocket].request = "";
 		this->_clientInfos[clientSocket].requestReceived = false;
-		this->_clientInfos[clientSocket].cgiResponseReady = false;
-		this->_clientInfos[clientSocket].cgiResponseBody = "";
+		this->_clientInfos[clientSocket].ResponseReady = false;
+		this->_clientInfos[clientSocket].ResponseBody = "";
 		std::string connectionStatus = this->_clientInfos[clientSocket].req->getConnectionHeader();
 		if (connectionStatus == "close" || checkConnectionUptime(clientSocket) == true
 			|| this->_clientInfos[clientSocket].responseStatus != 0  || this->_clientInfos[clientSocket].req->getSanitizeStatus() != 200)
@@ -333,6 +337,12 @@ void	ServerManager::receiveRequest(size_t& i)
 		}
 	} catch (Response::ResponseException &e){
 		std::cerr << e.what() << " in receiveRequest"<< std::endl;
+		this->_clientInfos[clientSocket].req->openErrorFile(this->_info[this->_connections[clientSocket]], e.responseCode());
+		if (this->_clientInfos[clientSocket].req->getFileFD() != 0)
+		{
+			this->_clientPipe[this->_clientInfos[clientSocket].req->getFileFD()] = clientSocket;
+			addPollFd(this->_clientInfos[clientSocket].req->getFileFD());
+		}
 		this->_clientInfos[clientSocket].responseStatus = e.responseCode();
 		this->_clientInfos[clientSocket].requestReceived = true;
 		throw;
@@ -356,21 +366,38 @@ void	ServerManager::receiveRequest(size_t& i)
 				this->_clientInfos[clientSocket].latestRequest = std::time(nullptr);
 			std::cout << "request " << this->_clientInfos[clientSocket].request << std::endl;
 			if (checkForCgi(*this->_clientInfos[clientSocket].req, clientSocket) == 1)
-				addPipeFd(this->_clientInfos[clientSocket].pipeFd);
+			{
+				addPollFd(this->_clientInfos[clientSocket].pipeFd);
+				return;
+			}
+			this->_clientInfos[clientSocket].req->openFile(this->_info[this->_connections[clientSocket]]);
+			if (this->_clientInfos[clientSocket].req->getFileFD() != 0)
+			{
+				this->_clientPipe[this->_clientInfos[clientSocket].req->getFileFD()] = clientSocket;
+				addPollFd(this->_clientInfos[clientSocket].req->getFileFD());
+			}
 		} catch (Response::ResponseException &e){
 			std::cerr << e.what()<< " in receiveRequest" << std::endl;
 			this->_clientInfos[clientSocket].responseStatus = e.responseCode();
-			this->_clientInfos[clientSocket].requestReceived = true;
+			this->_clientInfos[clientSocket].req->openErrorFile(this->_info[this->_connections[clientSocket]], e.responseCode());
+			if (this->_clientInfos[clientSocket].req->getFileFD() != 0)
+			{
+			  this->_clientPipe[this->_clientInfos[clientSocket].req->getFileFD()] = clientSocket;
+			  addPollFd(this->_clientInfos[clientSocket].req->getFileFD());
+			}
 			throw;
 		} catch (std::exception &e){
+			if (this->_clientInfos[clientSocket].responseStatus == 200)
+				this->_clientInfos[clientSocket].responseStatus = 400;
+			this->_clientInfos[clientSocket].requestReceived = true;
 			throw;
 		}
 	}
 }
 
-void	ServerManager::readFromCgiFd(const int& fd)
+void	ServerManager::readFromFd(const int& fd)
 {
-	char buffer[1024];
+	char buffer[8192];
 	ssize_t nbytes;
 
 	nbytes = read(fd, buffer, sizeof(buffer));
@@ -380,19 +407,18 @@ void	ServerManager::readFromCgiFd(const int& fd)
 		this->_clientPipe.erase(fd);
 		throw std::runtime_error("read() failed");
 	}
-	else if (nbytes == 0 || nbytes < 1024)
+	else if (nbytes == 0 || nbytes < 8192)
 	{
 		int clientSocket = this->_clientPipe[fd];
-		this->_clientInfos[clientSocket].cgiResponseBody.append(buffer, nbytes);
-		std::cout << "response bodyyyy " << this->_clientInfos[clientSocket].cgiResponseBody << std::endl;
-		this->_clientInfos[clientSocket].cgiResponseReady = true;
+		this->_clientInfos[clientSocket].ResponseBody.append(buffer, nbytes);
+		this->_clientInfos[clientSocket].ResponseReady = true;
 		close(fd);
 		this->_clientPipe.erase(fd);
 	}
 	else
 	{
 		int clientSocket = this->_clientPipe[fd];
-		this->_clientInfos[clientSocket].cgiResponseBody.append(buffer, nbytes);
+		this->_clientInfos[clientSocket].ResponseBody.append(buffer, nbytes);
 	}
 }
 
@@ -433,6 +459,7 @@ int	ServerManager::checkForCgi(Request& req, int& clientSocket)
 		}
 		catch (std::exception& e)
 		{
+			std::cerr << e.what() << " in checkForCgi" << std::endl;
 			throw Response::ResponseException();
 		}
 	}
@@ -472,7 +499,7 @@ void	ServerManager::runServers()
 						addNewConnection(i);
 					else if (isPipeFd(this->_poll_fds[i].fd))
 					{
-						readFromCgiFd(this->_poll_fds[i].fd);
+						readFromFd(this->_poll_fds[i].fd);
 						pipeFd = true;
 					}
 					else

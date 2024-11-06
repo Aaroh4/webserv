@@ -1,13 +1,16 @@
 #include "../includes/Request.hpp"
 #include <climits>
 #include "../includes/Response.hpp"
+#include <fcntl.h>
 
 Request::Request(void) : _sanitizeStatus(200)
 {
+	this->_filefd =  0;
 }
 
 Request::Request(std::string request, int bodyLimit) :  _sanitizeStatus(200), _request(request), _bodyLimit(bodyLimit)
 {
+	this->_filefd =  0;
 	return;
 }
 
@@ -31,6 +34,7 @@ Request::Request(Request const& src)
 	this->_origLoc = src._origLoc;
 	this->_sessionId = src._sessionId;
 	this->_bodyLimit = src._bodyLimit;
+	this->_filefd = src._filefd;
 }
 
 Request& Request::operator=(Request const& src)
@@ -50,6 +54,7 @@ Request& Request::operator=(Request const& src)
 		this->_origLoc = src._origLoc;
 		this->_sessionId = src._sessionId;
 		this->_bodyLimit = src._bodyLimit;
+		this->_filefd = src._filefd;
 		for (const auto& map_content : src._headers)
 		{
 			this->_headers[map_content.first] = map_content.second;
@@ -142,6 +147,7 @@ void	Request::_verifyPath(void)
 	std::filesystem::path file = this->_root + "/" + this->_url.substr(this->_origLoc.size(), std::string::npos);
 	if (!std::filesystem::exists(file))
 	{
+		this->_sanitizeStatus = 404;
 		throw Response::ResponseException404();
 	}
 	else if (!std::filesystem::is_regular_file(file))
@@ -165,7 +171,7 @@ void	Request::_getContentType(void)
 	if (i != std::string::npos)
 	{
 		std::string type = this->_url.substr(i + 1, this->_url.length());
-		if (type == "css" || type == "js" || type == "html")
+		if (type == "css" || type == "js" || type == "html" || type == "txt")
 			this->_type = "text/" + type;
 		else if (type == "jpg" || type == "png" || type == "jpeg" || type == "gif")
 			this->_type = "image/" + type;
@@ -333,6 +339,7 @@ void	Request::parse(void)
 	}
 	catch(Response::ResponseException& e)
 	{
+		std::cerr << e.what() << " in Parse" << std::endl;
 		throw;
 	}
 }
@@ -382,7 +389,6 @@ void	Request::sanitize(ServerInfo server)
 		}
 		if (this->_url.find("..") != std::string::npos )
 		{
-
 			this->_sanitizeStatus = 403;
 			throw Response::ResponseException403();
 		}
@@ -410,6 +416,115 @@ void	Request::sanitize(ServerInfo server)
 			std::cerr << e.what() << " in sanitize"<< std::endl;
 			throw ;
 		}
+}
+
+void Request::openFile(ServerInfo server)
+{
+	try{
+		if (!(!server.getlocationinfo()[this->_origLoc].redirection.empty() || !server.getlocationinfo()[this->_url].redirection.empty())
+		&& !(server.getlocationinfo()[this->_origLoc].dirList != false && server.getlocationinfo()[this->_origLoc].index.empty()
+			&& std::filesystem::is_directory(this->_root + "/" + this->_url.substr(this->_origLoc.size(), std::string::npos))))
+		{
+
+			if (!server.getlocationinfo()[this->_url].index.empty())
+				this->_filefd = open((server.getlocationinfo()[this->_url].root + "/" + server.getlocationinfo()[this->_url].index).c_str(), O_RDONLY);
+			else if (!this->_root.empty())
+			{
+				// std::cout << "ELSE IF " << (this->_root + "/" + this->_url.substr(this->_origLoc.size() - 1, std::string::npos)).c_str() << std::endl;
+				this->_filefd = open((this->_root + "/" + this->_url.substr(this->_origLoc.size() - 1, std::string::npos)).c_str(), O_RDONLY);
+			}
+			else
+			{
+				// std::cout << "ELSE " << (server.getlocationinfo()["/"].root + "/" + this->_url).c_str() << std::endl;
+				this->_filefd = open((server.getlocationinfo()["/"].root + "/" + this->_url).c_str(), O_RDONLY);
+
+			}
+
+			if (this->_filefd < 0)
+			{
+				switch errno
+				{
+					case ENOTDIR:
+					case ENOENT:
+					case 21:
+							this->_sanitizeStatus = 404;
+							throw Response::ResponseException404();
+					case EACCES:
+							this->_sanitizeStatus = 403;
+							throw Response::ResponseException403();
+					default:
+							this->_sanitizeStatus = 500;
+							throw Response::ResponseException();
+				}
+			}
+	}
+	}catch (Response::ResponseException &e)
+	{
+		std::cerr << e.what() << " ResponseExeption in OpenFile" << std::endl;
+		throw ;
+	}
+	catch (std::exception &e)
+	{
+		std::cerr << e.what() << " exception in OpenFile" << std::endl;
+		throw Response::ResponseException404();
+	}
+}
+
+void Request::openErrorFile(ServerInfo server, int sanitizeStatus)
+{
+	if (this->_filefd != 0)
+		close (this->_filefd);
+	switch (sanitizeStatus)
+	{
+		case 400:
+			if (server.getErrorPages()[400].empty())
+				this->_filefd = open("./www/400.html", O_RDONLY);
+			else
+				this->_filefd = open(server.getErrorPages()[400].c_str(), O_RDONLY);
+			break ;
+		case 403:
+			if (server.getErrorPages()[403].empty())
+				this->_filefd = open("./www/403.html", O_RDONLY);
+			else
+				this->_filefd = open(server.getErrorPages()[403].c_str(), O_RDONLY);
+			break ;
+		case 405:
+			if (server.getErrorPages()[405].empty())
+				this->_filefd = open("./www/405.html", O_RDONLY);
+			else
+				this->_filefd = open(server.getErrorPages()[405].c_str(), O_RDONLY);
+			break ;
+		case 404:
+			if (server.getErrorPages()[404].empty())
+				this->_filefd = open("./www/404.html", O_RDONLY);
+			else
+				this->_filefd = open(server.getErrorPages()[404].c_str(), O_RDONLY);
+			break ;
+		case 501:
+			if (server.getErrorPages()[501].empty())
+				this->_filefd = open("./www/501.html", O_RDONLY);
+			else
+				this->_filefd = open(server.getErrorPages()[501].c_str(), O_RDONLY);
+			break ;
+		case 505:
+			if (server.getErrorPages()[505].empty())
+				this->_filefd = open("./www/505.html", O_RDONLY);
+			else
+				this->_filefd = open(server.getErrorPages()[505].c_str(), O_RDONLY);
+			break ;
+		case 415:
+			if (server.getErrorPages()[415].empty())
+				this->_filefd = open("./www/415.html", O_RDONLY);
+			else
+				this->_filefd = open(server.getErrorPages()[415].c_str(), O_RDONLY);
+			break ;
+		default:
+			if (server.getErrorPages()[500].empty())
+				this->_filefd = open("./www/500.html", O_RDONLY);
+			else
+				this->_filefd = open(server.getErrorPages()[500].c_str(), O_RDONLY);
+			break ;
+	}
 }
 
 std::string	Request::getHost(void)
@@ -490,4 +605,9 @@ void Request::printRequest(int clientSocket)
 	std::cout << "Type: "<< this-> _type << std::endl;
 	std::cout << "Session ID: " << this->_sessionId << std::endl;
 	std::cout << "*******" << std::endl;
+}
+
+int	Request::getFileFD()
+{
+	return (this->_filefd);
 }
