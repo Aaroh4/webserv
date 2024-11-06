@@ -344,6 +344,13 @@ void	Request::parse(void)
 	}
 }
 
+bool	Request::_checkAllowedMethods(ServerInfo server) const
+{
+	if (server.getlocationinfo()[this->_origLoc].methods.find(this->_method) == server.getlocationinfo()["this->_origloc"].methods.end())
+		return false;
+	return true;
+}
+
 void	Request::sanitize(ServerInfo server)
 {
 	std::string temp;
@@ -368,7 +375,8 @@ void	Request::sanitize(ServerInfo server)
 			this->_origLoc = "/";
 			temp = "/";
 		}
-
+		if (this->_checkAllowedMethods(server) == false)
+			throw Response::ResponseException400();
 		if (this->_type == "cgi/py" || this->_type == "cgi/php")
 			this->_verifyPath();
 
@@ -578,6 +586,14 @@ std::string	Request::getSessionId(void) const
 
 void Request::setSessionId (std::string sessionId){
 	this->_sessionId = sessionId;
+}
+
+int Request::getSanitizeStatus(void) const{
+	return this->_sanitizeStatus;
+}
+
+void Request::setSanitizeStatus (int sanitizeStatus){
+	this->_sanitizeStatus = sanitizeStatus;
 }
 
 void Request::printRequest(int clientSocket)

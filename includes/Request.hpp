@@ -33,6 +33,9 @@ class Request
 		void		openFile(ServerInfo server);
 		void		openErrorFile(ServerInfo server, int sanitizeStatus);
 		int			getFileFD();
+		int			getSanitizeStatus( void ) const;
+		void		setSanitizeStatus (int sanitizeStatus);
+
 	protected:
 		int	_sanitizeStatus;
 		std::string	_root;
@@ -50,6 +53,7 @@ class Request
 		std::unordered_map<std::string, std::string> _headers;
 
 	private:
+		bool		_checkAllowedMethods(ServerInfo server) const;
 		void		_parseRequestLine(void);
 		void 		_parseHeaders(void);
 		void		_getContentType(void);
