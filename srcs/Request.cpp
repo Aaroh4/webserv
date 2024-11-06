@@ -477,10 +477,10 @@ void Request::openErrorFile(ServerInfo server, int sanitizeStatus)
 	switch (sanitizeStatus)
 	{
 		case 400:
-			if (server.getErrorPages()[400].empty())
-				this->_filefd = open("./www/400.html", O_RDONLY);
-			else
+			if (!server.getErrorPages()[400].empty())
 				this->_filefd = open(server.getErrorPages()[400].c_str(), O_RDONLY);
+			else
+				this->_filefd = open("./www/403.html", O_RDONLY);
 			break ;
 		case 403:
 			if (server.getErrorPages()[403].empty())
