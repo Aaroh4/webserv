@@ -19,8 +19,6 @@ class Response: public Request
 			Response operator=(const Response &);
 
 			std::string 	formatGetResponseMsg(int code);
-			void			sendErrorResponse(std::string errorMessage, int clientfd, int errorCode, ServerInfo);
-			void			sendCustomErrorPage(int clientfd);
       		std::string		buildDirectorylist(std::string name, int rootsize);
 			void			directorylisting(int clientfd, std::string file);
 			void			respond(int clientfd, ServerInfo server);
@@ -28,7 +26,6 @@ class Response: public Request
 			void			respondPost(int clientfd);
 			void			respondDelete(int clientfd);
 			void			handleCRUD(int clientfd, ServerInfo server);
-			void 			sendStandardErrorPage(int sanitizeStatus, int clientfd, ServerInfo server);
 			void			setResponseBody(std::string body);
 			std::string		formatPostResponseMsg(int close);
 			std::string 	formatSessionCookie( void );
