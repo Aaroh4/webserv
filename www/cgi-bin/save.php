@@ -19,11 +19,10 @@ if ($file = fopen($file_path, "a"))
 	fwrite($file, $name);
 	fwrite($file, "\n");
 	fclose($file);
-<<<<<<< HEAD
-    
+
 	$response = "<!DOCTYPE html>\n<html>\n<body>\n<p>Added $name!</p>\n</body>\n</html>";
 	$contentLength = strlen($response);
-	
+
 	echo "HTTP/1.1 200 OK\n";
 	echo "Content-Type: text/html\n";
 	echo "Content-Length: $contentLength\n";
@@ -31,12 +30,7 @@ if ($file = fopen($file_path, "a"))
 	echo "Keep-Alive: timeout=5, max=100\n\n";
 	echo $response;
 }
-else 
-=======
-    echo $name . " written to file.";
-}
 else
->>>>>>> e5c397fc114da06926cf58d759dce0ccd1887df2
 {
 	echo "Failed to open file for writing.";
 }
