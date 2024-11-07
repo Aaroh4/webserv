@@ -211,7 +211,7 @@ void	ServerManager::sendResponse(size_t& i)
 
 	if (this->_clientInfos[clientSocket].responseStatus != 0 && this->_clientInfos[clientSocket].ResponseReady == true)
 	{
-		Response::sendErrorPage(this->_clientInfos[clientSocket].responseStatus, clientSocket);
+		Response::sendErrorPage(this->_clientInfos[clientSocket].responseStatus, clientSocket,this->_clientInfos[clientSocket].ResponseBody);
 		cleanRequestData(clientSocket, i);
 		return ;
 	}
