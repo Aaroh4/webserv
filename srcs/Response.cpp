@@ -172,23 +172,28 @@ void Response::cgiResponse(int clientfd)
 
 	if (this->_httpVersion.empty())
 		this->_httpVersion = "HTTP/1.1";
-	if (this->_responseBody.empty())
+	if (this->_responseBody.empty() || this->_method == "POST")
 	{
 		this->_sanitizeStatus = 204;
 		response = this->_httpVersion + " 204 No Content\r\n";
 	}
 		else
 		response = this->_httpVersion + " 200 OK\r\n";
-	response += "Content-Type: text/plain\r\n";
-	response += "Content-Length: " + std::to_string(this->_responseBody.length()) + "\r\n";
+	if (this->_sanitizeStatus == 200)
+	{
+		response += "Content-Type: text/plain\r\n";
+		response += "Content-Length: " + std::to_string(this->_responseBody.length()) + "\r\n";
+	}
 	if (!this->_sessionId.empty())
 		response += formatSessionCookie();
 	response += "Connection: Keep-Alive\r\n";
 	response += "Keep-Alive: timeout=5, max=100\r\n\r\n"; //this->_server.get_timeout()
-	response += this->_responseBody;
+	if (this->_sanitizeStatus == 200)
+		response += this->_responseBody;
 	send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL);
 	std::cout << "Response to client: " << clientfd << std::endl;
 	std::cout << response << std::endl;
+	std::cout << "responseBody is " << this->_body << std::endl;
 
 }
 
