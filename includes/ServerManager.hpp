@@ -23,6 +23,7 @@ typedef struct s_clientInfo
 	bool		requestReceived;
 	bool		ResponseReady;
 	int			responseStatus;
+	size_t		requestLength;
 	std::time_t	latestRequest;
 }	t_clientInfo;
 

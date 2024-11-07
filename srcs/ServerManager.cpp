@@ -260,6 +260,7 @@ void ServerManager::cleanRequestData(int clientSocket, size_t& i)
 		this->_clientInfos[clientSocket].requestReceived = false;
 		this->_clientInfos[clientSocket].ResponseReady = false;
 		this->_clientInfos[clientSocket].ResponseBody = "";
+		this->_clientInfos[clientSocket].requestLength = 0;
 		std::string connectionStatus = this->_clientInfos[clientSocket].req->getConnectionHeader();
 		if (connectionStatus == "close" || checkConnectionUptime(clientSocket) == true
 			|| this->_clientInfos[clientSocket].responseStatus != 0  || this->_clientInfos[clientSocket].req->getSanitizeStatus() != 200)
@@ -362,8 +363,7 @@ void	ServerManager::receiveRequest(size_t& i)
 	char		buffer[1024] = {0};
 	int 		clientSocket = this->_poll_fds[i].fd;
 	int 		bytesReceived = 0;
-	size_t		totalLength = 0;
-
+	size_t		totalLength = this->_clientInfos[clientSocket].requestLength;
 	// Receive data until complete request is received
 	if (this->_clientInfos[clientSocket].requestReceived == true)
 		return;
@@ -376,7 +376,10 @@ void	ServerManager::receiveRequest(size_t& i)
 			{
 				this->_clientInfos[clientSocket].request.append(buffer, bytesReceived);
 				if (totalLength == 0)
-					totalLength = getRequestLength(this->_clientInfos[clientSocket].request);
+				{
+					this->_clientInfos[clientSocket].requestLength = getRequestLength(this->_clientInfos[clientSocket].request);
+					totalLength = this->_clientInfos[clientSocket].requestLength;
+				}
 				if ((bytesReceived < 1024 && totalLength == 0)
 					|| (bytesReceived < 1024 && this->_clientInfos[clientSocket].request.length() < totalLength))
 				{
