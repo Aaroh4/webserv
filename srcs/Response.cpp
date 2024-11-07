@@ -44,7 +44,7 @@ void Response::handleCRUD(int clientfd, ServerInfo server)
 	} catch (ResponseException &e){
 		std::cerr << e.what() << " in handleCRUD" << std::endl;
 		this->_sanitizeStatus = e.responseCode();
-		sendErrorResponse(e.what(), clientfd, e.responseCode(), server);
+		sendErrorPage(e.responseCode(), clientfd, "");
 	}
 }
 
@@ -71,7 +71,7 @@ void	Response::respond(int clientfd, ServerInfo server)
 	} catch(ResponseException& e) {
 		std::cerr << e.what() << " in respond" << std::endl;
 		this->_sanitizeStatus = e.responseCode();
-		sendErrorResponse(e.what(), clientfd, e.responseCode(), server);
+		sendErrorPage(e.responseCode(), clientfd, "");
 		return ;
 	}
 	try{
@@ -79,7 +79,7 @@ void	Response::respond(int clientfd, ServerInfo server)
 	} catch(ResponseException& e){
 		std::cerr << e.what() << " in respond" << std::endl;
 		this->_sanitizeStatus = e.responseCode();
-		sendErrorResponse(e.what(), clientfd, e.responseCode(), server);
+		sendErrorPage(e.responseCode(), clientfd, "");
 		return ;
 	}
 }
@@ -224,6 +224,8 @@ void Response::directorylisting(int clientfd, std::string file)
 	std::string responseWithoutFile = response;
 	send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL);
 	send(clientfd, file.c_str(), file.length(), MSG_NOSIGNAL);
+	std::cout << "Response to client: " << clientfd << std::endl;
+	std::cout << responseWithoutFile << std::endl;
 }
 
 std::string Response::buildDirectorylist(std::string name, int rootsize)
@@ -282,25 +284,6 @@ std::string Response::formatGetResponseMsg(int close)
 	return (response);
 }
 
-void Response::sendStandardErrorPage(int sanitizeStatus, int clientfd, ServerInfo server)
-{
-	std::string response;
-	std::string file;
-	(void) server;
-	(void) sanitizeStatus;
-
-	this->_fileSize = std::to_string(file.length());
-
-	response = formatGetResponseMsg(1);
-	std::string responseWithoutFile = response;
-	if (this->_method == "GET")
-		response += file;
-	send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL);
-	std::cout << "Response to client: " << clientfd << std::endl;
-	std::cout << responseWithoutFile << std::endl;
-
-}
-
 std::string	makeErrorContent(int statusCode, std::string message)
 {
 	std::string content = "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<title>";
@@ -309,41 +292,6 @@ std::string	makeErrorContent(int statusCode, std::string message)
 	content += "h1 {color: blue; font-style: italic; text-align: center;}\n</style>\n</head>\n<body>\n<h1>";
 	content += std::to_string(statusCode) + " " + message + "</h1>\n</body>\n</html>\n";
 	return content;
-}
-
-void Response::sendCustomErrorPage(int clientfd)
-{
-	std::string response;
-
-	this->_body = makeErrorContent(this->_sanitizeStatus, this->_errorMessage);
-	this->_fileSize = std::to_string(this->_body.length());
-
-	response = formatGetResponseMsg(0);
-	response += this->_body;
-
-	send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL);
-	std::cout << "Response to client: " << clientfd << std::endl;
-	std::cout << response << std::endl;
-}
-
-void Response::sendErrorResponse(std::string errorMessage, int clientfd, int errorCode, ServerInfo server)
-{
-	this->_errorMessage = errorMessage;
-	this->_sanitizeStatus = errorCode;
-	if (this->_sanitizeStatus == 400 ||
-		this->_sanitizeStatus == 405 ||
-		this->_sanitizeStatus == 403 ||
-		this->_sanitizeStatus == 500 ||
-		this->_sanitizeStatus == 404 ||
-		this->_sanitizeStatus == 505 ||
-		this->_sanitizeStatus == 501 ||
-		this->_sanitizeStatus == 415)
-	{
-		sendStandardErrorPage(this->_sanitizeStatus, clientfd, server);
-		return ;
-	}
-	else
-		sendCustomErrorPage(clientfd);
 }
 
 void	Response::setResponseBody(std::string body)
