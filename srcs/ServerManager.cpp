@@ -400,6 +400,11 @@ void	ServerManager::receiveRequest(size_t& i)
 			else if (bytesReceived == -1)
 				return ;
 		}
+		if (this->_clientInfos[clientSocket].request.length() > totalLength)
+		{
+			this->_clientInfos[clientSocket].failedToReceiveRequest = true;
+			throw Response::ResponseException400();
+		}
 	} catch (Response::ResponseException &e){
 		std::cerr << e.what() << " in first part of receiveRequest"<< std::endl;
 		this->_clientInfos[clientSocket].responseStatus = e.responseCode();
