@@ -377,7 +377,6 @@ void	Request::sanitize(ServerInfo server)
 		}
 		if (this->_checkAllowedMethods(server) == false)
 			throw Response::ResponseException400();
-
 		if (this->_type == "cgi/py" || this->_type == "cgi/php")
 			this->_verifyPath();
 
@@ -430,16 +429,9 @@ void Request::openFile(ServerInfo server)
 			if (!server.getlocationinfo()[this->_url].index.empty())
 				this->_filefd = open((server.getlocationinfo()[this->_url].root + "/" + server.getlocationinfo()[this->_url].index).c_str(), O_RDONLY);
 			else if (!this->_root.empty())
-			{
-				// std::cout << "ELSE IF " << (this->_root + "/" + this->_url.substr(this->_origLoc.size() - 1, std::string::npos)).c_str() << std::endl;
 				this->_filefd = open((this->_root + "/" + this->_url.substr(this->_origLoc.size() - 1, std::string::npos)).c_str(), O_RDONLY);
-			}
 			else
-			{
-				// std::cout << "ELSE " << (server.getlocationinfo()["/"].root + "/" + this->_url).c_str() << std::endl;
 				this->_filefd = open((server.getlocationinfo()["/"].root + "/" + this->_url).c_str(), O_RDONLY);
-
-			}
 
 			if (this->_filefd < 0)
 			{
@@ -478,10 +470,10 @@ void Request::openErrorFile(ServerInfo server, int sanitizeStatus)
 	switch (sanitizeStatus)
 	{
 		case 400:
-			if (server.getErrorPages()[400].empty())
-				this->_filefd = open("./www/400.html", O_RDONLY);
-			else
+			if (!server.getErrorPages()[400].empty())
 				this->_filefd = open(server.getErrorPages()[400].c_str(), O_RDONLY);
+			else
+				this->_filefd = open("./www/403.html", O_RDONLY);
 			break ;
 		case 403:
 			if (server.getErrorPages()[403].empty())
@@ -587,6 +579,14 @@ std::string	Request::getSessionId(void) const
 
 void Request::setSessionId (std::string sessionId){
 	this->_sessionId = sessionId;
+}
+
+int Request::getSanitizeStatus(void) const{
+	return this->_sanitizeStatus;
+}
+
+void Request::setSanitizeStatus (int sanitizeStatus){
+	this->_sanitizeStatus = sanitizeStatus;
 }
 
 void Request::printRequest(int clientSocket)

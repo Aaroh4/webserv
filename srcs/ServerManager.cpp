@@ -49,14 +49,12 @@ ServerManager::~ServerManager()
 	}
 }
 
-
-
 void	ServerManager::addNewConnection(size_t& i)
 {
 	int clientSocket;
 	try
 	{
-		std::cout << "add new connections...\n";
+		//std::cout << "add new connections...\n";
 		clientSocket = accept(this->_poll_fds[i].fd, nullptr, nullptr);
 		if (clientSocket < 0)
 			throw Response::ResponseException();
@@ -211,7 +209,7 @@ void	ServerManager::sendResponse(size_t& i)
 	if (!pipeFd)
 		pipeFd = this->_clientInfos[clientSocket].req->getFileFD();
 
-	if (this->_clientInfos[clientSocket].responseStatus != 0)
+	if (this->_clientInfos[clientSocket].responseStatus != 0 && this->_clientInfos[clientSocket].ResponseReady == true)
 	{
 		Response::sendErrorPage(this->_clientInfos[clientSocket].responseStatus, clientSocket);
 		cleanRequestData(clientSocket, i);
@@ -230,11 +228,13 @@ void	ServerManager::sendResponse(size_t& i)
 			Response respond(*this->_clientInfos[clientSocket].req);
 			respond.setResponseBody(this->_clientInfos[clientSocket].ResponseBody);
 			respond.respond(clientSocket, this->_info[this->_connections.at(clientSocket)]);
+			this->_clientInfos[clientSocket].req->setSanitizeStatus(respond.getSanitizeStatus());
 		}
 		else
 		{
 			Response respond(*this->_clientInfos[clientSocket].req);
 			respond.respond(clientSocket, this->_info[this->_connections.at(clientSocket)]);
+			this->_clientInfos[clientSocket].req->setSanitizeStatus(respond.getSanitizeStatus());
 		}
 		cleanRequestData(clientSocket, i);
 	}
@@ -262,7 +262,7 @@ void ServerManager::cleanRequestData(int clientSocket, size_t& i)
 		this->_clientInfos[clientSocket].ResponseBody = "";
 		std::string connectionStatus = this->_clientInfos[clientSocket].req->getConnectionHeader();
 		if (connectionStatus == "close" || checkConnectionUptime(clientSocket) == true
-			|| this->_clientInfos[clientSocket].responseStatus != 0)
+			|| this->_clientInfos[clientSocket].responseStatus != 0  || this->_clientInfos[clientSocket].req->getSanitizeStatus() != 200)
 			closeConnection(clientSocket, i);
 	} catch(const std::exception& e) {
 		std::cout << e.what() <<" in request cleanup" << std::endl;
@@ -281,8 +281,7 @@ void	ServerManager::closeConnection(int& clientSocket, size_t& i)
 		this->_clientInfos[clientSocket].req = nullptr;
 	}
 	this->_clientInfos.erase(clientSocket);
-	std::cout << "removeConnection: ClientSocket " << clientSocket << " closed\n\n" << std::endl;
-	std::cout << "Client disconnected" << "\n";
+	std::cout << "ClientSocket " << clientSocket << " disconnected\n\n" << std::endl;
 }
 
 bool	ServerManager::checkConnectionUptime(int& clientSocket)
@@ -392,7 +391,7 @@ void	ServerManager::receiveRequest(size_t& i)
 				return ;
 		}
 	} catch (Response::ResponseException &e){
-		std::cerr << e.what() << " in receiveRequest"<< std::endl;
+		std::cerr << e.what() << " in first part of receiveRequest"<< std::endl;
 		this->_clientInfos[clientSocket].req->openErrorFile(this->_info[this->_connections[clientSocket]], e.responseCode());
 		handleFd(clientSocket);
 		this->_clientInfos[clientSocket].responseStatus = e.responseCode();

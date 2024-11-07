@@ -33,6 +33,9 @@ class Request
 		void		openFile(ServerInfo server);
 		void		openErrorFile(ServerInfo server, int sanitizeStatus);
 		int			getFileFD();
+		int			getSanitizeStatus( void ) const;
+		void		setSanitizeStatus (int sanitizeStatus);
+
 	protected:
 		int	_sanitizeStatus;
 		std::string	_root;

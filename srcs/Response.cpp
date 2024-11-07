@@ -43,6 +43,7 @@ void Response::handleCRUD(int clientfd, ServerInfo server)
 			throw ResponseException405();
 	} catch (ResponseException &e){
 		std::cerr << e.what() << " in handleCRUD" << std::endl;
+		this->_sanitizeStatus = e.responseCode();
 		sendErrorResponse(e.what(), clientfd, e.responseCode(), server);
 	}
 }
@@ -50,7 +51,6 @@ void Response::handleCRUD(int clientfd, ServerInfo server)
 void	Response::respond(int clientfd, ServerInfo server)
 {
 	this->_server = server;
-	//std::cout << this->_sanitizeStatus<< " sanitize status in respond" << std::endl;
 	try{
 		switch (this->_sanitizeStatus){
 			case 404:
@@ -70,6 +70,7 @@ void	Response::respond(int clientfd, ServerInfo server)
 		}
 	} catch(ResponseException& e) {
 		std::cerr << e.what() << " in respond" << std::endl;
+		this->_sanitizeStatus = e.responseCode();
 		sendErrorResponse(e.what(), clientfd, e.responseCode(), server);
 		return ;
 	}
@@ -77,6 +78,7 @@ void	Response::respond(int clientfd, ServerInfo server)
 		handleCRUD(clientfd, server);
 	} catch(ResponseException& e){
 		std::cerr << e.what() << " in respond" << std::endl;
+		this->_sanitizeStatus = e.responseCode();
 		sendErrorResponse(e.what(), clientfd, e.responseCode(), server);
 		return ;
 	}
@@ -420,7 +422,7 @@ int Response::ResponseException415::responseCode () const{
 }
 
 
-void Response::sendErrorPage(int statusCode, int clientfd)
+void Response::sendErrorPage(int statusCode, int clientfd, std::string body)
 {
 	std::string response;
 	std::string fileSize;
@@ -452,11 +454,14 @@ void Response::sendErrorPage(int statusCode, int clientfd)
 		default:
 			message = "Internal Server Error";
 	}
-	std::string body = "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<title>";
-	body += std::to_string(statusCode) + " " + message + "</title>\n<style>\n";
-	body += "body {background-color: powderblue;}\n";
-	body += "h1 {color: blue; font-style: italic; text-align: center;}\n</style>\n</head>\n<body>\n<h1>";
-	body += std::to_string(statusCode) + " " + message + "</h1>\n</body>\n</html>\n";
+	if (body.empty())
+	{
+		body = "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<title>";
+		body += std::to_string(statusCode) + " " + message + "</title>\n<style>\n";
+		body += "body {background-color: powderblue;}\n";
+		body += "h1 {color: blue; font-style: italic; text-align: center;}\n</style>\n</head>\n<body>\n<h1>";
+		body += std::to_string(statusCode) + " " + message + "</h1>\n</body>\n</html>\n";
+	}
 
 	fileSize = std::to_string(body.length());
 
