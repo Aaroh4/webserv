@@ -191,9 +191,9 @@ void Response::cgiResponse(int clientfd)
 void	Response::respondDelete(int clientfd)
 {
 	std::vector<std::string> supportedPaths = {
-		"./www/uploads/"
+		this->_root + "/uploads"
 		};
-	std::string fileToDelete = this->_root + "/" + this->_url;
+	std::string fileToDelete = this->_root + this->_url;
 	bool canBeDeleted = false;
 	for (const std::string &path : supportedPaths){
 		if (fileToDelete.rfind(path,0) == 0){
