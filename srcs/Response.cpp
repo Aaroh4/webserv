@@ -125,7 +125,7 @@ void	Response::respondPost(int clientfd)
 {
 	std::string response;
 
-	response = formatPostResponseMsg(1);
+	response = formatPostResponseMsg(0);
 	send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL);
 	std::cout << "Response to client: " << clientfd << std::endl;
 	std::cout << response << std::endl;
@@ -137,16 +137,23 @@ std::string Response::formatPostResponseMsg (int close){
 
 	if (this->_httpVersion.empty())
 		this->_httpVersion = "HTTP/1.1";
-	if (this->_responseBody.empty())
+	if (this->_body.empty())
 	{
 		this->_sanitizeStatus = 204;
 		response = this->_httpVersion + " 204 No Content\r\n";
 	}
 	else
+	{
+		setResponseBody(this->_body);
 		response = this->_httpVersion + " 200 OK\r\n";
-	this->_type = "text/html";
+	}
+	if (this->_type.empty())
+		this->_type = "text/plain";
 	if (this->_sanitizeStatus == 200)
+	{
 		response += "Content-Type: " + this->_type + "\r\n";
+		response += "Content-Length: " + std::to_string(this->_responseBody.length()) + "\r\n";
+	}
 	if (!this->_sessionId.empty())
 		response += formatSessionCookie();
 	if (close == 0)
@@ -154,12 +161,9 @@ std::string Response::formatPostResponseMsg (int close){
 		response += "Connection: Keep-Alive\r\n";
 		response += "Keep-Alive: timeout=5, max=100\r\n\r\n"; //this->_server.get_timeout()
 	}
-	else
-		response += "Connection: close\r\n\r\n";
-	if (!this->_responseBody.empty())
+	if (this->_sanitizeStatus == 200)
 		response += this->_responseBody;
 	return (response);
-
 }
 
 void Response::cgiResponse(int clientfd)
