@@ -13,5 +13,5 @@ name = form.getvalue('input', '')
 
 with open(file_path, 'a') as file:
     file.write(f"{name}\n")
-
-print(f"Added {name}")
+print(f"Content-Length: {len(name)}\n")
+print(f"{name}")
