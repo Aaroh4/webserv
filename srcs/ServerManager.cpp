@@ -214,7 +214,7 @@ void	ServerManager::sendResponse(size_t& i)
 	if (this->_clientInfos[clientSocket].responseStatus != 0)
 	{
 		Response::sendErrorPage(this->_clientInfos[clientSocket].responseStatus, clientSocket);
-		cleanPreviousRequestData(clientSocket, i);
+		cleanRequestData(clientSocket, i);
 		return ;
 	}
 
@@ -236,11 +236,11 @@ void	ServerManager::sendResponse(size_t& i)
 			Response respond(*this->_clientInfos[clientSocket].req);
 			respond.respond(clientSocket, this->_info[this->_connections.at(clientSocket)]);
 		}
-		cleanPreviousRequestData(clientSocket, i);
+		cleanRequestData(clientSocket, i);
 	}
 }
 
-void ServerManager::cleanPreviousRequestData(int clientSocket, size_t& i)
+void ServerManager::cleanRequestData(int clientSocket, size_t& i)
 {
 	try
 	{
@@ -301,6 +301,63 @@ bool	ServerManager::checkConnectionUptime(int& clientSocket)
 	return false;
 }
 
+bool	ServerManager::requestReceived(size_t& totalLength, int& clientSocket)
+{
+	if (totalLength != 0 && totalLength == this->_clientInfos[clientSocket].request.length())
+	{
+		this->_clientInfos[clientSocket].requestReceived = true;
+		return true;
+	}
+	return false;
+}
+
+void	ServerManager::handleFd(int& clientSocket)
+{
+	if (this->_clientInfos[clientSocket].req->getFileFD() > 0)
+	{
+		this->_clientPipe[this->_clientInfos[clientSocket].req->getFileFD()] = clientSocket;
+		addPollFd(this->_clientInfos[clientSocket].req->getFileFD());
+	}
+}
+
+void	ServerManager::handleRequest(int& clientSocket)
+{
+	try
+	{
+		if (this->_clientInfos[clientSocket].req != nullptr)
+		{
+			delete this->_clientInfos[clientSocket].req;
+			this->_clientInfos[clientSocket].req = nullptr;
+		}
+		this->_clientInfos[clientSocket].req = new Request(this->_clientInfos[clientSocket].request, this->_info[this->_connections[clientSocket]].getBodylimit());
+		this->_clientInfos[clientSocket].req->parse();
+		this->_clientInfos[clientSocket].req->sanitize(this->_info[this->_connections[clientSocket]]);
+		if (this->_clientInfos[clientSocket].req->getConnectionHeader() == "keep-alive")
+			this->_clientInfos[clientSocket].latestRequest = std::time(nullptr);
+		
+		std::cout << "request " << this->_clientInfos[clientSocket].request << std::endl;
+		
+		if (checkForCgi(*this->_clientInfos[clientSocket].req, clientSocket) == 1)
+			addPollFd(this->_clientInfos[clientSocket].pipeFd);
+		else
+		{
+			this->_clientInfos[clientSocket].req->openFile(this->_info[this->_connections[clientSocket]]);
+			handleFd(clientSocket);
+		}
+	} catch (Response::ResponseException &e){
+		std::cerr << e.what()<< " in receiveRequest" << std::endl;
+		this->_clientInfos[clientSocket].responseStatus = e.responseCode();
+		this->_clientInfos[clientSocket].req->openErrorFile(this->_info[this->_connections[clientSocket]], e.responseCode());
+		handleFd(clientSocket);
+		throw;
+	} catch (std::exception &e){
+		if (this->_clientInfos[clientSocket].responseStatus == 200)
+			this->_clientInfos[clientSocket].responseStatus = 400;
+		this->_clientInfos[clientSocket].requestReceived = true;
+		throw;
+	}
+}
+
 void	ServerManager::receiveRequest(size_t& i)
 {
 	char		buffer[1024] = {0};
@@ -337,58 +394,22 @@ void	ServerManager::receiveRequest(size_t& i)
 	} catch (Response::ResponseException &e){
 		std::cerr << e.what() << " in receiveRequest"<< std::endl;
 		this->_clientInfos[clientSocket].req->openErrorFile(this->_info[this->_connections[clientSocket]], e.responseCode());
-		if (this->_clientInfos[clientSocket].req->getFileFD() != 0)
-		{
-			this->_clientPipe[this->_clientInfos[clientSocket].req->getFileFD()] = clientSocket;
-			addPollFd(this->_clientInfos[clientSocket].req->getFileFD());
-		}
+		handleFd(clientSocket);
 		this->_clientInfos[clientSocket].responseStatus = e.responseCode();
 		this->_clientInfos[clientSocket].requestReceived = true;
 		throw;
 	} catch (std::exception &e){
 		throw;
 	}
-	if (totalLength != 0 && totalLength == this->_clientInfos[clientSocket].request.length())
+	if (requestReceived(totalLength, clientSocket) == true)
 	{
-		this->_clientInfos[clientSocket].requestReceived = true;
 		try
 		{
-			if (this->_clientInfos[clientSocket].req != nullptr)
-			{
-				delete this->_clientInfos[clientSocket].req;
-				this->_clientInfos[clientSocket].req = nullptr;
-			}
-			this->_clientInfos[clientSocket].req = new Request(this->_clientInfos[clientSocket].request, this->_info[this->_connections[clientSocket]].getBodylimit());
-			this->_clientInfos[clientSocket].req->parse();
-			this->_clientInfos[clientSocket].req->sanitize(this->_info[this->_connections[clientSocket]]);
-			if (this->_clientInfos[clientSocket].req->getConnectionHeader() == "keep-alive")
-				this->_clientInfos[clientSocket].latestRequest = std::time(nullptr);
-			std::cout << "request " << this->_clientInfos[clientSocket].request << std::endl;
-			if (checkForCgi(*this->_clientInfos[clientSocket].req, clientSocket) == 1)
-			{
-				addPollFd(this->_clientInfos[clientSocket].pipeFd);
-				return;
-			}
-			this->_clientInfos[clientSocket].req->openFile(this->_info[this->_connections[clientSocket]]);
-			if (this->_clientInfos[clientSocket].req->getFileFD() > 0)
-			{
-				this->_clientPipe[this->_clientInfos[clientSocket].req->getFileFD()] = clientSocket;
-				addPollFd(this->_clientInfos[clientSocket].req->getFileFD());
-			}
+			handleRequest(clientSocket);
 		} catch (Response::ResponseException &e){
-			std::cerr << e.what()<< " in receiveRequest" << std::endl;
-			this->_clientInfos[clientSocket].responseStatus = e.responseCode();
-			this->_clientInfos[clientSocket].req->openErrorFile(this->_info[this->_connections[clientSocket]], e.responseCode());
-			if (this->_clientInfos[clientSocket].req->getFileFD() != 0)
-			{
-				this->_clientPipe[this->_clientInfos[clientSocket].req->getFileFD()] = clientSocket;
-				addPollFd(this->_clientInfos[clientSocket].req->getFileFD());
-			}
+			std::cerr << e.what() << " in receiveRequest"<< std::endl;
 			throw;
 		} catch (std::exception &e){
-			if (this->_clientInfos[clientSocket].responseStatus == 200)
-				this->_clientInfos[clientSocket].responseStatus = 400;
-			this->_clientInfos[clientSocket].requestReceived = true;
 			throw;
 		}
 	}

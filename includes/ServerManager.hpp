@@ -43,12 +43,15 @@ class ServerManager
 			size_t	getRequestLength(std::string& request);
 			size_t	findLastChunk(std::string& request, size_t start_pos);
 			void	sendResponse(size_t& i);
-			void	cleanPreviousRequestData(int clientSocket, size_t& i);
+			void	cleanRequestData(int clientSocket, size_t& i);
 			void	addPollFd(int pipeFd);
 			int		checkForCgi(Request& req, int& clientSocket);
 			bool	isPipeFd(int& fd);
 			void	readFromFd(const int& fd);
 			bool	checkConnectionUptime(int& clientSocket);
+			bool	requestReceived(size_t& totalLength, int& clientSocket);
+			void	handleRequest(int& clientSocket);
+			void	handleFd(int& clientSocket);
 			void	closeConnection(int& clientSocket, size_t& i);
 			std::vector<ServerInfo> get_info(void);
 	private:
