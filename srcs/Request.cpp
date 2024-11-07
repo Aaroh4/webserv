@@ -429,16 +429,9 @@ void Request::openFile(ServerInfo server)
 			if (!server.getlocationinfo()[this->_url].index.empty())
 				this->_filefd = open((server.getlocationinfo()[this->_url].root + "/" + server.getlocationinfo()[this->_url].index).c_str(), O_RDONLY);
 			else if (!this->_root.empty())
-			{
-				// std::cout << "ELSE IF " << (this->_root + "/" + this->_url.substr(this->_origLoc.size() - 1, std::string::npos)).c_str() << std::endl;
 				this->_filefd = open((this->_root + "/" + this->_url.substr(this->_origLoc.size() - 1, std::string::npos)).c_str(), O_RDONLY);
-			}
 			else
-			{
-				// std::cout << "ELSE " << (server.getlocationinfo()["/"].root + "/" + this->_url).c_str() << std::endl;
 				this->_filefd = open((server.getlocationinfo()["/"].root + "/" + this->_url).c_str(), O_RDONLY);
-
-			}
 
 			if (this->_filefd < 0)
 			{
