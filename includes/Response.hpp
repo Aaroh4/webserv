@@ -32,6 +32,7 @@ class Response: public Request
 			void			setResponseBody(std::string body);
 			std::string		formatPostResponseMsg(int close);
 			std::string 	formatSessionCookie( void );
+			static std::string makeErrorContent(int statusCode, std::string message);
 			static void     sendErrorPage(int statusCode, int clientfd, std::string body);
 			void 			cgiResponse(int clientfd);
 

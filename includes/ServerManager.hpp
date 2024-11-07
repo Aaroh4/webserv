@@ -24,6 +24,7 @@ typedef struct s_clientInfo
 	bool		ResponseReady;
 	int			responseStatus;
 	size_t		requestLength;
+	bool		failedToReceiveRequest;
 	std::time_t	latestRequest;
 }	t_clientInfo;
 

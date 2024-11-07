@@ -307,7 +307,7 @@ void Response::sendStandardErrorPage(int sanitizeStatus, int clientfd, ServerInf
 
 }
 
-std::string makeErrorContent(int statusCode, std::string message)
+std::string Response::makeErrorContent(int statusCode, std::string message)
 {
 	std::string content = "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<title>";
 	content += std::to_string(statusCode) + " " + message + "</title>\n<style>\n";

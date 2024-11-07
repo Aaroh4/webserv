@@ -54,7 +54,6 @@ void	ServerManager::addNewConnection(size_t& i)
 	int clientSocket;
 	try
 	{
-		//std::cout << "add new connections...\n";
 		clientSocket = accept(this->_poll_fds[i].fd, nullptr, nullptr);
 		if (clientSocket < 0)
 			throw Response::ResponseException();
@@ -206,16 +205,16 @@ void	ServerManager::sendResponse(size_t& i)
 {
 	int	clientSocket = this->_poll_fds[i].fd;
 	int	pipeFd = this->_clientInfos[clientSocket].pipeFd;
-	if (!pipeFd)
-		pipeFd = this->_clientInfos[clientSocket].req->getFileFD();
-
+	
 	if (this->_clientInfos[clientSocket].responseStatus != 0 && this->_clientInfos[clientSocket].ResponseReady == true)
 	{
-		Response::sendErrorPage(this->_clientInfos[clientSocket].responseStatus, clientSocket,this->_clientInfos[clientSocket].ResponseBody);
+		Response::sendErrorPage(this->_clientInfos[clientSocket].responseStatus, clientSocket, this->_clientInfos[clientSocket].ResponseBody);
 		cleanRequestData(clientSocket, i);
 		return ;
 	}
-
+	
+	if (!pipeFd)
+		pipeFd = this->_clientInfos[clientSocket].req->getFileFD();
 	if (this->_clientInfos[clientSocket].req->getHost() == this->_info[this->_connections.at(clientSocket)].getServerName()
 		|| this->_info[this->_connections.at(clientSocket)].getServerName().empty())
 	{
@@ -244,8 +243,10 @@ void ServerManager::cleanRequestData(int clientSocket, size_t& i)
 {
 	try
 	{
+		std::string connectionStatus;
 		int pipeFd = this->_clientInfos[clientSocket].pipeFd;
-		if (!pipeFd)
+
+		if (!pipeFd && this->_clientInfos[clientSocket].failedToReceiveRequest == false)
 			pipeFd = this->_clientInfos[clientSocket].req->getFileFD();
 		if (pipeFd){
 			for (auto it = this->_poll_fds.begin(); it != this->_poll_fds.end();){
@@ -261,10 +262,15 @@ void ServerManager::cleanRequestData(int clientSocket, size_t& i)
 		this->_clientInfos[clientSocket].ResponseReady = false;
 		this->_clientInfos[clientSocket].ResponseBody = "";
 		this->_clientInfos[clientSocket].requestLength = 0;
-		std::string connectionStatus = this->_clientInfos[clientSocket].req->getConnectionHeader();
+
+		if (this->_clientInfos[clientSocket].failedToReceiveRequest == true)
+			connectionStatus = "close";
+		else
+			connectionStatus = this->_clientInfos[clientSocket].req->getConnectionHeader();
 		if (connectionStatus == "close" || checkConnectionUptime(clientSocket) == true
 			|| this->_clientInfos[clientSocket].responseStatus != 0  || this->_clientInfos[clientSocket].req->getSanitizeStatus() != 200)
 			closeConnection(clientSocket, i);
+		this->_clientInfos[clientSocket].failedToReceiveRequest = false;
 	} catch(const std::exception& e) {
 		std::cout << e.what() <<" in request cleanup" << std::endl;
 	}
@@ -276,7 +282,7 @@ void	ServerManager::closeConnection(int& clientSocket, size_t& i)
 	this->_poll_fds.erase(this->_poll_fds.begin() + i);
 	i--;
 	this->_connections.erase(clientSocket);
-	if (this->_clientInfos[clientSocket].req != nullptr)
+	if (this->_clientInfos[clientSocket].failedToReceiveRequest == false && this->_clientInfos[clientSocket].req != nullptr)
 	{
 		delete this->_clientInfos[clientSocket].req;
 		this->_clientInfos[clientSocket].req = nullptr;
@@ -383,6 +389,7 @@ void	ServerManager::receiveRequest(size_t& i)
 				if ((bytesReceived < 1024 && totalLength == 0)
 					|| (bytesReceived < 1024 && this->_clientInfos[clientSocket].request.length() < totalLength))
 				{
+					this->_clientInfos[clientSocket].failedToReceiveRequest = true;
 					throw Response::ResponseException400();
 				}
 			}
@@ -395,9 +402,8 @@ void	ServerManager::receiveRequest(size_t& i)
 		}
 	} catch (Response::ResponseException &e){
 		std::cerr << e.what() << " in first part of receiveRequest"<< std::endl;
-		this->_clientInfos[clientSocket].req->openErrorFile(this->_info[this->_connections[clientSocket]], e.responseCode());
-		handleFd(clientSocket);
 		this->_clientInfos[clientSocket].responseStatus = e.responseCode();
+		this->_clientInfos[clientSocket].ResponseReady = true;
 		this->_clientInfos[clientSocket].requestReceived = true;
 		throw;
 	} catch (std::exception &e){
