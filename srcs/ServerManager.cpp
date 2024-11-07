@@ -474,6 +474,7 @@ int	ServerManager::checkForCgi(Request& req, int& clientSocket)
 			query = "QUERY_STRING=" + req.getQueryString();
 		else
 			query = "QUERY_STRING=" + req.getBody();
+		
 		char *envp[] = {
 		(char *) method.c_str(),
 		(char *) query.c_str(),

@@ -332,6 +332,8 @@ void	Request::parse(void)
 			this->_decodeChunks();
 		if (this->_headers["Content-Type"].find("multipart/form-data") != std::string::npos)
 			this->_parseMultipartContent();
+		if (this->_headers["Content-Type"] == "application/x-www-form-urlencoded")
+			this->_body.erase(0, this->_body.find("=") + 1);
 		if (this->_headers.find("Cookie") != this->_headers.end())
 			this->setSessionId(this->_headers["Cookie"]);
 		else
