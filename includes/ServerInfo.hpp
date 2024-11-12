@@ -41,7 +41,7 @@ class ServerInfo
 			int													get_port() const;
 
 			void												setsocketfd(int fd);
-			int													getsocketfd();
+			int													getsocketfd() const;
 
 			void												setnewlocation(location input);
 			std::unordered_map<std::string, location>			getlocationinfo() const;

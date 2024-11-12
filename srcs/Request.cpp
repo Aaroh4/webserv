@@ -522,9 +522,9 @@ void Request::openErrorFile(ServerInfo server, int sanitizeStatus)
 	}
 }
 
-std::string	Request::getHost(void)
+std::string	Request::getHost(void) const
 {
-	return this->_headers["Host"];
+	return this->_headers.at("Host");
 }
 
 std::string	Request::getType(void) const
@@ -532,10 +532,10 @@ std::string	Request::getType(void) const
 	return this->_type;
 }
 
-std::string	Request::getContentLength(void)
+std::string	Request::getContentLength(void) const
 {
 	if (this->_headers.find("Content-Length") != this->_headers.end())
-		return this->_headers["Content-Length"];
+		return this->_headers.at("Content-Length");
 	return "";
 }
 
@@ -569,9 +569,9 @@ std::string	Request::getOrigLocLen(void) const
 	return this->_origLoc;
 }
 
-std::string	Request::getConnectionHeader(void)
+std::string	Request::getConnectionHeader(void) const
 {
-	return this->_headers["Connection"];
+	return this->_headers.at("Connection");
 }
 
 std::string	Request::getSessionId(void) const
@@ -602,7 +602,7 @@ void Request::printRequest(int clientSocket)
 	std::cout << "*******" << std::endl;
 }
 
-int	Request::getFileFD()
+int	Request::getFileFD() const
 {
 	return (this->_filefd);
 }

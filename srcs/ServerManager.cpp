@@ -66,8 +66,8 @@ void	ServerManager::addNewConnection(size_t& i)
 		this->_poll_fds.push_back(client_pollfd);
 		this->_connections[clientSocket] = i;
 
-		t_clientInfo clientInfo;
-		std::memset(&clientInfo, 0, sizeof(t_clientInfo));
+		t_clientInfo clientInfo = {}; // changed this line to initialize all members to 0 and get rid of memset
+		//std::memset(&clientInfo, 0, sizeof(t_clientInfo));
 		this->_clientInfos[clientSocket] = clientInfo;
 		std::cout << "----------------------------------------" << std::endl;
 		std::cout << "New client connected on server " << i << "\n";

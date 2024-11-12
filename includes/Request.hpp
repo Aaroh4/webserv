@@ -16,22 +16,22 @@ class Request
 
 		void		parse(void);
 		void		sanitize(ServerInfo server);
-		std::string	getHost(void);
+		std::string	getHost(void) const;
 		std::string	getType(void) const;
-		std::string	getContentLength(void);
+		std::string	getContentLength(void) const;
 		std::string	getQueryString(void) const;
 		std::string	getMethod(void) const;
 		std::string	getUrl(void) const;
 		std::string	getRoot(void) const;
 		std::string	getBody(void) const;
 		std::string	getOrigLocLen(void) const;
-		std::string	getConnectionHeader(void);
+		std::string	getConnectionHeader(void) const;
 		std::string getSessionId (void) const;
 		void 		setSessionId (std::string sessionId);
 		void		printRequest(int clientSocket);
 		void		openFile(ServerInfo server);
 		void		openErrorFile(ServerInfo server, int sanitizeStatus);
-		int			getFileFD();
+		int			getFileFD() const;
 		int			getSanitizeStatus( void ) const;
 		void		setSanitizeStatus (int sanitizeStatus);
 

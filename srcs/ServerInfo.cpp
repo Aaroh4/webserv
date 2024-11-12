@@ -66,7 +66,7 @@ void	ServerInfo::setsocketfd(int fd)
 	this->_socketfd = fd;
 }
 
-int		ServerInfo::getsocketfd()
+int		ServerInfo::getsocketfd() const
 {
 	return (this->_socketfd);
 }
