@@ -1,7 +1,7 @@
-#ifndef CONFIGEXCEPTIONS_HPP
-# define CONFIGEXCEPTIONS_HPP
+#pragma once
 
 #include <unistd.h>
+#include <exception>
 
 class wrongPort : public std::exception
 {
@@ -47,5 +47,3 @@ class serverNotFilled : public std::exception
     const char* what() const noexcept override;
 
 };
-
-#endif

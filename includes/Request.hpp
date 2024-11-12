@@ -1,5 +1,4 @@
-#ifndef REQUEST_HPP
-# define REQUEST_HPP
+#pragma once
 
 #include <unordered_map>
 #include "ServerInfo.hpp"
@@ -65,5 +64,3 @@ class Request
 		std::string	_parseFileName(std::string& line);
 		int			_bodyLimit;
 };
-
-#endif

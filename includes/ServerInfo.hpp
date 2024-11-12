@@ -1,5 +1,4 @@
-#ifndef SERVERINFO_HPP
-#define SERVERINFO_HPP
+#pragma once
 
 #include <unordered_map>
 #include <unordered_set>
@@ -72,5 +71,3 @@ class ServerInfo
 };
 
 unsigned int convertip(std::string ip);
-
-#endif

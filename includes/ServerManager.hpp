@@ -1,5 +1,4 @@
-#ifndef SERVERMANAGER_HPP
-#define SERVERMANAGER_HPP
+#pragma once
 
 #include "ServerInfo.hpp"
 #include <algorithm>
@@ -63,6 +62,3 @@ class ServerManager
 			std::unordered_map<int, int> 			_connections; // clients and servers
 			std::unordered_map<int, int> 			_clientPipe; //key = pipe fd & value = client socket
 };
-
-#endif
-

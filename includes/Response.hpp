@@ -1,5 +1,4 @@
-#ifndef RESPONSE_HPP
-#define RESPONSE_HPP
+#pragma once
 
 #include "Request.hpp"
 #include "ServerInfo.hpp"
@@ -106,6 +105,3 @@ class Response: public Request
 			std::string _errorMessage;
 			std::string _fileSize;
 };
-
-
-#endif
