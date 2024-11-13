@@ -205,13 +205,13 @@ ServerInfo	config_server(std::string temp, ServerInfo &server)
 						server.setErrorPage(400, value);
 						break;
 				case 7:
-						server.setErrorPage(404, value);
+						server.setErrorPage(403, value);
 						break;
 				case 8:
 						server.setErrorPage(404, value);
 						break;
 				case 9:
-						server.setErrorPage(404, value);
+						server.setErrorPage(405, value);
 						break;
 				case 10:
 						server.setErrorPage(405, value);
