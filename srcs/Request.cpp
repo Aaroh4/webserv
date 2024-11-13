@@ -373,7 +373,7 @@ void	Request::sanitize(ServerInfo server)
 			temp = "/";
 		}
 		if (this->_checkAllowedMethods(server) == false)
-			throw Response::ResponseException400();
+			throw Response::ResponseException405();
 		if (this->_type == "cgi/py" || this->_type == "cgi/php")
 			this->_verifyPath();
 
