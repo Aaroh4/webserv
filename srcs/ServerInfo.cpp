@@ -17,6 +17,8 @@ ServerInfo::ServerInfo(const ServerInfo &input)
 	this->_timeout = input._timeout;
 	this->_bodylimit = input._bodylimit;
 	this->_serverName = input._serverName;
+	this->_pollfds = input._pollfds;
+	this->_errorPages = input._errorPages;
 }
 
 ServerInfo ServerInfo::operator=(const ServerInfo &input)
@@ -31,6 +33,8 @@ ServerInfo ServerInfo::operator=(const ServerInfo &input)
 		this->_timeout = input._timeout;
 		this->_bodylimit = input._bodylimit;
 		this->_serverName = input._serverName;
+		this->_pollfds = input._pollfds;
+		this->_errorPages = input._errorPages;
 	}
 	return (input);
 }
