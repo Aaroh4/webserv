@@ -5,8 +5,7 @@
 #include <filesystem>
 #include <vector>
 #include <poll.h>
-
-
+#define DEFAULT_TIMEOUT "10"
 // Function for simplifying cutting string without having to mess around with substr
 inline std::string cutFromTo(std::string input, int start, std::string last)
 {

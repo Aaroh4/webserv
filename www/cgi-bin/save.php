@@ -13,6 +13,7 @@ $file_path = realpath(__DIR__ . '/../data/strings.txt');
 if ($file = fopen($file_path, "a"))
 {
 	$sanitized_query_string = strip_tags($_SERVER['QUERY_STRING']);
+	$timeout = isset($_SERVER['TIMEOUT']) ? $_SERVER['TIMEOUT'] : '';
 	$sanitized_query_string = htmlspecialchars($sanitized_query_string, ENT_QUOTES, 'UTF-8');
 	parse_str($sanitized_query_string, $params);
 	$name = isset($params['input']) ? strip_tags($params['input']) : $sanitized_query_string;
@@ -27,7 +28,7 @@ if ($file = fopen($file_path, "a"))
 	echo "Content-Type: text/html\n";
 	echo "Content-Length: $contentLength\n";
 	echo "Connection: Keep-Alive\n";
-	echo "Keep-Alive: timeout=5, max=100\n\n";
+	echo "Keep-Alive: timeout=$timeout, max=100\n\n";
 	echo $response;
 }
 else

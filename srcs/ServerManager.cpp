@@ -154,7 +154,7 @@ size_t	ServerManager::getRequestLength(std::string& request)
 	}
 	catch(const std::exception& e)
 	{
-		std::cerr << e.what() << " in getRequestLenght" << std::endl;
+		std::cerr << e.what() << " in getRequestLength" << std::endl;
 		throw Response::ResponseException();
 	}
 	return totalLength;
@@ -461,12 +461,18 @@ int	ServerManager::checkForCgi(Request& req, int& clientSocket)
 		std::string method = "REQUEST_METHOD=" + req.getMethod();
 		std::string query;
 		std::string	length;
+		std::string timeOut = "TIMEOUT=";
 
+		std::string temp = std::to_string(this->_info[this->_connections.at(clientSocket)].get_timeout());
+		if (temp.empty())
+			timeOut += DEFAULT_TIMEOUT;
+		else
+			timeOut += temp;
+			
 		if (contentLen.empty())
 			length = "CONTENT_LENGTH=" + contentLen;
 		else
 			length = "CONTENT_LENGTH=0";
-
 		if (!req.getQueryString().empty())
 			query = "QUERY_STRING=" + req.getQueryString();
 		else
@@ -476,6 +482,7 @@ int	ServerManager::checkForCgi(Request& req, int& clientSocket)
 		(char *) method.c_str(),
 		(char *) query.c_str(),
 		(char *) length.c_str(),
+		(char *) timeOut.c_str(),
 		nullptr
 		};
 

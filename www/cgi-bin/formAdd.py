@@ -8,7 +8,7 @@ file_path = "www/data/strings.txt"
 
 form = cgi.FieldStorage()
 name = form.getvalue('input', '')
-
+timeout = os.environ.get("TIMEOUT", "10")
 with open(file_path, 'a') as file:
     file.write(f"{name}\n")
 
@@ -18,6 +18,6 @@ print("HTTP/1.1 200 OK")
 print("Content-Type: text/html")
 print(f"Content-Length: {len(response_content)}")
 print("Connection: Keep-Alive")
-print("Keep-Alive: timeout=5, max=100")
+print(f"Keep-Alive: timeout={timeout}, max=100")
 print()
 print(response_content)

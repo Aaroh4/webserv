@@ -139,7 +139,10 @@ void	Response::respondPost(int clientfd)
 std::string Response::formatPostResponseMsg (int close){
 
 	std::string response;
+	std::string timeOut = std::to_string(_server.get_timeout());
 
+	if (timeOut.empty())
+		timeOut = DEFAULT_TIMEOUT;
 	if (this->_httpVersion.empty())
 		this->_httpVersion = "HTTP/1.1";
 	if (this->_body.empty())
@@ -164,7 +167,7 @@ std::string Response::formatPostResponseMsg (int close){
 	if (close == 0)
 	{
 		response += "Connection: Keep-Alive\r\n";
-		response += "Keep-Alive: timeout=5, max=100\r\n\r\n";
+		response += "Keep-Alive: timeout=" + timeOut + ", max=100\r\n\r\n";
 	}
 	if (this->_sanitizeStatus == 200)
 		response += this->_responseBody;
@@ -174,12 +177,16 @@ std::string Response::formatPostResponseMsg (int close){
 void Response::cgiResponse(int clientfd)
 {
 	std::string response;
+	std::string timeOut = std::to_string(_server.get_timeout());
+
+	if (timeOut.empty())
+		timeOut = DEFAULT_TIMEOUT;
 
 	if (this->_body.empty() && this->_method == "POST")
 	{
 		this->_sanitizeStatus = 204;
 		response = this->_httpVersion + " 204 No Content\r\n";
-		response += "Connection: Keep-Alive\r\n";
+		response += "Keep-Alive: timeout=" + timeOut + ", max=100\r\n\r\n";
 	}
 	else
 		response = this->_responseBody;
@@ -256,7 +263,10 @@ std::string Response::buildDirectorylist(std::string name, int rootsize)
 std::string Response::formatGetResponseMsg(int close)
 {
 	std::string response;
+	std::string timeOut = std::to_string(_server.get_timeout());
 
+	if (timeOut.empty())
+		timeOut = DEFAULT_TIMEOUT;
 	if (this->_httpVersion.empty())
 		this->_httpVersion = "HTTP/1.1";
 
@@ -275,7 +285,7 @@ std::string Response::formatGetResponseMsg(int close)
 	if (close == 0)
 	{
 		response += "Connection: keep-alive\r\n";
-		response += "keep-alive: timeout=5, max=100\r\n\r\n";
+		response += "Keep-Alive: timeout=" + timeOut + ", max=100\r\n\r\n";
 	}
 	else
 		response += "Connection: close\r\n\r\n";
