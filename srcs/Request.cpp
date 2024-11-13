@@ -344,10 +344,7 @@ void	Request::parse(void)
 bool	Request::_checkAllowedMethods(ServerInfo server) const
 {
 	if (server.getlocationinfo()[this->_origLoc].methods.find(this->_method) == server.getlocationinfo()["this->_origloc"].methods.end())
-	{
-		std::cout << "xD\n";
 		return false;
-	}
 	return true;
 }
 
@@ -375,7 +372,6 @@ void	Request::sanitize(ServerInfo server)
 			this->_origLoc = "/";
 			temp = "/";
 		}
-		std::cout << "request " << this->_request << std::endl;
 		if (this->_checkAllowedMethods(server) == false)
 			throw Response::ResponseException405();
 		if (this->_type == "cgi/py" || this->_type == "cgi/php")
