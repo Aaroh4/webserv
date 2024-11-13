@@ -252,6 +252,7 @@ void ServerManager::cleanRequestData(int clientSocket, size_t& i)
 				else
 					++it;
 			}
+			close(pipeFd);
 		}
 		this->_clientPipe.erase(pipeFd);
 		this->_clientInfos[clientSocket].request = "";
@@ -439,10 +440,10 @@ void	ServerManager::readFromFd(const int& fd)
 	}
 	else if (nbytes == 0 || nbytes < 8192)
 	{
+		close(fd);
 		int clientSocket = this->_clientPipe[fd];
 		this->_clientInfos[clientSocket].ResponseBody.append(buffer, nbytes);
 		this->_clientInfos[clientSocket].ResponseReady = true;
-		close(fd);
 		this->_clientPipe.erase(fd);
 	}
 	else
