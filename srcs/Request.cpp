@@ -377,7 +377,7 @@ void	Request::sanitize(ServerInfo server)
 		}
 		std::cout << "request " << this->_request << std::endl;
 		if (this->_checkAllowedMethods(server) == false)
-			throw Response::ResponseException400();
+			throw Response::ResponseException405();
 		if (this->_type == "cgi/py" || this->_type == "cgi/php")
 			this->_verifyPath();
 
