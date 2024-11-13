@@ -103,6 +103,9 @@ void Response::respondGet(int clientfd, ServerInfo server)
 			this->_redirectplace = server.getlocationinfo()[this->_url].redirection;
 		else
 			this->_redirectplace = server.getlocationinfo()[this->_origLoc].redirection;
+		response = formatGetResponseMsg(0);
+		std::cout << "response: " << response << std::endl;
+		send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL);
 	}
 	else if (server.getlocationinfo()[this->_origLoc].dirList != false && server.getlocationinfo()[this->_origLoc].index.empty()
         && std::filesystem::is_directory(this->_root + "/" + this->_url.substr(this->_origLoc.size(), std::string::npos)))
