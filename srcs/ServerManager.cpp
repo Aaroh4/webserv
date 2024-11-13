@@ -39,6 +39,8 @@ ServerManager ServerManager::operator=(const ServerManager &input)
 
 ServerManager::~ServerManager()
 {
+	for (size_t i = 0; i < _poll_fds.size(); i++)
+		close(_poll_fds[i].fd);
 	for (auto& it: this->_clientInfos)
 	{
 		close(it.first);
