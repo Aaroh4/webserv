@@ -19,10 +19,9 @@ ServerManager::ServerManager(const ServerManager &input)
 {
 	this->_info = input._info;
 	this->_poll_fds = input._poll_fds;
-	for (const auto& map_content : input._connections)
-	{
-		this->_connections[map_content.first] = map_content.second;
-	}
+	this->_connections = input._connections;
+	this->_clientPipe = input._clientPipe;
+	this->_clientInfos = input._clientInfos;
 }
 
 ServerManager ServerManager::operator=(const ServerManager &input)
@@ -31,10 +30,9 @@ ServerManager ServerManager::operator=(const ServerManager &input)
 	{
 		this->_info = input._info;
 		this->_poll_fds = input._poll_fds;
-		for (const auto& map_content : input._connections)
-		{
-			this->_connections[map_content.first] = map_content.second;
-		}
+		this->_connections = input._connections;
+		this->_clientPipe = input._clientPipe;
+		this->_clientInfos = input._clientInfos;
 	}
 	return (input);
 }
