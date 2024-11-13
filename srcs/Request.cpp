@@ -124,8 +124,6 @@ void	Request::_parseMultipartContent(void)
 	size_t		ind = this->_headers["Content-Type"].find_first_of("=");
 	int			blockCount = 0;
 	std::string	boundary = "--" + this->_headers["Content-Type"].substr(ind + 1, len - (ind + 1));
-	std::string end = boundary + "--";
-	std::string	value;
 	std::string part;
 
 	this->_body.erase(0, boundary.length() + 2);
@@ -181,7 +179,6 @@ void	Request::_getContentType(void)
 			this->_type = "cgi/" + type;
     	else if (this->_url != "/")
 		{
-			//std::cerr << "Unsupported Media Type in _getContentType" << std::endl;
 			this->_sanitizeStatus = 404;
 			this->_errmsg = "Not Found";
 			throw Response::ResponseException404();
@@ -237,7 +234,7 @@ void	Request::_parseRequestLine(void)
 	}
 	this->_getContentType();
 
-	//Parses HTTP Version nd put's it to string attribute _httpVersion, then erases it from the request
+	//Parses HTTP Version and put's it to string attribute _httpVersion, then erases it from the request
 
 	i = this->_request.find_first_of("\r\n");
 	this->_httpVersion = this->_request.substr(0, i);
