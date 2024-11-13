@@ -45,7 +45,7 @@ void locations(std::string temp, ServerInfo &server)
 							temploc.dirList = true;
 						else
 							temploc.dirList = false;
-											break;
+						break;
 				case 2:
 						for (std::string method : all_methods)
 							if (value.find(method) != std::string::npos)

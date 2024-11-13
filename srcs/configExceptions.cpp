@@ -1,8 +1,5 @@
 #include "../includes/configExceptions.hpp"
 
-
-//  const char* what() const noexcept override
-
 const char* wrongPort::what() const noexcept
 {
 	 return "Wrong port!";

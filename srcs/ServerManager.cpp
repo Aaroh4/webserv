@@ -66,8 +66,7 @@ void	ServerManager::addNewConnection(size_t& i)
 		this->_poll_fds.push_back(client_pollfd);
 		this->_connections[clientSocket] = i;
 
-		t_clientInfo clientInfo = {}; // changed this line to initialize all members to 0 and get rid of memset
-		//std::memset(&clientInfo, 0, sizeof(t_clientInfo));
+		t_clientInfo clientInfo = {};
 		this->_clientInfos[clientSocket] = clientInfo;
 		std::cout << "----------------------------------------" << std::endl;
 		std::cout << "New client connected on server " << i << "\n";
@@ -115,7 +114,7 @@ size_t	ServerManager::findLastChunk(std::string& request, size_t start_pos)
 		{
 			chunk_size = std::stoi(request.substr(start_pos, pos - start_pos), nullptr, 16);
 			if (chunk_size == 0)
-				return pos + 4; // Position after 0 + \r\n\r\n
+				return pos + 4;
 		}
 		catch(const std::exception& e)
 		{
@@ -123,7 +122,7 @@ size_t	ServerManager::findLastChunk(std::string& request, size_t start_pos)
 			throw Response::ResponseException();
 		}
 		start_pos = pos;
-		start_pos += chunk_size + 4; // \r\n before and after chunk
+		start_pos += chunk_size + 4;
 	}
 	return pos + 4;
 }
@@ -254,8 +253,8 @@ void ServerManager::cleanRequestData(int clientSocket, size_t& i)
 					it = this->_poll_fds.erase(it);
 				else
 					++it;
-				}
 			}
+		}
 		this->_clientPipe.erase(pipeFd);
 		this->_clientInfos[clientSocket].request = "";
 		this->_clientInfos[clientSocket].requestReceived = false;

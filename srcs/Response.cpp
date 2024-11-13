@@ -102,6 +102,9 @@ void Response::respondGet(int clientfd, ServerInfo server)
 			this->_redirectplace = server.getlocationinfo()[this->_url].redirection;
 		else
 			this->_redirectplace = server.getlocationinfo()[this->_origLoc].redirection;
+		response = formatGetResponseMsg(0);
+		std::cout << "response: " << response << std::endl;
+		send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL);
 	}
 	else if (server.getlocationinfo()[this->_origLoc].dirList != false && server.getlocationinfo()[this->_origLoc].index.empty()
         && std::filesystem::is_directory(this->_root + "/" + this->_url.substr(this->_origLoc.size(), std::string::npos)))
@@ -156,7 +159,7 @@ std::string Response::formatPostResponseMsg (int close){
 	if (close == 0)
 	{
 		response += "Connection: Keep-Alive\r\n";
-		response += "Keep-Alive: timeout=5, max=100\r\n\r\n"; //this->_server.get_timeout()
+		response += "Keep-Alive: timeout=5, max=100\r\n\r\n";
 	}
 	if (this->_sanitizeStatus == 200)
 		response += this->_responseBody;
@@ -185,7 +188,7 @@ void	Response::respondDelete(int clientfd)
 {
 	std::vector<std::string> supportedPaths = {
 		this->_root + "/uploads"
-		};
+	};
 	std::string fileToDelete = this->_root + this->_url;
 	bool canBeDeleted = false;
 	for (const std::string &path : supportedPaths){
@@ -218,7 +221,7 @@ void Response::directorylisting(int clientfd, std::string file)
 	std::string response;
 
 	if (this->_type.empty())
-			this->_type = "text/html";
+		this->_type = "text/html";
 	this->_fileSize = std::to_string(file.size());
 	this->_responseBody = file;
 	response = formatGetResponseMsg(0);
@@ -267,7 +270,7 @@ std::string Response::formatGetResponseMsg(int close)
 	if (close == 0)
 	{
 		response += "Connection: keep-alive\r\n";
-		response += "keep-alive: timeout=5, max=100\r\n\r\n"; //this->_server.get_timeout()
+		response += "keep-alive: timeout=5, max=100\r\n\r\n";
 	}
 	else
 		response += "Connection: close\r\n\r\n";
@@ -364,7 +367,6 @@ const char* Response::ResponseException415::what() const noexcept{
 int Response::ResponseException415::responseCode () const{
 	return (415);
 }
-
 
 void Response::sendErrorPage(int statusCode, int clientfd, std::string body, std::string cookie)
 {
