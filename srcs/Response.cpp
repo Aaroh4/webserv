@@ -44,7 +44,7 @@ void Response::handleCRUD(int clientfd, ServerInfo server)
 	} catch (ResponseException &e){
 		std::cerr << e.what() << " in handleCRUD" << std::endl;
 		this->_sanitizeStatus = e.responseCode();
-		sendErrorPage(e.responseCode(), clientfd, "");
+		sendErrorPage(e.responseCode(), clientfd, "", this->_sessionId.empty() ? "" : this->_sessionId);
 	}
 }
 
@@ -70,8 +70,7 @@ void	Response::respond(int clientfd, ServerInfo server)
 		}
 	} catch(ResponseException& e) {
 		std::cerr << e.what() << " in respond" << std::endl;
-		this->_sanitizeStatus = e.responseCode();
-		sendErrorPage(e.responseCode(), clientfd, "");
+		sendErrorPage(e.responseCode(), clientfd,"", this->_sessionId.empty() ? "" : this->_sessionId);
 		return ;
 	}
 	try{
@@ -79,7 +78,7 @@ void	Response::respond(int clientfd, ServerInfo server)
 	} catch(ResponseException& e){
 		std::cerr << e.what() << " in respond" << std::endl;
 		this->_sanitizeStatus = e.responseCode();
-		sendErrorPage(e.responseCode(), clientfd, "");
+		sendErrorPage(e.responseCode(), clientfd, "", this->_sessionId.empty() ? "" : this->_sessionId);
 		return ;
 	}
 }
@@ -208,6 +207,8 @@ void	Response::respondDelete(int clientfd)
 	if (remove(fileToDelete.c_str()) != 0)
 		throw ResponseException();
 	std::string response = "HTTP/1.1 204 No Content\r\n";
+	if (!this->_sessionId.empty())
+		response += formatSessionCookie();
 	response += "Connection: close\r\n\r\n";
 
 	send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL);
@@ -263,7 +264,8 @@ std::string Response::formatGetResponseMsg(int close)
 	response += "Content-Type: " + this->_type + "\r\n";
 
 	response += "Content-Length: " + std::to_string(this->_responseBody.length()) + "\r\n";
-	response += "Location: " + this->_redirectplace + "\r\n";
+	if (!this->_redirectplace.empty())
+		response += "Location: " + this->_redirectplace + "\r\n";
 	response += formatSessionCookie();
 	if (close == 0)
 	{
@@ -366,7 +368,7 @@ int Response::ResponseException415::responseCode () const{
 	return (415);
 }
 
-void Response::sendErrorPage(int statusCode, int clientfd, std::string body)
+void Response::sendErrorPage(int statusCode, int clientfd, std::string body, std::string cookie)
 {
 	std::string response;
 	std::string fileSize;
@@ -412,6 +414,8 @@ void Response::sendErrorPage(int statusCode, int clientfd, std::string body)
 	response = "HTTP/1.1 " + std::to_string(statusCode) + " " + message + "\r\n";
 	response += "Content-Type: text/html\r\n";
 	response += "Content-Length: " + fileSize + "\r\n";
+	if (!cookie.empty())
+		response += "Set-Cookie: " + cookie + "; HttpOnly; Path=/; Max-Age=60;\r\n";
 	response += "Connection: close\r\n\r\n";
 
 	std::string responseWithoutBody = response;

@@ -204,14 +204,14 @@ void	ServerManager::sendResponse(size_t& i)
 {
 	int	clientSocket = this->_poll_fds[i].fd;
 	int	pipeFd = this->_clientInfos[clientSocket].pipeFd;
-	
+
 	if (this->_clientInfos[clientSocket].responseStatus != 0 && this->_clientInfos[clientSocket].ResponseReady == true)
 	{
-		Response::sendErrorPage(this->_clientInfos[clientSocket].responseStatus, clientSocket, this->_clientInfos[clientSocket].ResponseBody);
+		Response::sendErrorPage(this->_clientInfos[clientSocket].responseStatus, clientSocket, this->_clientInfos[clientSocket].ResponseBody, this->_clientInfos[clientSocket].req->getCookie());
 		cleanRequestData(clientSocket, i);
 		return ;
 	}
-	
+
 	if (!pipeFd)
 		pipeFd = this->_clientInfos[clientSocket].req->getFileFD();
 	if (this->_clientInfos[clientSocket].req->getHost() == this->_info[this->_connections.at(clientSocket)].getServerName()
@@ -339,9 +339,9 @@ void	ServerManager::handleRequest(int& clientSocket)
 		this->_clientInfos[clientSocket].req->sanitize(this->_info[this->_connections[clientSocket]]);
 		if (this->_clientInfos[clientSocket].req->getConnectionHeader() == "keep-alive")
 			this->_clientInfos[clientSocket].latestRequest = std::time(nullptr);
-		
+
 		std::cout << "request " << this->_clientInfos[clientSocket].request << std::endl;
-		
+
 		if (checkForCgi(*this->_clientInfos[clientSocket].req, clientSocket) == 1)
 			addPollFd(this->_clientInfos[clientSocket].pipeFd);
 		else
@@ -473,7 +473,7 @@ int	ServerManager::checkForCgi(Request& req, int& clientSocket)
 			query = "QUERY_STRING=" + req.getQueryString();
 		else
 			query = "QUERY_STRING=" + req.getBody();
-		
+
 		char *envp[] = {
 		(char *) method.c_str(),
 		(char *) query.c_str(),

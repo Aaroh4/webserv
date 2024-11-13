@@ -329,6 +329,8 @@ void	Request::parse(void)
 			this->_decodeChunks();
 		if (this->_headers["Content-Type"].find("multipart/form-data") != std::string::npos)
 			this->_parseMultipartContent();
+		if (this->_headers["Content-Type"] == "application/x-www-form-urlencoded")
+			this->_body.erase(0, this->_body.find("=") + 1);
 		if (this->_headers.find("Cookie") != this->_headers.end())
 			this->setSessionId(this->_headers["Cookie"]);
 		else
@@ -410,30 +412,19 @@ void	Request::sanitize(ServerInfo server)
 			}
 		}
 	} catch (Response::ResponseException &e){
-		std::cerr << e.what() << " in sanitize"<< std::endl;
-		throw ;
-	}
+			std::cerr << e.what() << " in sanitize"<< std::endl;
+			throw ;
+		}
 }
 
 void Request::openFile(ServerInfo server)
 {
 	try{
-		if (this->_origLoc.size() > this->_url.size())
-		{
-			std::string location = this->_url;
-			std::filesystem::path absolutePath = std::filesystem::absolute("www" + location);
-
-			if (std::filesystem::is_directory(absolutePath) == true)
-			{
-				if (static_cast<std::string>(absolutePath).back() != '/')
-					throw Response::ResponseException404();
-				return;
-			}
-		}
-		else if (!(!server.getlocationinfo()[this->_origLoc].redirection.empty() || !server.getlocationinfo()[this->_url].redirection.empty())
+		if (!(!server.getlocationinfo()[this->_origLoc].redirection.empty() || !server.getlocationinfo()[this->_url].redirection.empty())
 		&& !(server.getlocationinfo()[this->_origLoc].dirList != false && server.getlocationinfo()[this->_origLoc].index.empty()
 			&& std::filesystem::is_directory(this->_root + "/" + this->_url.substr(this->_origLoc.size(), std::string::npos))))
 		{
+
 			if (!server.getlocationinfo()[this->_url].index.empty())
 				this->_filefd = open((server.getlocationinfo()[this->_url].root + "/" + server.getlocationinfo()[this->_url].index).c_str(), O_RDONLY);
 			else if (!this->_root.empty())
@@ -448,14 +439,14 @@ void Request::openFile(ServerInfo server)
 					case ENOTDIR:
 					case ENOENT:
 					case 21:
-						this->_sanitizeStatus = 404;
-						throw Response::ResponseException404();
+							this->_sanitizeStatus = 404;
+							throw Response::ResponseException404();
 					case EACCES:
-						this->_sanitizeStatus = 403;
-						throw Response::ResponseException403();
+							this->_sanitizeStatus = 403;
+							throw Response::ResponseException403();
 					default:
-						this->_sanitizeStatus = 500;
-						throw Response::ResponseException();
+							this->_sanitizeStatus = 500;
+							throw Response::ResponseException();
 				}
 			}
 	}
@@ -578,6 +569,12 @@ std::string	Request::getOrigLocLen(void) const
 std::string	Request::getConnectionHeader(void)
 {
 	return this->_headers["Connection"];
+}
+std::string	Request::getCookie(void)
+{
+	if (this->_headers.find("Cookie") != this->_headers.end())
+		return this->_headers["Cookie"];
+	return "";
 }
 
 std::string	Request::getSessionId(void) const
