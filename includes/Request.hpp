@@ -27,6 +27,7 @@ class Request
 		std::string	getOrigLocLen(void) const;
 		std::string	getConnectionHeader(void);
 		std::string getSessionId (void) const;
+		std::string getCookie(void);
 		void 		setSessionId (std::string sessionId);
 		void		printRequest(int clientSocket);
 		void		openFile(ServerInfo server);

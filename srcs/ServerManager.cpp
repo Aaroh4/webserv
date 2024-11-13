@@ -208,7 +208,7 @@ void	ServerManager::sendResponse(size_t& i)
 
 	if (this->_clientInfos[clientSocket].responseStatus != 0 && this->_clientInfos[clientSocket].ResponseReady == true)
 	{
-		Response::sendErrorPage(this->_clientInfos[clientSocket].responseStatus, clientSocket, this->_clientInfos[clientSocket].ResponseBody, "");
+		Response::sendErrorPage(this->_clientInfos[clientSocket].responseStatus, clientSocket, this->_clientInfos[clientSocket].ResponseBody, this->_clientInfos[clientSocket].req->getCookie());
 		cleanRequestData(clientSocket, i);
 		return ;
 	}
