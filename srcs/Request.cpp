@@ -329,8 +329,6 @@ void	Request::parse(void)
 			this->_decodeChunks();
 		if (this->_headers["Content-Type"].find("multipart/form-data") != std::string::npos)
 			this->_parseMultipartContent();
-		if (this->_headers["Content-Type"] == "application/x-www-form-urlencoded")
-			this->_body.erase(0, this->_body.find("=") + 1);
 		if (this->_headers.find("Cookie") != this->_headers.end())
 			this->setSessionId(this->_headers["Cookie"]);
 		else
@@ -420,7 +418,18 @@ void	Request::sanitize(ServerInfo server)
 void Request::openFile(ServerInfo server)
 {
 	try{
-		if (!(!server.getlocationinfo()[this->_origLoc].redirection.empty() || !server.getlocationinfo()[this->_url].redirection.empty())
+		if (this->_origLoc.size() > this->_url.size())
+		{
+			std::string location = this->_url;
+			std::filesystem::path absolutePath = std::filesystem::absolute("www" + location);
+			if (std::filesystem::is_directory(absolutePath) == true)
+			{
+				if (static_cast<std::string>(absolutePath).back() != '/')
+					throw Response::ResponseException404();
+				return;
+			}
+		}
+		else if (!(!server.getlocationinfo()[this->_origLoc].redirection.empty() || !server.getlocationinfo()[this->_url].redirection.empty())
 		&& !(server.getlocationinfo()[this->_origLoc].dirList != false && server.getlocationinfo()[this->_origLoc].index.empty()
 			&& std::filesystem::is_directory(this->_root + "/" + this->_url.substr(this->_origLoc.size(), std::string::npos))))
 		{
