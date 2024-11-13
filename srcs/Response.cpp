@@ -47,7 +47,6 @@ void Response::handleCRUD(int clientfd, ServerInfo server)
 		else
 			throw ResponseException405();
 	} catch (ResponseException &e){
-		std::cerr << e.what() << " in handleCRUD" << std::endl;
 		this->_sanitizeStatus = e.responseCode();
 		sendErrorPage(e.responseCode(), clientfd, "", this->_sessionId.empty() ? "" : this->_sessionId);
 	}
@@ -74,14 +73,12 @@ void	Response::respond(int clientfd, ServerInfo server)
 				throw ResponseException();
 		}
 	} catch(ResponseException& e) {
-		std::cerr << e.what() << " in respond" << std::endl;
 		sendErrorPage(e.responseCode(), clientfd,"", this->_sessionId.empty() ? "" : this->_sessionId);
 		return ;
 	}
 	try{
 		handleCRUD(clientfd, server);
 	} catch(ResponseException& e){
-		std::cerr << e.what() << " in respond" << std::endl;
 		this->_sanitizeStatus = e.responseCode();
 		sendErrorPage(e.responseCode(), clientfd, "", this->_sessionId.empty() ? "" : this->_sessionId);
 		return ;
