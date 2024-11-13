@@ -28,7 +28,7 @@ class Response: public Request
 			void			setResponseBody(std::string body);
 			std::string		formatPostResponseMsg(int close);
 			std::string 	formatSessionCookie( void );
-			static void     sendErrorPage(int statusCode, int clientfd, std::string body);
+			static void     sendErrorPage(int statusCode, int clientfd, std::string body, std::string cookie);
 			void 			cgiResponse(int clientfd);
 
 			// RESPONSE EXCEPTIONS
