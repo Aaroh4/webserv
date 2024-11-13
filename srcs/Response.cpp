@@ -19,11 +19,16 @@ Response::Response(const Response &input): Request()
 	*this = input;
 }
 
-Response Response::operator=(const Response &input)
-{
+Response Response::operator=(const Response &input){
 	if (this != &input)
 	{
-
+		_server = input._server;
+		_redirectplace =  input._redirectplace;
+		_contentType = input._contentType;
+		_response = input._response;
+		_responseBody = input._responseBody;
+		_errorMessage = input._errorMessage;
+		_fileSize = input._fileSize;
 	}
 	return (*this);
 }
