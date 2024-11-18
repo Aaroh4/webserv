@@ -25,6 +25,7 @@ typedef struct s_clientInfo
 	size_t		requestLength;
 	bool		failedToReceiveRequest;
 	std::time_t	latestRequest;
+	std::pair<int, std::time_t>	childProcess;
 }	t_clientInfo;
 
 class ServerManager
@@ -54,6 +55,7 @@ class ServerManager
 			void	handleRequest(int& clientSocket);
 			void	handleFd(int& clientSocket);
 			void	closeConnection(int& clientSocket, size_t& i);
+			void	checkChildprocessUptime(size_t& clientSocket);
 			std::vector<ServerInfo> get_info(void);
 	private:
 			std::unordered_map<int, t_clientInfo>  	_clientInfos; //key = client socket

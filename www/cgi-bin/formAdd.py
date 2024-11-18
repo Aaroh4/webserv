@@ -4,8 +4,9 @@
 import cgi
 import os
 
-file_path = "www/data/strings.txt"
-
+file_path = "../data/strings.txt"
+while(True):
+ continue
 form = cgi.FieldStorage()
 name = form.getvalue('input', '')
 timeout = os.environ.get("TIMEOUT", "10")

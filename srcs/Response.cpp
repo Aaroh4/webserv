@@ -389,7 +389,6 @@ void Response::sendErrorPage(int statusCode, int clientfd, std::string body, std
 	std::string fileSize;
 
 	std::string message;
-
 	switch (statusCode){
 		case 400:
 			message = "Bad Request";

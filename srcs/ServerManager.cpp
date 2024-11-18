@@ -165,10 +165,15 @@ size_t	ServerManager::getRequestLength(std::string& request)
 void	ServerManager::runCgi(std::string path, char** envp, int& clientSocket)
 {
 	int	pipeFd[2];
+	size_t pathIndex = path.find_last_of("/");
 
 	if (pipe(pipeFd) == -1)
 	{
 		throw std::runtime_error("pipe() failed");
+	}
+	if (chdir(path.substr(0, pathIndex + 1).c_str()) == -1)
+	{
+		throw std::runtime_error("chdir() failed");
 	}
 	int	pid = fork();
 	if (pid == -1)
@@ -191,9 +196,19 @@ void	ServerManager::runCgi(std::string path, char** envp, int& clientSocket)
 	{
 		close(pipeFd[1]);
 		int	status;
-		if  (waitpid(pid, &status, 0) == -1)
+		int result = waitpid(pid, &status, WNOHANG);
+		if  (result == -1)
 		{
 			throw std::runtime_error("waitpid() failed");
+		}
+		else if (result == 0)
+		{
+			this->_clientInfos[clientSocket].childProcess = {pid, std::time(nullptr)};
+		}
+		pathIndex = path.find("www");
+		if (chdir(path.substr(0, pathIndex).c_str()) == -1)
+		{
+			throw std::runtime_error("chdir() failed");
 		}
 		this->_clientInfos[clientSocket].pipeFd = pipeFd[0];
 		this->_clientPipe[pipeFd[0]] = clientSocket;
@@ -207,7 +222,7 @@ void	ServerManager::sendResponse(size_t& i)
 
 	if (this->_clientInfos[clientSocket].responseStatus != 0 && this->_clientInfos[clientSocket].ResponseReady == true)
 	{
-		Response::sendErrorPage(this->_clientInfos[clientSocket].responseStatus, clientSocket, this->_clientInfos[clientSocket].ResponseBody, this->_clientInfos[clientSocket].req->getCookie());
+		Response::sendErrorPage(this->_clientInfos[clientSocket].responseStatus, clientSocket, this->_clientInfos[clientSocket].ResponseBody, "");
 		cleanRequestData(clientSocket, i);
 		return ;
 	}
@@ -398,7 +413,7 @@ void	ServerManager::receiveRequest(size_t& i)
 				closeConnection(clientSocket, i);
 			}
 			else if (bytesReceived == -1)
-				return ;
+				closeConnection(clientSocket, i);
 		}
 		if (this->_clientInfos[clientSocket].request.length() > totalLength)
 		{
@@ -517,6 +532,19 @@ bool	ServerManager::isPipeFd(int& fd)
 	return false;
 }
 
+void	ServerManager::checkChildprocessUptime(size_t& clientSocket)
+{
+	if (this->_clientInfos[clientSocket].childProcess.first == 0)
+		return;
+	float diff = std::time(nullptr) - this->_clientInfos[clientSocket].childProcess.second;
+	if (diff > 0.5)
+	{
+		kill(this->_clientInfos[clientSocket].childProcess.first, SIGTERM);
+		this->_clientInfos[clientSocket].ResponseReady = true;
+		this->_clientInfos[clientSocket].responseStatus = 415;
+	}
+}
+
 void	ServerManager::runServers()
 {
 	signal(SIGINT, sigint_handler);
@@ -534,6 +562,7 @@ void	ServerManager::runServers()
 			for (size_t i = 0; i < this->_poll_fds.size(); i++)
 			{
 				bool pipeFd = false;
+				checkChildprocessUptime(i);
 				if (this->_poll_fds[i].revents & POLLIN)
 				{
 					if (i < this->get_info().size())
@@ -546,7 +575,7 @@ void	ServerManager::runServers()
 					else
 						receiveRequest(i);
 				}
-				if (this->_poll_fds[i].revents & POLLOUT && this->_clientInfos[this->_poll_fds[i].fd].requestReceived == true
+				else if (this->_poll_fds[i].revents & POLLOUT && this->_clientInfos[this->_poll_fds[i].fd].requestReceived == true
 					&& pipeFd == false)
 					sendResponse(i);
 			}
