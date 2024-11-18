@@ -146,7 +146,7 @@ std::string Response::formatPostResponseMsg (int close){
 		timeOut = DEFAULT_TIMEOUT;
 	if (this->_httpVersion.empty())
 		this->_httpVersion = "HTTP/1.1";
-	if (this->_body.empty())
+	if (this->_body.empty() || this->_type.empty())
 	{
 		this->_sanitizeStatus = 204;
 		response = this->_httpVersion + " 204 No Content\r\n";
@@ -156,10 +156,10 @@ std::string Response::formatPostResponseMsg (int close){
 		setResponseBody(this->_body);
 		response = this->_httpVersion + " 200 OK\r\n";
 	}
-	if (this->_type.empty())
-		this->_type = "text/plain";
 	if (this->_sanitizeStatus == 200)
 	{
+		if (this->_type.empty())
+			this->_type = "text/html";
 		response += "Content-Type: " + this->_type + "\r\n";
 		response += "Content-Length: " + std::to_string(this->_responseBody.length()) + "\r\n";
 	}

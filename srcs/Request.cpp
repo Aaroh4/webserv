@@ -578,6 +578,8 @@ std::string	Request::getConnectionHeader(void)
 }
 std::string	Request::getCookie(void)
 {
+	if (this->_headers.empty())
+		return "";
 	if (this->_headers.find("Cookie") != this->_headers.end())
 		return this->_headers["Cookie"];
 	return "";
