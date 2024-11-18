@@ -106,7 +106,7 @@ void Response::respondGet(int clientfd, ServerInfo server)
 			this->_redirectplace = server.getlocationinfo()[this->_origLoc].redirection;
 		response = formatGetResponseMsg(0);
 		std::cout << "response: " << response << std::endl;
-		if (send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL) < response.length());
+		if (send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL) < 0)
 			throw SendErrorException();
 	}
 	else if (server.getlocationinfo()[this->_origLoc].dirList != false && server.getlocationinfo()[this->_origLoc].index.empty()
@@ -119,9 +119,9 @@ void Response::respondGet(int clientfd, ServerInfo server)
 	{
 		response = formatGetResponseMsg(0);
 		std::cout << "response: " << response << std::endl;
-		if (send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL) < response.length());
+		if (send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL) < 0)
 			throw SendErrorException();
-		if (send(clientfd, this->_responseBody.c_str(), this->_responseBody.length(), MSG_NOSIGNAL) < this->_responseBody.length());
+		if (send(clientfd, this->_responseBody.c_str(), this->_responseBody.length(), MSG_NOSIGNAL) < 0)
 			throw SendErrorException();
 	}
 }
@@ -131,7 +131,7 @@ void	Response::respondPost(int clientfd)
 	std::string response;
 
 	response = formatPostResponseMsg(0);
-	if (send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL) < response.length());
+	if (send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL) < 0)
 		throw SendErrorException();
 	std::cout << "Response to client: " << clientfd << std::endl;
 	std::cout << response << std::endl;
@@ -191,7 +191,7 @@ void Response::cgiResponse(int clientfd)
 	}
 	else
 		response = this->_responseBody;
-	if (send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL) < response.length());
+	if (send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL) < 0)
 		throw SendErrorException();
 	std::cout << "Response to client: " << clientfd << std::endl;
 	std::cout << response << std::endl;
@@ -225,7 +225,7 @@ void	Response::respondDelete(int clientfd)
 		response += formatSessionCookie();
 	response += "Connection: close\r\n\r\n";
 
-	if (send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL) < response.length());
+	if (send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL) < 0)
 		throw SendErrorException();
 	std::cout << "Response to client: " << clientfd << std::endl;
 	std::cout << response << std::endl;
@@ -241,9 +241,9 @@ void Response::directorylisting(int clientfd, std::string file)
 	this->_responseBody = file;
 	response = formatGetResponseMsg(0);
 	std::string responseWithoutFile = response;
-	if (send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL) < response.length());
+	if (send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL) < 0)
 		throw SendErrorException();
-	if (send(clientfd, file.c_str(), file.length(), MSG_NOSIGNAL) < file.length());
+	if (send(clientfd, file.c_str(), file.length(), MSG_NOSIGNAL) < 0)
 		throw SendErrorException();
 	std::cout << "Response to client: " << clientfd << std::endl;
 	std::cout << responseWithoutFile << std::endl;
@@ -388,7 +388,7 @@ int Response::ResponseException415::responseCode () const{
 	return (415);
 }
 
-const char* Response::ResponseException::what() const noexcept{
+const char* Response::SendErrorException::what() const noexcept{
 	return "Send failed";
 }
 
@@ -445,7 +445,7 @@ void Response::sendErrorPage(int statusCode, int clientfd, std::string body, std
 	std::string responseWithoutBody = response;
 	response += body;
 
-	if (send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL) < response.length());
+	if (send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL) < 0)
 		throw SendErrorException();
 	std::cout << "Response to client: " << clientfd << std::endl;
 	std::cout << responseWithoutBody << std::endl;
