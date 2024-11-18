@@ -370,6 +370,10 @@ void	Request::sanitize(ServerInfo server)
 			this->_origLoc = "/";
 			temp = "/";
 		}
+
+		if (this->_url.back() != '/' && std::filesystem::is_directory(this->_root + "/" + this->_url.substr(this->_origLoc.size(), std::string::npos)))
+			throw Response::ResponseException404();
+		
 		if (this->_checkAllowedMethods(server) == false)
 			throw Response::ResponseException405();
 		if (this->_type == "cgi/py" || this->_type == "cgi/php")
