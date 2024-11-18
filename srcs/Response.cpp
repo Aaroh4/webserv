@@ -110,7 +110,8 @@ void Response::respondGet(int clientfd, ServerInfo server)
 			throw SendErrorException();
 	}
 	else if (server.getlocationinfo()[this->_origLoc].dirList != false && server.getlocationinfo()[this->_origLoc].index.empty()
-        && std::filesystem::is_directory(this->_root + "/" + this->_url.substr(this->_origLoc.size(), std::string::npos)))
+        && std::filesystem::is_directory(this->_root + "/" + this->_url.substr(this->_origLoc.size(), std::string::npos))
+		&& this->_origLoc.back() == '/')
     {
         std::string tempdir = this->_root + "/" + this->_url.substr(this->_origLoc.size(), std::string::npos);
         this->directorylisting(clientfd, this->buildDirectorylist(tempdir, tempdir.size()));
