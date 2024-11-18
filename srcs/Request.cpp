@@ -364,6 +364,8 @@ void	Request::sanitize(ServerInfo server)
 		if (!server.getlocationinfo()[temp].root.empty()){
 			this->_root = server.getlocationinfo()[temp].root;
 			this->_origLoc = temp;
+			if (this->_url.back() != '/')
+				this->_origLoc = this->_origLoc.substr(0, this->_origLoc.size() - 1);
 		}
 		else{
 			this->_root = server.getlocationinfo()["/"].root;
