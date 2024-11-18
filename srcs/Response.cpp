@@ -388,6 +388,14 @@ int Response::ResponseException415::responseCode () const{
 	return (415);
 }
 
+const char* Response::ResponseException408::what() const noexcept{
+	return "Request Timeout";
+}
+
+int Response::ResponseException408::responseCode () const{
+	return (408);
+}
+
 const char* Response::SendErrorException::what() const noexcept{
 	return "Send failed";
 }
@@ -411,6 +419,9 @@ void Response::sendErrorPage(int statusCode, int clientfd, std::string body, std
 			break ;
 		case 404:
 			message = "Not Found";
+			break ;
+		case 408:
+			message = "Request Timeout";
 			break ;
 		case 501:
 			message = "Unsupported method";
