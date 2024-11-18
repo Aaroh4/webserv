@@ -1,0 +1,30 @@
+{-jos resposnsebody on tyhja niin 204 No content Post
+
+-Responsebody pitaisi tulla cgi getin mukana, pitaisi tehda uusi response suoraan cgille
+
+
+- if error, do remove connection!
+
+- Error response saataminen servermanageriin ja requestiin.
+
+
+- Kun error status vaihtuu niin response status tulis kans vaihtaa.
+
+- Request status pois ja korvaa responseStatuksella
+
+
+- 200toClose kesken: cgi response jaa hengailemaan ja post myos.
+
+
+- localhost:8080/html jattaa looppiin mainissa
+-
+
+-post pitaisi vastata bodyssa mita on syottanyt
+
+}
+
+
+UUSIA VIKOJA:
+- Errorpage kun vaihtuu niin response ei vaihdu. Kun 404 sivua vaihdetaan niin pitaisi paivittya vastaukseen.
+- Allowed-methods ei toimi. Pitaisi pystya asettamaan uploads on vain sallittu mista delete toimii ja asettaa se myos responsessa.
+-
