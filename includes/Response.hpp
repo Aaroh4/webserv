@@ -96,6 +96,12 @@ class Response: public Request
 					int responseCode () const override;
 			};
 
+			class SendErrorException: public std::exception
+			{
+				public:
+				    	const char *what() const noexcept;
+			};
+
 	private:
 			ServerInfo	_server;
 			std::string _redirectplace;
