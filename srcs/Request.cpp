@@ -283,7 +283,6 @@ void	Request::_decodeChunks(void)
 		}
 		catch(const std::exception& e)
 		{
-			std::cerr << e.what() << " stoi failed in _decodeChunks" << std::endl;
 			this->_sanitizeStatus = 500;
 			throw Response::ResponseException();
 		}
@@ -334,7 +333,6 @@ void	Request::parse(void)
 	}
 	catch(Response::ResponseException& e)
 	{
-		std::cerr << e.what() << " in Parse" << std::endl;
 		throw;
 	}
 }
@@ -364,6 +362,8 @@ void	Request::sanitize(ServerInfo server)
 		if (!server.getlocationinfo()[temp].root.empty()){
 			this->_root = server.getlocationinfo()[temp].root;
 			this->_origLoc = temp;
+			if (this->_url.back() != '/')
+				this->_origLoc = this->_origLoc.substr(0, this->_origLoc.size() - 1);
 		}
 		else{
 			this->_root = server.getlocationinfo()["/"].root;
@@ -408,7 +408,6 @@ void	Request::sanitize(ServerInfo server)
 			}
 		}
 	} catch (Response::ResponseException &e){
-			std::cerr << e.what() << " in sanitize"<< std::endl;
 			throw ;
 		}
 }
@@ -459,12 +458,10 @@ void Request::openFile(ServerInfo server)
 	}
 	}catch (Response::ResponseException &e)
 	{
-		std::cerr << e.what() << " ResponseExeption in OpenFile" << std::endl;
 		throw ;
 	}
 	catch (std::exception &e)
 	{
-		std::cerr << e.what() << " exception in OpenFile" << std::endl;
 		throw Response::ResponseException404();
 	}
 }
@@ -579,6 +576,8 @@ std::string	Request::getConnectionHeader(void)
 }
 std::string	Request::getCookie(void)
 {
+	if (this->_headers.empty())
+		return "";
 	if (this->_headers.find("Cookie") != this->_headers.end())
 		return this->_headers["Cookie"];
 	return "";

@@ -96,6 +96,21 @@ class Response: public Request
 					int responseCode () const override;
 			};
 
+			//Request Timeout
+			class ResponseException408: public ResponseException
+			{
+				public:
+					const char *what() const noexcept override;
+					int responseCode () const override;
+			};
+
+			//Exception if Send() has Failed
+			class SendErrorException: public std::exception
+			{
+				public:
+				    	const char *what() const noexcept;
+			};
+
 	private:
 			ServerInfo	_server;
 			std::string _redirectplace;

@@ -18,7 +18,7 @@ std::string toLowerCase(const std::string str)
 void locations(std::string temp, ServerInfo &server)
 {
 	std::vector<std::string> location_configs =
-	{"root:", "dir-listing:", "allowed-methods:", "upload:", "index:", 
+	{"root:", "dir-listing:", "allowed-methods:", "upload:", "index:",
 		"redirect:", "allowed-cgis:"};
 	std::unordered_set<std::string> all_methods =
 	{"GET", "POST", "DELETE", "HEAD"};
@@ -114,7 +114,7 @@ int bracketfinder(std::string configfile, std::string type, ServerInfo &server)
 	for (std::string line; std::getline(file, line);)
 	{
 		if (line.find("server") != std::string::npos && line.find("{") != std::string::npos)
-      		break; 
+      		break;
 		temp += line;
 	}
 	return (temp.size());
@@ -138,7 +138,8 @@ ServerInfo	config_server(std::string temp, ServerInfo &server)
 		{"500:"},
 		{"501:"},
 		{"505:"},
-		{"415:"}
+		{"415:"},
+		{"408:"}
 
 	};
 
@@ -224,6 +225,9 @@ ServerInfo	config_server(std::string temp, ServerInfo &server)
 						break;
 				case 13:
 						server.setErrorPage(415, value);
+						break;
+				case 14:
+						server.setErrorPage(408, value);
 						break;
 				default:
 						break;

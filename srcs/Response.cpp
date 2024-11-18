@@ -47,7 +47,6 @@ void Response::handleCRUD(int clientfd, ServerInfo server)
 		else
 			throw ResponseException405();
 	} catch (ResponseException &e){
-		std::cerr << e.what() << " in handleCRUD" << std::endl;
 		this->_sanitizeStatus = e.responseCode();
 		sendErrorPage(e.responseCode(), clientfd, "", this->_sessionId.empty() ? "" : this->_sessionId);
 	}
@@ -74,14 +73,12 @@ void	Response::respond(int clientfd, ServerInfo server)
 				throw ResponseException();
 		}
 	} catch(ResponseException& e) {
-		std::cerr << e.what() << " in respond" << std::endl;
 		sendErrorPage(e.responseCode(), clientfd,"", this->_sessionId.empty() ? "" : this->_sessionId);
 		return ;
 	}
 	try{
 		handleCRUD(clientfd, server);
 	} catch(ResponseException& e){
-		std::cerr << e.what() << " in respond" << std::endl;
 		this->_sanitizeStatus = e.responseCode();
 		sendErrorPage(e.responseCode(), clientfd, "", this->_sessionId.empty() ? "" : this->_sessionId);
 		return ;
@@ -109,7 +106,8 @@ void Response::respondGet(int clientfd, ServerInfo server)
 			this->_redirectplace = server.getlocationinfo()[this->_origLoc].redirection;
 		response = formatGetResponseMsg(0);
 		std::cout << "response: " << response << std::endl;
-		send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL);
+		if (send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL) < 0)
+			throw SendErrorException();
 	}
 	else if (server.getlocationinfo()[this->_origLoc].dirList != false && server.getlocationinfo()[this->_origLoc].index.empty()
         && std::filesystem::is_directory(this->_root + "/" + this->_url.substr(this->_origLoc.size(), std::string::npos)))
@@ -121,8 +119,10 @@ void Response::respondGet(int clientfd, ServerInfo server)
 	{
 		response = formatGetResponseMsg(0);
 		std::cout << "response: " << response << std::endl;
-		send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL);
-		send(clientfd, this->_responseBody.c_str(), this->_responseBody.length(), MSG_NOSIGNAL);
+		if (send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL) < 0)
+			throw SendErrorException();
+		if (send(clientfd, this->_responseBody.c_str(), this->_responseBody.length(), MSG_NOSIGNAL) < 0)
+			throw SendErrorException();
 	}
 }
 
@@ -131,7 +131,8 @@ void	Response::respondPost(int clientfd)
 	std::string response;
 
 	response = formatPostResponseMsg(0);
-	send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL);
+	if (send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL) < 0)
+		throw SendErrorException();
 	std::cout << "Response to client: " << clientfd << std::endl;
 	std::cout << response << std::endl;
 }
@@ -145,7 +146,7 @@ std::string Response::formatPostResponseMsg (int close){
 		timeOut = DEFAULT_TIMEOUT;
 	if (this->_httpVersion.empty())
 		this->_httpVersion = "HTTP/1.1";
-	if (this->_body.empty())
+	if (this->_body.empty() || this->_type.empty())
 	{
 		this->_sanitizeStatus = 204;
 		response = this->_httpVersion + " 204 No Content\r\n";
@@ -155,10 +156,10 @@ std::string Response::formatPostResponseMsg (int close){
 		setResponseBody(this->_body);
 		response = this->_httpVersion + " 200 OK\r\n";
 	}
-	if (this->_type.empty())
-		this->_type = "text/plain";
 	if (this->_sanitizeStatus == 200)
 	{
+		if (this->_type.empty())
+			this->_type = "text/html";
 		response += "Content-Type: " + this->_type + "\r\n";
 		response += "Content-Length: " + std::to_string(this->_responseBody.length()) + "\r\n";
 	}
@@ -190,7 +191,8 @@ void Response::cgiResponse(int clientfd)
 	}
 	else
 		response = this->_responseBody;
-	send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL);
+	if (send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL) < 0)
+		throw SendErrorException();
 	std::cout << "Response to client: " << clientfd << std::endl;
 	std::cout << response << std::endl;
 
@@ -223,7 +225,8 @@ void	Response::respondDelete(int clientfd)
 		response += formatSessionCookie();
 	response += "Connection: close\r\n\r\n";
 
-	send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL);
+	if (send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL) < 0)
+		throw SendErrorException();
 	std::cout << "Response to client: " << clientfd << std::endl;
 	std::cout << response << std::endl;
 }
@@ -238,8 +241,10 @@ void Response::directorylisting(int clientfd, std::string file)
 	this->_responseBody = file;
 	response = formatGetResponseMsg(0);
 	std::string responseWithoutFile = response;
-	send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL);
-	send(clientfd, file.c_str(), file.length(), MSG_NOSIGNAL);
+	if (send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL) < 0)
+		throw SendErrorException();
+	if (send(clientfd, file.c_str(), file.length(), MSG_NOSIGNAL) < 0)
+		throw SendErrorException();
 	std::cout << "Response to client: " << clientfd << std::endl;
 	std::cout << responseWithoutFile << std::endl;
 }
@@ -383,6 +388,18 @@ int Response::ResponseException415::responseCode () const{
 	return (415);
 }
 
+const char* Response::ResponseException408::what() const noexcept{
+	return "Request Timeout";
+}
+
+int Response::ResponseException408::responseCode () const{
+	return (408);
+}
+
+const char* Response::SendErrorException::what() const noexcept{
+	return "Send failed";
+}
+
 void Response::sendErrorPage(int statusCode, int clientfd, std::string body, std::string cookie)
 {
 	std::string response;
@@ -401,6 +418,9 @@ void Response::sendErrorPage(int statusCode, int clientfd, std::string body, std
 			break ;
 		case 404:
 			message = "Not Found";
+			break ;
+		case 408:
+			message = "Request Timeout";
 			break ;
 		case 501:
 			message = "Unsupported method";
@@ -435,7 +455,8 @@ void Response::sendErrorPage(int statusCode, int clientfd, std::string body, std
 	std::string responseWithoutBody = response;
 	response += body;
 
-	send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL);
+	if (send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL) < 0)
+		throw SendErrorException();
 	std::cout << "Response to client: " << clientfd << std::endl;
 	std::cout << responseWithoutBody << std::endl;
 }

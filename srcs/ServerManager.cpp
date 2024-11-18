@@ -74,7 +74,6 @@ void	ServerManager::addNewConnection(size_t& i)
 	}
 	catch (Response::ResponseException &e)
 	{
-		std::cerr << e.what() << " in addNewConnection" << std::endl;
 		this->_clientInfos[clientSocket].responseStatus = 500;
 		this->_clientInfos[clientSocket].requestReceived = true;
 		throw ;
@@ -97,7 +96,6 @@ void	ServerManager::addPollFd(int pipeFd)
 	}
 	catch (Response::ResponseException &e)
 	{
-		std::cerr << e.what() << " in addPipeFd"<< std::endl;
 		throw ;
 	}
 }
@@ -118,7 +116,6 @@ size_t	ServerManager::findLastChunk(std::string& request, size_t start_pos)
 		}
 		catch(const std::exception& e)
 		{
-			std::cerr << e.what() << " stoi failed in findLastChunk" << std::endl;
 			throw Response::ResponseException();
 		}
 		start_pos = pos;
@@ -156,7 +153,6 @@ size_t	ServerManager::getRequestLength(std::string& request)
 	}
 	catch(const std::exception& e)
 	{
-		std::cerr << e.what() << " in getRequestLength" << std::endl;
 		throw Response::ResponseException();
 	}
 	return totalLength;
@@ -222,7 +218,12 @@ void	ServerManager::sendResponse(size_t& i)
 
 	if (this->_clientInfos[clientSocket].responseStatus != 0 && this->_clientInfos[clientSocket].ResponseReady == true)
 	{
-		Response::sendErrorPage(this->_clientInfos[clientSocket].responseStatus, clientSocket, this->_clientInfos[clientSocket].ResponseBody, "");
+		try {
+			Response::sendErrorPage(this->_clientInfos[clientSocket].responseStatus, clientSocket, this->_clientInfos[clientSocket].ResponseBody, "");
+		} catch (Response::SendErrorException &e){
+			std::cerr << e.what() << std::endl;
+			this->_clientInfos[clientSocket].responseStatus = 500;
+		}
 		cleanRequestData(clientSocket, i);
 		return ;
 	}
@@ -240,13 +241,23 @@ void	ServerManager::sendResponse(size_t& i)
 		{
 			Response respond(*this->_clientInfos[clientSocket].req);
 			respond.setResponseBody(this->_clientInfos[clientSocket].ResponseBody);
-			respond.respond(clientSocket, this->_info[this->_connections.at(clientSocket)]);
+			try{
+				respond.respond(clientSocket, this->_info[this->_connections.at(clientSocket)]);
+			}catch (Response::SendErrorException &e){
+				std::cerr << e.what() << std::endl;
+				this->_clientInfos[clientSocket].responseStatus = 500;
+			}
 			this->_clientInfos[clientSocket].req->setSanitizeStatus(respond.getSanitizeStatus());
 		}
 		else
 		{
 			Response respond(*this->_clientInfos[clientSocket].req);
-			respond.respond(clientSocket, this->_info[this->_connections.at(clientSocket)]);
+			try{
+				respond.respond(clientSocket, this->_info[this->_connections.at(clientSocket)]);
+			} catch (Response::SendErrorException &e){
+				std::cerr << e.what() << std::endl;
+				this->_clientInfos[clientSocket].responseStatus = 500;
+		}
 			this->_clientInfos[clientSocket].req->setSanitizeStatus(respond.getSanitizeStatus());
 		}
 		cleanRequestData(clientSocket, i);
@@ -287,7 +298,6 @@ void ServerManager::cleanRequestData(int clientSocket, size_t& i)
 			closeConnection(clientSocket, i);
 		this->_clientInfos[clientSocket].failedToReceiveRequest = false;
 	} catch(const std::exception& e) {
-		std::cout << e.what() <<" in request cleanup" << std::endl;
 	}
 }
 
@@ -317,7 +327,6 @@ bool	ServerManager::checkConnectionUptime(int& clientSocket)
 				return true;
 		}
 	} catch (std::exception& e) {
-		std::cerr << e.what() << "in ConnectionUpTime" << std::endl;
 	}
 	return false;
 }
@@ -366,7 +375,6 @@ void	ServerManager::handleRequest(int& clientSocket)
 			handleFd(clientSocket);
 		}
 	} catch (Response::ResponseException &e){
-		std::cerr << e.what()<< " in receiveRequest" << std::endl;
 		this->_clientInfos[clientSocket].responseStatus = e.responseCode();
 		this->_clientInfos[clientSocket].req->openErrorFile(this->_info[this->_connections[clientSocket]], e.responseCode());
 		handleFd(clientSocket);
@@ -421,7 +429,6 @@ void	ServerManager::receiveRequest(size_t& i)
 			throw Response::ResponseException400();
 		}
 	} catch (Response::ResponseException &e){
-		std::cerr << e.what() << " in first part of receiveRequest"<< std::endl;
 		this->_clientInfos[clientSocket].responseStatus = e.responseCode();
 		this->_clientInfos[clientSocket].ResponseReady = true;
 		this->_clientInfos[clientSocket].requestReceived = true;
@@ -435,7 +442,6 @@ void	ServerManager::receiveRequest(size_t& i)
 		{
 			handleRequest(clientSocket);
 		} catch (Response::ResponseException &e){
-			std::cerr << e.what() << " in receiveRequest"<< std::endl;
 			throw;
 		} catch (std::exception &e){
 			throw;
@@ -486,7 +492,7 @@ int	ServerManager::checkForCgi(Request& req, int& clientSocket)
 			timeOut += DEFAULT_TIMEOUT;
 		else
 			timeOut += temp;
-			
+
 		if (contentLen.empty())
 			length = "CONTENT_LENGTH=" + contentLen;
 		else
@@ -515,7 +521,6 @@ int	ServerManager::checkForCgi(Request& req, int& clientSocket)
 		}
 		catch (std::exception& e)
 		{
-			std::cerr << e.what() << " in checkForCgi" << std::endl;
 			throw Response::ResponseException();
 		}
 	}
@@ -580,7 +585,6 @@ void	ServerManager::runServers()
 					sendResponse(i);
 			}
 		} catch (std::exception &e){
-			std::cerr << "Mainloop catched an error " << e.what() << std::endl;
 		}
 	}
 }
