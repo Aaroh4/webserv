@@ -4,6 +4,9 @@
 import cgi
 import os
 
+while True:
+    continue
+
 file_path = "www/data/strings.txt"
 
 form = cgi.FieldStorage()

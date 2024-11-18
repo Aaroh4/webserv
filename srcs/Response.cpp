@@ -106,7 +106,8 @@ void Response::respondGet(int clientfd, ServerInfo server)
 			this->_redirectplace = server.getlocationinfo()[this->_origLoc].redirection;
 		response = formatGetResponseMsg(0);
 		std::cout << "response: " << response << std::endl;
-		send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL);
+		if (send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL) < response.length());
+			throw SendErrorException();
 	}
 	else if (server.getlocationinfo()[this->_origLoc].dirList != false && server.getlocationinfo()[this->_origLoc].index.empty()
         && std::filesystem::is_directory(this->_root + "/" + this->_url.substr(this->_origLoc.size(), std::string::npos)))
@@ -118,8 +119,10 @@ void Response::respondGet(int clientfd, ServerInfo server)
 	{
 		response = formatGetResponseMsg(0);
 		std::cout << "response: " << response << std::endl;
-		send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL);
-		send(clientfd, this->_responseBody.c_str(), this->_responseBody.length(), MSG_NOSIGNAL);
+		if (send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL) < response.length());
+			throw SendErrorException();
+		if (send(clientfd, this->_responseBody.c_str(), this->_responseBody.length(), MSG_NOSIGNAL) < this->_responseBody.length());
+			throw SendErrorException();
 	}
 }
 
@@ -128,7 +131,8 @@ void	Response::respondPost(int clientfd)
 	std::string response;
 
 	response = formatPostResponseMsg(0);
-	send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL);
+	if (send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL) < response.length());
+		throw SendErrorException();
 	std::cout << "Response to client: " << clientfd << std::endl;
 	std::cout << response << std::endl;
 }
@@ -187,7 +191,8 @@ void Response::cgiResponse(int clientfd)
 	}
 	else
 		response = this->_responseBody;
-	send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL);
+	if (send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL) < response.length());
+		throw SendErrorException();
 	std::cout << "Response to client: " << clientfd << std::endl;
 	std::cout << response << std::endl;
 
@@ -220,7 +225,8 @@ void	Response::respondDelete(int clientfd)
 		response += formatSessionCookie();
 	response += "Connection: close\r\n\r\n";
 
-	send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL);
+	if (send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL) < response.length());
+		throw SendErrorException();
 	std::cout << "Response to client: " << clientfd << std::endl;
 	std::cout << response << std::endl;
 }
@@ -235,8 +241,10 @@ void Response::directorylisting(int clientfd, std::string file)
 	this->_responseBody = file;
 	response = formatGetResponseMsg(0);
 	std::string responseWithoutFile = response;
-	send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL);
-	send(clientfd, file.c_str(), file.length(), MSG_NOSIGNAL);
+	if (send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL) < response.length());
+		throw SendErrorException();
+	if (send(clientfd, file.c_str(), file.length(), MSG_NOSIGNAL) < file.length());
+		throw SendErrorException();
 	std::cout << "Response to client: " << clientfd << std::endl;
 	std::cout << responseWithoutFile << std::endl;
 }
@@ -380,6 +388,10 @@ int Response::ResponseException415::responseCode () const{
 	return (415);
 }
 
+const char* Response::ResponseException::what() const noexcept{
+	return "Send failed";
+}
+
 void Response::sendErrorPage(int statusCode, int clientfd, std::string body, std::string cookie)
 {
 	std::string response;
@@ -433,7 +445,8 @@ void Response::sendErrorPage(int statusCode, int clientfd, std::string body, std
 	std::string responseWithoutBody = response;
 	response += body;
 
-	send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL);
+	if (send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL) < response.length());
+		throw SendErrorException();
 	std::cout << "Response to client: " << clientfd << std::endl;
 	std::cout << responseWithoutBody << std::endl;
 }

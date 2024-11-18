@@ -203,7 +203,12 @@ void	ServerManager::sendResponse(size_t& i)
 
 	if (this->_clientInfos[clientSocket].responseStatus != 0 && this->_clientInfos[clientSocket].ResponseReady == true)
 	{
-		Response::sendErrorPage(this->_clientInfos[clientSocket].responseStatus, clientSocket, this->_clientInfos[clientSocket].ResponseBody, this->_clientInfos[clientSocket].req->getCookie());
+		try {
+			Response::sendErrorPage(this->_clientInfos[clientSocket].responseStatus, clientSocket, this->_clientInfos[clientSocket].ResponseBody, this->_clientInfos[clientSocket].req->getCookie());
+		} catch (Response::SendErrorException &e){
+			std::cerr << e.what() << std::endl;
+			this->_clientInfos[clientSocket].responseStatus = 500;
+		}
 		cleanRequestData(clientSocket, i);
 		return ;
 	}
@@ -221,13 +226,23 @@ void	ServerManager::sendResponse(size_t& i)
 		{
 			Response respond(*this->_clientInfos[clientSocket].req);
 			respond.setResponseBody(this->_clientInfos[clientSocket].ResponseBody);
-			respond.respond(clientSocket, this->_info[this->_connections.at(clientSocket)]);
+			try{
+				respond.respond(clientSocket, this->_info[this->_connections.at(clientSocket)]);
+			}catch (Response::SendErrorException &e){
+				std::cerr << e.what() << std::endl;
+				this->_clientInfos[clientSocket].responseStatus = 500;
+			}
 			this->_clientInfos[clientSocket].req->setSanitizeStatus(respond.getSanitizeStatus());
 		}
 		else
 		{
 			Response respond(*this->_clientInfos[clientSocket].req);
-			respond.respond(clientSocket, this->_info[this->_connections.at(clientSocket)]);
+			try{
+				respond.respond(clientSocket, this->_info[this->_connections.at(clientSocket)]);
+			} catch (Response::SendErrorException &e){
+				std::cerr << e.what() << std::endl;
+				this->_clientInfos[clientSocket].responseStatus = 500;
+		}
 			this->_clientInfos[clientSocket].req->setSanitizeStatus(respond.getSanitizeStatus());
 		}
 		cleanRequestData(clientSocket, i);
