@@ -546,7 +546,7 @@ void	ServerManager::checkChildprocessUptime(size_t& clientSocket)
 	{
 		kill(this->_clientInfos[clientSocket].childProcess.first, SIGTERM);
 		this->_clientInfos[clientSocket].ResponseReady = true;
-		this->_clientInfos[clientSocket].responseStatus = 415;
+		this->_clientInfos[clientSocket].responseStatus = 408;
 	}
 }
 

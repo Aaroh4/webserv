@@ -63,6 +63,8 @@ void	Response::respond(int clientfd, ServerInfo server)
 				throw ResponseException400();
 			case 403:
 				throw ResponseException403();
+			case 408:
+				throw ResponseException408();
 			case 501:
 				throw ResponseException501();
 			case 505:
