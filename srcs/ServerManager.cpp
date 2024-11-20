@@ -192,14 +192,23 @@ void	ServerManager::runCgi(std::string path, char** envp, int& clientSocket)
 	{
 		close(pipeFd[1]);
 		int	status;
-		int result = waitpid(pid, &status, WNOHANG);
+		int result = 0;
+		float timeout = 50000.0f;
+		float timePassed = 0.0;
+		
+		while (result == 0 && timePassed < timeout) {
+			result = waitpid(pid, &status, WNOHANG);
+			timePassed += 0.1;
+		}
+		if (timePassed >= timeout)
+		{
+			kill(pid, SIGKILL);
+			this->_clientInfos[clientSocket].ResponseReady = true;
+			this->_clientInfos[clientSocket].responseStatus = 408;
+		}
 		if  (result == -1)
 		{
 			throw std::runtime_error("waitpid() failed");
-		}
-		else if (result == 0)
-		{
-			this->_clientInfos[clientSocket].childProcess = {pid, std::time(nullptr)};
 		}
 		pathIndex = path.find("www");
 		if (chdir(path.substr(0, pathIndex).c_str()) == -1)
@@ -537,19 +546,6 @@ bool	ServerManager::isPipeFd(int& fd)
 	return false;
 }
 
-void	ServerManager::checkChildprocessUptime(size_t& clientSocket)
-{
-	if (this->_clientInfos[clientSocket].childProcess.first == 0)
-		return;
-	float diff = std::time(nullptr) - this->_clientInfos[clientSocket].childProcess.second;
-	if (diff > 0.5)
-	{
-		kill(this->_clientInfos[clientSocket].childProcess.first, SIGTERM);
-		this->_clientInfos[clientSocket].ResponseReady = true;
-		this->_clientInfos[clientSocket].responseStatus = 408;
-	}
-}
-
 void	ServerManager::runServers()
 {
 	signal(SIGINT, sigint_handler);
@@ -567,7 +563,6 @@ void	ServerManager::runServers()
 			for (size_t i = 0; i < this->_poll_fds.size(); i++)
 			{
 				bool pipeFd = false;
-				checkChildprocessUptime(i);
 				if (this->_poll_fds[i].revents & POLLIN)
 				{
 					if (i < this->get_info().size())

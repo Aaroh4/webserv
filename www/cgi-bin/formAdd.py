@@ -3,7 +3,7 @@ import cgi
 import os
 
 # Define the file path
-file_path = "www/data/strings.txt"
+file_path = "../data/strings.txt"
 
 # Ensure the directory exists
 os.makedirs(os.path.dirname(file_path), exist_ok=True)
@@ -12,7 +12,6 @@ os.makedirs(os.path.dirname(file_path), exist_ok=True)
 form = cgi.FieldStorage()
 name = form.getvalue('input', '')
 timeout = os.environ.get("TIMEOUT", "10")
-
 # Open the file in append mode, create it if it doesn't exist
 with open(file_path, 'a') as file:
     file.write(f"{name}\n")
