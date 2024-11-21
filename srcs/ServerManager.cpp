@@ -193,22 +193,28 @@ void	ServerManager::runCgi(std::string path, char** envp, int& clientSocket)
 		close(pipeFd[1]);
 		int	status;
 		int result = 0;
-		float timeout = 50000.0f;
-		float timePassed = 0.0;
-		
-		while (result == 0 && timePassed < timeout) {
+		float timeout = 500.0f;
+
+		auto start = std::chrono::high_resolution_clock::now();
+
+		while (result == 0) 
+		{
 			result = waitpid(pid, &status, WNOHANG);
-			timePassed += 0.1;
-		}
-		if (timePassed >= timeout)
-		{
-			kill(pid, SIGKILL);
-			this->_clientInfos[clientSocket].ResponseReady = true;
-			this->_clientInfos[clientSocket].responseStatus = 408;
-		}
-		if  (result == -1)
-		{
-			throw std::runtime_error("waitpid() failed");
+			if  (result == -1)
+				throw std::runtime_error("waitpid() failed");
+
+			auto now = std::chrono::high_resolution_clock::now();
+			std::chrono::duration<float> elapsed = now - start;
+			float timePassed = elapsed.count() * 1000.0f;
+
+			if (timePassed >= timeout) 
+			{
+				kill(pid, SIGKILL);
+				
+				this->_clientInfos[clientSocket].ResponseReady = true;
+				this->_clientInfos[clientSocket].responseStatus = 408;
+				break;
+			}
 		}
 		pathIndex = path.find("www");
 		if (chdir(path.substr(0, pathIndex).c_str()) == -1)
