@@ -197,7 +197,7 @@ void	ServerManager::runCgi(std::string path, char** envp, int& clientSocket)
 
 		auto start = std::chrono::high_resolution_clock::now();
 
-		while (result == 0) 
+		while (result == 0)
 		{
 			result = waitpid(pid, &status, WNOHANG);
 			if  (result == -1)
@@ -207,13 +207,19 @@ void	ServerManager::runCgi(std::string path, char** envp, int& clientSocket)
 			std::chrono::duration<float> elapsed = now - start;
 			float timePassed = elapsed.count() * 1000.0f;
 
-			if (timePassed >= timeout) 
+			if (timePassed >= timeout)
 			{
 				kill(pid, SIGKILL);
-				
+
 				this->_clientInfos[clientSocket].ResponseReady = true;
 				this->_clientInfos[clientSocket].responseStatus = 408;
 				break;
+			}
+
+			if (WIFEXITED(status) && WEXITSTATUS(status) != 0)
+			{
+				this->_clientInfos[clientSocket].responseStatus = 500;
+				this->_clientInfos[clientSocket].ResponseReady = true;
 			}
 		}
 		pathIndex = path.find("www");
@@ -481,6 +487,10 @@ void	ServerManager::readFromFd(const int& fd)
 		close(fd);
 		int clientSocket = this->_clientPipe[fd];
 		this->_clientInfos[clientSocket].ResponseBody.append(buffer, nbytes);
+		if (this->_clientInfos[clientSocket].ResponseBody.empty())
+		{
+			this->_clientInfos[clientSocket].responseStatus = 408;
+		}
 		this->_clientInfos[clientSocket].ResponseReady = true;
 		this->_clientPipe.erase(fd);
 	}
