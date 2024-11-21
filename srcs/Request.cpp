@@ -55,10 +55,7 @@ Request& Request::operator=(Request const& src)
 		this->_sessionId = src._sessionId;
 		this->_bodyLimit = src._bodyLimit;
 		this->_filefd = src._filefd;
-		for (const auto& map_content : src._headers)
-		{
-			this->_headers[map_content.first] = map_content.second;
-		}
+		this->_headers = src._headers;
 	}
 	return *this;
 }
@@ -401,7 +398,7 @@ void	Request::sanitize(ServerInfo server)
 			this->_sanitizeStatus = 400;
 			throw Response::ResponseException400();
 		}
-		for (const auto& map_content : this->_headers)
+		for (const std::unordered_map<std::string, std::string>::iterator::value_type& map_content : this->_headers)
 		{
 			if (map_content.first.find_first_of("&;|`<>()#") != std::string::npos || map_content.first.length() > INT_MAX)
 			{

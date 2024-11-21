@@ -257,7 +257,7 @@ std::string Response::buildDirectorylist(std::string name, int rootsize)
 	std::string	directory;
 	directory += "<!DOCTYPE html>\n <html lang=\"en\">\n <head>\n </head>\n <body bgColor=\"#76ad0e\">\n";
 	directory += " <h1>Directory listing<h1>\n <h1>[---------------------]</h1>\n <ol>\n";
-	for (const auto & entry : std::filesystem::directory_iterator(name))
+	for (const std::filesystem::__cxx11::directory_entry & entry : std::filesystem::directory_iterator(name))
 	{
 		if (entry.is_directory())
 			directory += "<li><a href=" + this->_url + entry.path().string().erase(0, rootsize) + "/>" + entry.path().string().erase(0, rootsize) + "/" + "</a> </li>" + "\n";

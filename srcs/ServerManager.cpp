@@ -41,7 +41,7 @@ ServerManager::~ServerManager()
 {
 	for (size_t i = 0; i < _poll_fds.size(); i++)
 		close(_poll_fds[i].fd);
-	for (auto& it: this->_clientInfos)
+	for (std::unordered_map<int, t_clientInfo>::iterator::value_type& it: this->_clientInfos)
 	{
 		close(it.first);
 		close(it.second.pipeFd);
@@ -194,7 +194,7 @@ void	ServerManager::runCgi(std::string path, char** envp, int& clientSocket)
 		int	status;
 		int result = 0;
 
-		auto start = std::chrono::high_resolution_clock::now();
+		std::chrono::_V2::system_clock::time_point start = std::chrono::high_resolution_clock::now();
 
 		while (result == 0)
 		{
@@ -202,7 +202,7 @@ void	ServerManager::runCgi(std::string path, char** envp, int& clientSocket)
 			if  (result == -1)
 				throw std::runtime_error("waitpid() failed");
 
-			auto now = std::chrono::high_resolution_clock::now();
+			std::chrono::_V2::system_clock::time_point now = std::chrono::high_resolution_clock::now();
 			std::chrono::duration<float> elapsed = now - start;
 			float timePassed = elapsed.count() * 1000.0f;
 
@@ -294,7 +294,7 @@ void ServerManager::cleanRequestData(int clientSocket, size_t& i)
 		if (!pipeFd && this->_clientInfos[clientSocket].failedToReceiveRequest == false)
 			pipeFd = this->_clientInfos[clientSocket].req->getFileFD();
 		if (pipeFd){
-			for (auto it = this->_poll_fds.begin(); it != this->_poll_fds.end();){
+			for (std::vector<pollfd>::iterator it = this->_poll_fds.begin(); it != this->_poll_fds.end();){
 				if (it->fd == pipeFd)
 					it = this->_poll_fds.erase(it);
 				else
