@@ -12,6 +12,7 @@
 #include <arpa/inet.h>
 #include <fcntl.h>
 #define DEFAULT "test1.cfg"
+#define TIMEOUT 500.0f
 
 typedef struct s_clientInfo
 {

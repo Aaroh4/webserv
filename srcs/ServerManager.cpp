@@ -193,7 +193,6 @@ void	ServerManager::runCgi(std::string path, char** envp, int& clientSocket)
 		close(pipeFd[1]);
 		int	status;
 		int result = 0;
-		float timeout = 500.0f;
 
 		auto start = std::chrono::high_resolution_clock::now();
 
@@ -207,7 +206,7 @@ void	ServerManager::runCgi(std::string path, char** envp, int& clientSocket)
 			std::chrono::duration<float> elapsed = now - start;
 			float timePassed = elapsed.count() * 1000.0f;
 
-			if (timePassed >= timeout)
+			if (timePassed >= TIMEOUT)
 			{
 				kill(pid, SIGKILL);
 
