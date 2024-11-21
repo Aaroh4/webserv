@@ -476,7 +476,7 @@ void	ServerManager::readFromFd(const int& fd)
 		this->_clientPipe.erase(fd);
 		throw std::runtime_error("read() failed");
 	}
-	else if (nbytes == 0 || nbytes < 8192)
+	else if (nbytes < 8192)
 	{
 		close(fd);
 		int clientSocket = this->_clientPipe[fd];
