@@ -124,7 +124,7 @@ size_t	ServerManager::findLastChunk(std::string& request, size_t start_pos)
 	return pos + 4;
 }
 
-size_t	ServerManager::getRequestLength(std::string& request)
+size_t	ServerManager::getRequestLength(std::string& request, int& clientSocket)
 {
 	size_t	end = request.find("\r\n\r\n");
 	if (end == std::string::npos)
@@ -134,10 +134,32 @@ size_t	ServerManager::getRequestLength(std::string& request)
 	size_t	content_length = 0;
 	size_t	totalLength = 0;
 	size_t	start = request.find("Content-Length: ");
-
 	try
 	{
-		if (request.substr(0, 4) == "GET " || request.substr(0, 7) == "DELETE " )
+		size_t index = request.find(" ");
+		if (index == std::string::npos)
+		{
+			this->_clientInfos[clientSocket].responseStatus = 501;
+			this->_clientInfos[clientSocket].failedToReceiveRequest = true;
+			throw Response::ResponseException501();
+		}
+		std::string method = request.substr(0, index);
+		const char* methods[3] = {"GET", "POST", "DELETE"};
+
+		for (index = 0; index < 3; index++)
+		{
+			if (method == methods[index])
+			{
+				break;
+			}
+		}
+		if (index == 3)
+		{
+			this->_clientInfos[clientSocket].responseStatus = 501;
+			this->_clientInfos[clientSocket].failedToReceiveRequest = true;
+			throw Response::ResponseException501();
+		}
+		if (method == "GET" || request.substr(0, 7) == "DELETE" )
 			return headers_length;
 		else if (start != std::string::npos)
 		{
@@ -153,7 +175,7 @@ size_t	ServerManager::getRequestLength(std::string& request)
 	}
 	catch(const std::exception& e)
 	{
-		throw Response::ResponseException();
+		throw;// Response::ResponseException();
 	}
 	return totalLength;
 }
@@ -426,7 +448,7 @@ void	ServerManager::receiveRequest(size_t& i)
 				this->_clientInfos[clientSocket].request.append(buffer, bytesReceived);
 				if (totalLength == 0)
 				{
-					this->_clientInfos[clientSocket].requestLength = getRequestLength(this->_clientInfos[clientSocket].request);
+					this->_clientInfos[clientSocket].requestLength = getRequestLength(this->_clientInfos[clientSocket].request, clientSocket);
 					totalLength = this->_clientInfos[clientSocket].requestLength;
 				}
 				if ((bytesReceived < 1024 && totalLength == 0)

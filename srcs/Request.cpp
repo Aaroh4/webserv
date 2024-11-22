@@ -183,23 +183,10 @@ void	Request::_getContentType(void)
 void	Request::_parseRequestLine(void)
 {
 	//Parses method and put's it to string attribute _method, then erases it from the request
-	const char* methods[3] = {"GET", "POST", "DELETE"};
 	size_t i = this->_request.find_first_of(" ");
 	this->_method = this->_request.substr(0, i);
 	size_t index;
 
-	for (index = 0; index < 3; index++)
-	{
-		if (this->_method == methods[index])
-		{
-			break;
-		}
-	}
-	if (index == 3)
-	{
-		this->_sanitizeStatus = 501;
-		throw Response::ResponseException501();
-	}
 	this->_request.erase(0, this->_method.length() + 1);
 
 	//Parses URI and put's it to string attribute _url, then erases it from the request
