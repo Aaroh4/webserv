@@ -281,6 +281,8 @@ void	ServerManager::sendResponse(size_t& i)
 		}
 		cleanRequestData(clientSocket, i);
 	}
+	else
+		closeConnection(clientSocket, i);
 }
 
 void ServerManager::cleanRequestData(int clientSocket, size_t& i)
