@@ -4,6 +4,8 @@
 #include "ServerInfo.hpp"
 #include <unistd.h>
 #include <random>
+#define MAX_URL_LENGTH 1000
+#define MAX_HEADER_LENGTH 1000
 
 class Request
 {

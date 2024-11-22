@@ -159,7 +159,6 @@ void	Request::_verifyPath(void)
 void	Request::_getContentType(void)
 {
 	//Parses File type from url and set's the return content type to string attribute _type
-
 	size_t	i = this->_url.find_last_of(".");
 	if (i != std::string::npos)
 	{
@@ -217,7 +216,10 @@ void	Request::_parseRequestLine(void)
 		this->_url = this->_request.substr(0, index);
 		this->_request.erase(0, this->_url.length() + 1);
 	}
-
+	if (this->_url.length() > MAX_URL_LENGTH)
+	{
+		std::cout << "PROBLEMS SPOTTED!!!\n";
+	}
 	//Checks if there was query string attached to URI and if there was put's it to _queryString attribute, then erases it from the request
 
 	if (this->_request.find("?") == 0)
@@ -234,14 +236,22 @@ void	Request::_parseRequestLine(void)
 	i = this->_request.find_first_of("\r\n");
 	this->_httpVersion = this->_request.substr(0, i);
 	this->_request.erase(0, this->_httpVersion.length() + 2);
+	if (this->_httpVersion != "HTTP/1.1")
+	{
+		std::cout << "NONOO WROONK HTTP!!!\n";
+	}
 }
 
 void	Request::_parseHeaders(void)
 {
 	//Parses headers line by line and adds the header(before :) and value (after :) to map container attribute _headers
+	if (this->_request.find_first_not_of("\r\n") == std::string::npos)
+		return;
 	std::string line;
 	std::stringstream request(this->_request);
 	size_t	i = 0;
+	std::string key;
+	std::string value;
 
 	while (line != "\r\n\r\n")
 	{
@@ -249,11 +259,20 @@ void	Request::_parseHeaders(void)
 		i = line.find_first_of(":");
 		if (i == std::string::npos)
 			break ;
-		this->_headers[line.substr(0, i)] = line.substr(i + 2, (line.length() - (i + 3)));
+		key = line.substr(0, i);
+		value = line.substr(i + 2, (line.length() - (i + 3)));
+		if (key.length() > MAX_HEADER_LENGTH || value.length() > MAX_HEADER_LENGTH)
+		{
+			std::cout << "HEADERS ARE FUCKED!!!\n";
+		}
+		this->_headers[key] = value;
 	}
 	size_t bodyStart = this->_request.find("\r\n\r\n") + 4;
 	size_t bodyEnd = this->_request.find_last_of("\r\n\r\n") + 4;
-	this->_body = this->_request.substr(bodyStart, bodyEnd);
+	if (bodyStart != std::string::npos && bodyEnd != std::string::npos)
+	{
+		this->_body = this->_request.substr(bodyStart, bodyEnd);
+	}
 	if (this->_bodyLimit > 0 && static_cast<int> (this->_body.length()) > this->_bodyLimit)
 		throw Response::ResponseException400();
 }
@@ -429,7 +448,6 @@ void Request::openFile(ServerInfo server)
 		&& !(server.getlocationinfo()[this->_origLoc].dirList != false && server.getlocationinfo()[this->_origLoc].index.empty()
 			&& std::filesystem::is_directory(this->_root + "/" + this->_url.substr(this->_origLoc.size(), std::string::npos))))
 		{
-
 			if (!server.getlocationinfo()[this->_url].index.empty())
 				this->_filefd = open((server.getlocationinfo()[this->_url].root + "/" + server.getlocationinfo()[this->_url].index).c_str(), O_RDONLY);
 			else if (!this->_root.empty())

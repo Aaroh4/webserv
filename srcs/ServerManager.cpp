@@ -205,7 +205,6 @@ void	ServerManager::runCgi(std::string path, char** envp, int& clientSocket)
 			std::chrono::_V2::system_clock::time_point now = std::chrono::high_resolution_clock::now();
 			std::chrono::duration<float> elapsed = now - start;
 			float timePassed = elapsed.count() * 1000.0f;
-
 			if (timePassed >= TIMEOUT)
 			{
 				kill(pid, SIGKILL);
@@ -384,7 +383,6 @@ void	ServerManager::handleRequest(int& clientSocket)
 		this->_clientInfos[clientSocket].req->sanitize(this->_info[this->_connections[clientSocket]]);
 		if (this->_clientInfos[clientSocket].req->getConnectionHeader() == "keep-alive")
 			this->_clientInfos[clientSocket].latestRequest = std::time(nullptr);
-
 		std::cout << "request " << this->_clientInfos[clientSocket].request << std::endl;
 
 		if (checkForCgi(*this->_clientInfos[clientSocket].req, clientSocket) == 1)
@@ -443,7 +441,7 @@ void	ServerManager::receiveRequest(size_t& i)
 			else if (bytesReceived == -1)
 				closeConnection(clientSocket, i);
 		}
-		if (this->_clientInfos[clientSocket].request.length() > totalLength)
+		if (this->_clientInfos[clientSocket].request.length() > totalLength && totalLength != 0)
 		{
 			this->_clientInfos[clientSocket].failedToReceiveRequest = true;
 			throw Response::ResponseException400();
