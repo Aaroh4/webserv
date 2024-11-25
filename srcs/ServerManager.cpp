@@ -463,7 +463,11 @@ void	ServerManager::receiveRequest(size_t& i)
 					throw Response::ResponseException400();
 				}
 			}
-			else if (checkConnectionUptime(clientSocket) == true && bytesReceived == 0)
+			else if (bytesReceived == 0 || checkConnectionUptime(clientSocket) == true)
+			{
+				closeConnection(clientSocket, i);
+			}
+			else if (bytesReceived == -1)
 			{
 				closeConnection(clientSocket, i);
 			}
