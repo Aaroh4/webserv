@@ -205,7 +205,7 @@ void	Request::_parseRequestLine(void)
 	}
 	if (this->_url.length() > MAX_URL_LENGTH)
 	{
-		std::cout << "PROBLEMS SPOTTED!!!\n";
+		throw Response::ResponseException414();
 	}
 	//Checks if there was query string attached to URI and if there was put's it to _queryString attribute, then erases it from the request
 
@@ -225,7 +225,7 @@ void	Request::_parseRequestLine(void)
 	this->_request.erase(0, this->_httpVersion.length() + 2);
 	if (this->_httpVersion != "HTTP/1.1")
 	{
-		std::cout << "NONOO WROONK HTTP!!!\n";
+		throw Response::ResponseException505();
 	}
 }
 
@@ -250,7 +250,7 @@ void	Request::_parseHeaders(void)
 		value = line.substr(i + 2, (line.length() - (i + 3)));
 		if (key.length() > MAX_HEADER_LENGTH || value.length() > MAX_HEADER_LENGTH)
 		{
-			std::cout << "HEADERS ARE FUCKED!!!\n";
+			throw Response::ResponseException431();
 		}
 		this->_headers[key] = value;
 	}
@@ -261,7 +261,7 @@ void	Request::_parseHeaders(void)
 		this->_body = this->_request.substr(bodyStart, bodyEnd);
 	}
 	if (this->_bodyLimit > 0 && static_cast<int> (this->_body.length()) > this->_bodyLimit)
-		throw Response::ResponseException400();
+		throw Response::ResponseException413();
 }
 
 void	Request::_decodeChunks(void)
@@ -374,7 +374,7 @@ void	Request::sanitize(ServerInfo server)
 
 		if (this->_url.back() != '/' && std::filesystem::is_directory(this->_root + "/" + this->_url.substr(this->_origLoc.size() - 1, std::string::npos)))
 			throw Response::ResponseException404();
-		
+
 		if (this->_checkAllowedMethods(server) == false)
 			throw Response::ResponseException405();
 		if (this->_type == "cgi/py" || this->_type == "cgi/php")
@@ -488,17 +488,47 @@ void Request::openErrorFile(ServerInfo server, int sanitizeStatus)
 			else
 				this->_filefd = open(server.getErrorPages()[403].c_str(), O_RDONLY);
 			break ;
+		case 404:
+			if (server.getErrorPages()[404].empty())
+				this->_filefd = open("./www/404.html", O_RDONLY);
+			else
+				this->_filefd = open(server.getErrorPages()[404].c_str(), O_RDONLY);
+			break ;
 		case 405:
 			if (server.getErrorPages()[405].empty())
 				this->_filefd = open("./www/405.html", O_RDONLY);
 			else
 				this->_filefd = open(server.getErrorPages()[405].c_str(), O_RDONLY);
 			break ;
-		case 404:
-			if (server.getErrorPages()[404].empty())
-				this->_filefd = open("./www/404.html", O_RDONLY);
+		case 408:
+			if (server.getErrorPages()[408].empty())
+				this->_filefd = open("./www/405.html", O_RDONLY);
 			else
-				this->_filefd = open(server.getErrorPages()[404].c_str(), O_RDONLY);
+				this->_filefd = open(server.getErrorPages()[408].c_str(), O_RDONLY);
+			break ;
+		case 413:
+			if (server.getErrorPages()[413].empty())
+				this->_filefd = open("./www/405.html", O_RDONLY);
+			else
+				this->_filefd = open(server.getErrorPages()[413].c_str(), O_RDONLY);
+			break ;
+		case 414:
+			if (server.getErrorPages()[414].empty())
+				this->_filefd = open("./www/405.html", O_RDONLY);
+			else
+				this->_filefd = open(server.getErrorPages()[414].c_str(), O_RDONLY);
+			break ;
+		case 415:
+			if (server.getErrorPages()[415].empty())
+				this->_filefd = open("./www/405.html", O_RDONLY);
+			else
+				this->_filefd = open(server.getErrorPages()[415].c_str(), O_RDONLY);
+			break ;
+		case 431:
+			if (server.getErrorPages()[431].empty())
+				this->_filefd = open("./www/405.html", O_RDONLY);
+			else
+				this->_filefd = open(server.getErrorPages()[431].c_str(), O_RDONLY);
 			break ;
 		case 501:
 			if (server.getErrorPages()[501].empty())
@@ -511,12 +541,6 @@ void Request::openErrorFile(ServerInfo server, int sanitizeStatus)
 				this->_filefd = open("./www/505.html", O_RDONLY);
 			else
 				this->_filefd = open(server.getErrorPages()[505].c_str(), O_RDONLY);
-			break ;
-		case 415:
-			if (server.getErrorPages()[415].empty())
-				this->_filefd = open("./www/415.html", O_RDONLY);
-			else
-				this->_filefd = open(server.getErrorPages()[415].c_str(), O_RDONLY);
 			break ;
 		default:
 			if (server.getErrorPages()[500].empty())

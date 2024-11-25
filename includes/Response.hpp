@@ -104,6 +104,30 @@ class Response: public Request
 					int responseCode () const override;
 			};
 
+			//Content Too Large
+			class ResponseException413: public ResponseException
+			{
+				public:
+					const char *what() const noexcept override;
+					int responseCode () const override;
+			};
+			//URI Too Long
+			class ResponseException414: public ResponseException
+			{
+				public:
+					const char *what() const noexcept override;
+					int responseCode () const override;
+			};
+
+			//Request Header Fields Too Large
+			class ResponseException431: public ResponseException
+			{
+				public:
+					const char *what() const noexcept override;
+					int responseCode () const override;
+			};
+
+
 			//Exception if Send() has Failed
 			class SendErrorException: public std::exception
 			{
