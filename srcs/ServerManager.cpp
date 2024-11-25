@@ -260,6 +260,7 @@ void	ServerManager::sendResponse(size_t& i)
 	if (this->_clientInfos[clientSocket].responseStatus != 0 && this->_clientInfos[clientSocket].ResponseReady == true)
 	{
 		try {
+			std::cout<< "sending error page" << this->_clientInfos[clientSocket].responseStatus << std::endl;
 			Response::sendErrorPage(this->_clientInfos[clientSocket].responseStatus, clientSocket, this->_clientInfos[clientSocket].ResponseBody, "");
 		} catch (Response::SendErrorException &e){
 			std::cerr << e.what() << std::endl;
@@ -419,6 +420,7 @@ void	ServerManager::handleRequest(int& clientSocket)
 	} catch (Response::ResponseException &e){
 		this->_clientInfos[clientSocket].responseStatus = e.responseCode();
 		this->_clientInfos[clientSocket].req->openErrorFile(this->_info[this->_connections[clientSocket]], e.responseCode());
+		std::cout << "catched error "<<e.responseCode() << std::endl;
 		handleFd(clientSocket);
 		throw;
 	} catch (std::exception &e){
