@@ -59,20 +59,37 @@ void	Response::respond(int clientfd, ServerInfo server)
 		switch (this->_sanitizeStatus){
 			case 404:
 				throw ResponseException404();
+				break ;
 			case 400:
 				throw ResponseException400();
+				break ;
 			case 403:
 				throw ResponseException403();
+				break ;
 			case 408:
 				throw ResponseException408();
-			case 501:
-				throw ResponseException501();
-			case 505:
-				throw ResponseException505();
+				break ;
+			case 413:
+				throw ResponseException413();
+				break ;
+			case 414:
+				throw ResponseException414();
+				break ;
 			case 415:
 				throw ResponseException415();
+				break ;
+			case 431:
+				throw ResponseException431();
+				break ;
+			case 501:
+				throw ResponseException501();
+				break ;
+			case 505:
+				throw ResponseException505();
+				break ;
 			case 500:
 				throw ResponseException();
+				break ;
 		}
 	} catch(ResponseException& e) {
 		sendErrorPage(e.responseCode(), clientfd,"", this->_sessionId.empty() ? "" : this->_sessionId);
@@ -399,6 +416,30 @@ int Response::ResponseException408::responseCode () const{
 	return (408);
 }
 
+const char* Response::ResponseException413::what() const noexcept{
+	return "Content Too Large";
+}
+
+int Response::ResponseException413::responseCode () const{
+	return (413);
+}
+
+const char* Response::ResponseException414::what() const noexcept{
+	return "URI Too Long";
+}
+
+int Response::ResponseException414::responseCode () const{
+	return (414);
+}
+
+const char* Response::ResponseException431::what() const noexcept{
+	return "Request Header Fields Too Large";
+}
+
+int Response::ResponseException431::responseCode () const{
+	return (431);
+}
+
 const char* Response::SendErrorException::what() const noexcept{
 	return "Send failed";
 }
@@ -433,6 +474,15 @@ void Response::sendErrorPage(int statusCode, int clientfd, std::string body, std
 			break ;
 		case 415:
 			message = "Unsupported Media Type";
+			break ;
+		case 413:
+			message = "Content Too Large";
+			break ;
+		case 414:
+			message = "URI Too Long";
+			break ;
+		case 431:
+			message = "Request Header Fields Too Large";
 			break ;
 		default:
 			message = "Internal Server Error";
