@@ -126,14 +126,7 @@ size_t	ServerManager::findLastChunk(std::string& request, size_t start_pos)
 
 size_t	ServerManager::getRequestLength(std::string& request, int& clientSocket)
 {
-	size_t	end = request.find("\r\n\r\n");
-	if (end == std::string::npos)
-		return 0;
-
-	size_t	headers_length = end + 4;
-	size_t	content_length = 0;
 	size_t	totalLength = 0;
-	size_t	start = request.find("Content-Length: ");
 	try
 	{
 		size_t index = request.find(" ");
@@ -159,6 +152,13 @@ size_t	ServerManager::getRequestLength(std::string& request, int& clientSocket)
 			this->_clientInfos[clientSocket].failedToReceiveRequest = true;
 			throw Response::ResponseException501();
 		}
+		size_t	end = request.find("\r\n\r\n");
+		if (end == std::string::npos)
+			return 0;
+
+		size_t	headers_length = end + 4;
+		size_t	content_length = 0;
+		size_t	start = request.find("Content-Length: ");
 		if (method == "GET" || request.substr(0, 7) == "DELETE" )
 			return headers_length;
 		else if (start != std::string::npos)
@@ -175,7 +175,7 @@ size_t	ServerManager::getRequestLength(std::string& request, int& clientSocket)
 	}
 	catch(const std::exception& e)
 	{
-		throw;// Response::ResponseException();
+		throw;
 	}
 	return totalLength;
 }
