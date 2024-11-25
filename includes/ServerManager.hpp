@@ -42,7 +42,7 @@ class ServerManager
 			void	runCgi(std::string path, char** envp, int& clientSocket);
 			void	addNewConnection(size_t& i);
 			void	receiveRequest(size_t& i);
-			size_t	getRequestLength(std::string& request, int& clientSocket);
+			size_t	getRequestLength(std::string& request, int& clientSocket, size_t& i);
 			size_t	findLastChunk(std::string& request, size_t start_pos);
 			void	sendResponse(size_t& i);
 			void	cleanRequestData(int clientSocket, size_t& i);

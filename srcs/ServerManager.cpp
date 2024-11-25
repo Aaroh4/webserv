@@ -124,9 +124,20 @@ size_t	ServerManager::findLastChunk(std::string& request, size_t start_pos)
 	return pos + 4;
 }
 
-size_t	ServerManager::getRequestLength(std::string& request, int& clientSocket)
+size_t	ServerManager::getRequestLength(std::string& request, int& clientSocket, size_t &i)
 {
+	size_t	end = request.find("\r\n\r\n");
+	if (end == std::string::npos)
+	{
+		if (request.length() >= 50000)
+			closeConnection(clientSocket, i);
+		return 0;
+	}
+	size_t	headers_length = end + 4;
+	size_t	content_length = 0;
 	size_t	totalLength = 0;
+	size_t	start = request.find("Content-Length: ");
+	
 	try
 	{
 		size_t index = request.find(" ");
@@ -152,13 +163,6 @@ size_t	ServerManager::getRequestLength(std::string& request, int& clientSocket)
 			this->_clientInfos[clientSocket].failedToReceiveRequest = true;
 			throw Response::ResponseException501();
 		}
-		size_t	end = request.find("\r\n\r\n");
-		if (end == std::string::npos)
-			return 0;
-
-		size_t	headers_length = end + 4;
-		size_t	content_length = 0;
-		size_t	start = request.find("Content-Length: ");
 		if (method == "GET" || request.substr(0, 7) == "DELETE" )
 			return headers_length;
 		else if (start != std::string::npos)
@@ -260,7 +264,6 @@ void	ServerManager::sendResponse(size_t& i)
 	if (this->_clientInfos[clientSocket].responseStatus != 0 && this->_clientInfos[clientSocket].ResponseReady == true)
 	{
 		try {
-			std::cout<< "sending error page" << this->_clientInfos[clientSocket].responseStatus << std::endl;
 			Response::sendErrorPage(this->_clientInfos[clientSocket].responseStatus, clientSocket, this->_clientInfos[clientSocket].ResponseBody, "");
 		} catch (Response::SendErrorException &e){
 			std::cerr << e.what() << std::endl;
@@ -420,7 +423,7 @@ void	ServerManager::handleRequest(int& clientSocket)
 	} catch (Response::ResponseException &e){
 		this->_clientInfos[clientSocket].responseStatus = e.responseCode();
 		this->_clientInfos[clientSocket].req->openErrorFile(this->_info[this->_connections[clientSocket]], e.responseCode());
-		std::cout << "catched error "<<e.responseCode() << std::endl;
+
 		handleFd(clientSocket);
 		throw;
 	} catch (std::exception &e){
@@ -433,7 +436,7 @@ void	ServerManager::handleRequest(int& clientSocket)
 
 void	ServerManager::receiveRequest(size_t& i)
 {
-	char		buffer[1024] = {0};
+	char		buffer[10024] = {0};
 	int 		clientSocket = this->_poll_fds[i].fd;
 	int 		bytesReceived = 0;
 	size_t		totalLength = this->_clientInfos[clientSocket].requestLength;
@@ -450,7 +453,7 @@ void	ServerManager::receiveRequest(size_t& i)
 				this->_clientInfos[clientSocket].request.append(buffer, bytesReceived);
 				if (totalLength == 0)
 				{
-					this->_clientInfos[clientSocket].requestLength = getRequestLength(this->_clientInfos[clientSocket].request, clientSocket);
+					this->_clientInfos[clientSocket].requestLength = getRequestLength(this->_clientInfos[clientSocket].request, clientSocket, i);
 					totalLength = this->_clientInfos[clientSocket].requestLength;
 				}
 				if ((bytesReceived < 1024 && totalLength == 0)
@@ -464,8 +467,6 @@ void	ServerManager::receiveRequest(size_t& i)
 			{
 				closeConnection(clientSocket, i);
 			}
-			else if (bytesReceived == -1)
-				closeConnection(clientSocket, i);
 		}
 		if (this->_clientInfos[clientSocket].request.length() > totalLength && totalLength != 0)
 		{
