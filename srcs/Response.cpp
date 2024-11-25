@@ -142,12 +142,8 @@ void Response::respondGet(int clientfd, ServerInfo server)
 	{
 		response = formatGetResponseMsg(0);
 		std::cout << "response: " << response << std::endl;
+		response += this->_responseBody;
 		int res = send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL);
-		if (res == -1)
-			throw SendErrorException();
-		if (res == 0)
-			throw SendErrorException();
-		res = send(clientfd, this->_responseBody.c_str(), this->_responseBody.length(), MSG_NOSIGNAL);
 		if (res == -1)
 			throw SendErrorException();
 		if (res == 0)
@@ -279,19 +275,14 @@ void Response::directorylisting(int clientfd, std::string file)
 	this->_fileSize = std::to_string(file.size());
 	this->_responseBody = file;
 	response = formatGetResponseMsg(0);
-	std::string responseWithoutFile = response;
+	std::cout << "Response to client: " << clientfd << std::endl;
+	std::cout << response << std::endl;
+	response += file;
 	int res = send(clientfd, response.c_str(), response.length(), MSG_NOSIGNAL);
 	if (res == -1)
 		throw SendErrorException();
 	if (res == 0)
 		throw SendErrorException();
-	res = send(clientfd, file.c_str(), file.length(), MSG_NOSIGNAL);
-	if (res == -1)
-		throw SendErrorException();
-	if (res == 0)
-		throw SendErrorException();
-	std::cout << "Response to client: " << clientfd << std::endl;
-	std::cout << responseWithoutFile << std::endl;
 }
 
 std::string Response::buildDirectorylist(std::string name, int rootsize)
