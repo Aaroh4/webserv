@@ -163,7 +163,7 @@ size_t	ServerManager::getRequestLength(std::string& request, int& clientSocket, 
 			this->_clientInfos[clientSocket].failedToReceiveRequest = true;
 			throw Response::ResponseException501();
 		}
-		if (method == "GET" || request.substr(0, 7) == "DELETE" )
+		if (method == "GET" || method == "DELETE" )
 			return headers_length;
 		else if (start != std::string::npos)
 		{
