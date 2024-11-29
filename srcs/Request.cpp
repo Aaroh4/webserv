@@ -372,7 +372,8 @@ void	Request::sanitize(ServerInfo server)
 			temp = "/";
 		}
 
-		if (this->_url.back() != '/' && std::filesystem::is_directory(this->_root + "/" + this->_url.substr(this->_origLoc.size() - 1, std::string::npos)))
+		if ((this->_url.back() != '/' && std::filesystem::is_directory(this->_root + "/" + this->_url.substr(this->_origLoc.size() - 1, std::string::npos)))
+		|| (server.getlocationinfo()[_root].dirList == false && server.getlocationinfo()[_root].index.empty()))
 			throw Response::ResponseException404();
 
 		if (this->_checkAllowedMethods(server) == false)
