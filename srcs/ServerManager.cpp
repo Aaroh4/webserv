@@ -411,7 +411,7 @@ void	ServerManager::handleRequest(int& clientSocket)
 		this->_clientInfos[clientSocket].req->sanitize(this->_info[this->_connections[clientSocket]]);
 		if (this->_clientInfos[clientSocket].req->getConnectionHeader() == "keep-alive")
 			this->_clientInfos[clientSocket].latestRequest = std::time(nullptr);
-		std::cout << "request " << this->_clientInfos[clientSocket].request << std::endl;
+		//std::cout << "request " << this->_clientInfos[clientSocket].request << std::endl;
 
 		if (checkForCgi(*this->_clientInfos[clientSocket].req, clientSocket) == 1)
 			addPollFd(this->_clientInfos[clientSocket].pipeFd);
@@ -436,7 +436,7 @@ void	ServerManager::handleRequest(int& clientSocket)
 
 void	ServerManager::receiveRequest(size_t& i)
 {
-	char		buffer[10024] = {0};
+	char		buffer[1024] = {0};
 	int 		clientSocket = this->_poll_fds[i].fd;
 	int 		bytesReceived = 0;
 	size_t		totalLength = this->_clientInfos[clientSocket].requestLength;
@@ -535,7 +535,6 @@ int	ServerManager::checkForCgi(Request& req, int& clientSocket)
 		std::string query;
 		std::string	length;
 		std::string timeOut = "TIMEOUT=";
-
 		std::string temp = std::to_string(this->_info[this->_connections.at(clientSocket)].get_timeout());
 		if (temp.empty())
 			timeOut += DEFAULT_TIMEOUT;
