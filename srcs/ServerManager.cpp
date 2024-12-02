@@ -137,7 +137,7 @@ size_t	ServerManager::getRequestLength(std::string& request, int& clientSocket, 
 	size_t	content_length = 0;
 	size_t	totalLength = 0;
 	size_t	start = request.find("Content-Length: ");
-	
+
 	try
 	{
 		size_t index = request.find(" ");
@@ -515,10 +515,6 @@ void	ServerManager::readFromFd(const int& fd)
 		close(fd);
 		int clientSocket = this->_clientPipe[fd];
 		this->_clientInfos[clientSocket].ResponseBody.append(buffer, nbytes);
-		if (this->_clientInfos[clientSocket].ResponseBody.empty())
-		{
-			this->_clientInfos[clientSocket].responseStatus = 408;
-		}
 		this->_clientInfos[clientSocket].ResponseReady = true;
 		this->_clientPipe.erase(fd);
 	}
