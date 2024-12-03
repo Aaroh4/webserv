@@ -411,7 +411,8 @@ void	ServerManager::handleRequest(int& clientSocket)
 		this->_clientInfos[clientSocket].req->sanitize(this->_info[this->_connections[clientSocket]]);
 		if (this->_clientInfos[clientSocket].req->getConnectionHeader() == "keep-alive")
 			this->_clientInfos[clientSocket].latestRequest = std::time(nullptr);
-		//std::cout << "request " << this->_clientInfos[clientSocket].request << std::endl;
+		
+		std::cout << "request " << this->_clientInfos[clientSocket].request << std::endl;
 
 		if (checkForCgi(*this->_clientInfos[clientSocket].req, clientSocket) == 1)
 			addPollFd(this->_clientInfos[clientSocket].pipeFd);

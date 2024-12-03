@@ -361,7 +361,6 @@ void	Request::sanitize(ServerInfo server)
 			if (!server.getlocationinfo()[test].root.empty())
 				temp = test;
 		}
-
 		if (!server.getlocationinfo()[temp].root.empty()){
 			this->_root = server.getlocationinfo()[temp].root;
 			this->_origLoc = temp;
@@ -371,17 +370,13 @@ void	Request::sanitize(ServerInfo server)
 			this->_origLoc = "/";
 			temp = "/";
 		}
-
-
 		if ((this->_url.back() != '/' && std::filesystem::is_directory(this->_root + "/" + this->_url.substr(this->_origLoc.size() - 1, std::string::npos)))
 		|| (server.getlocationinfo()[_origLoc].dirList == false && server.getlocationinfo()[_origLoc].index.empty()))
 			throw Response::ResponseException404();
-
 		if (this->_checkAllowedMethods(server) == false)
 			throw Response::ResponseException405();
 		if (this->_type == "cgi/py" || this->_type == "cgi/php")
 			this->_verifyPath();
-
 		if (this->_sanitizeStatus != 200)
 			return ;
 		if (this->_url.find("..") != std::string::npos )
@@ -409,9 +404,9 @@ void	Request::sanitize(ServerInfo server)
 				throw Response::ResponseException400();
 			}
 		}
-	} catch (Response::ResponseException &e){
-			throw ;
-		}
+	} catch (std::exception &e){
+		throw ;
+	}
 }
 
 void Request::openFile(ServerInfo server)
