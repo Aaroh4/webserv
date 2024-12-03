@@ -384,11 +384,6 @@ void	Request::sanitize(ServerInfo server)
 
 		if (this->_sanitizeStatus != 200)
 			return ;
-		if (this->_httpVersion != "HTTP/1.0" && this->_httpVersion != "HTTP/1.1")
-		{
-			this->_sanitizeStatus = 505;
-			throw Response::ResponseException505();
-		}
 		if (this->_url.find("..") != std::string::npos )
 		{
 			this->_sanitizeStatus = 403;
