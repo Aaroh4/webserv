@@ -499,31 +499,31 @@ void Request::openErrorFile(ServerInfo server, int sanitizeStatus)
 			break ;
 		case 408:
 			if (server.getErrorPages()[408].empty())
-				this->_filefd = open("./www/405.html", O_RDONLY);
+				this->_filefd = open("./www/408.html", O_RDONLY);
 			else
 				this->_filefd = open(server.getErrorPages()[408].c_str(), O_RDONLY);
 			break ;
 		case 413:
 			if (server.getErrorPages()[413].empty())
-				this->_filefd = open("./www/405.html", O_RDONLY);
+				this->_filefd = open("./www/413.html", O_RDONLY);
 			else
 				this->_filefd = open(server.getErrorPages()[413].c_str(), O_RDONLY);
 			break ;
 		case 414:
 			if (server.getErrorPages()[414].empty())
-				this->_filefd = open("./www/405.html", O_RDONLY);
+				this->_filefd = open("./www/414.html", O_RDONLY);
 			else
 				this->_filefd = open(server.getErrorPages()[414].c_str(), O_RDONLY);
 			break ;
 		case 415:
 			if (server.getErrorPages()[415].empty())
-				this->_filefd = open("./www/405.html", O_RDONLY);
+				this->_filefd = open("./www/415.html", O_RDONLY);
 			else
 				this->_filefd = open(server.getErrorPages()[415].c_str(), O_RDONLY);
 			break ;
 		case 431:
 			if (server.getErrorPages()[431].empty())
-				this->_filefd = open("./www/405.html", O_RDONLY);
+				this->_filefd = open("./www/431.html", O_RDONLY);
 			else
 				this->_filefd = open(server.getErrorPages()[431].c_str(), O_RDONLY);
 			break ;
