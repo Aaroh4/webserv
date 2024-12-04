@@ -255,10 +255,9 @@ void	Request::_parseHeaders(void)
 		this->_headers[key] = value;
 	}
 	size_t bodyStart = this->_request.find("\r\n\r\n") + 4;
-	size_t bodyEnd = this->_request.find_last_of("\r\n\r\n") + 4;
-	if (bodyStart != std::string::npos && bodyEnd != std::string::npos)
+	if (bodyStart != std::string::npos)
 	{
-		this->_body = this->_request.substr(bodyStart, bodyEnd);
+		this->_body = this->_request.substr(bodyStart, std::string::npos);
 	}
 	if (this->_bodyLimit > 0 && static_cast<int> (this->_body.length()) > this->_bodyLimit)
 		throw Response::ResponseException413();
